@@ -1,4 +1,4 @@
-# Mitigating-Sycophancy
+# Mitigating-Sycophancy (In Progress)
 
 # Sycophancy Alignment Initiative
 
