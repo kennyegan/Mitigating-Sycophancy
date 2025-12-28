@@ -16,5 +16,10 @@ dependencies = [
     "scikit-learn",
     "pandas",
     "wandb",
-    "plotly"
+    "plotly",
+    "matplotlib",
+    "jaxtyping",
+    "accelerate",
+    "tqdm",
+    "datasets"
 ]
