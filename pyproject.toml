@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Mitigating-Sycophancy"
+version = "0.1.0"
+authors = [
+  { name="Kenneth Egan", email="kenegan2005@gmail.com" },
+]
+description = "Mechanistic analysis of sycophancy in LLMs"
+requires-python = ">=3.10"
+dependencies = [
+    "torch",
+    "transformer_lens",
+    "scikit-learn",
+    "pandas",
+    "wandb",
+    "plotly"
+]
