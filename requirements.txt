@@ -1,0 +1,13 @@
+transformer_lens
+wandb
+scikit-learn
+pandas
+plotly
+jupyterlab
+pytest
+tqdm
+accelerate
+datasets
+einops
+jaxtyping
+matplotlib
