@@ -1,0 +1,31 @@
+# --- Python Standard ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+.ipynb_checkpoints/
+
+# --- Mac OS ---
+.DS_Store
+
+# --- Project Specific (The Big Stuff) ---
+# Ignore the data folder but keep the gitkeep if you have one
+data/raw/*
+data/processed/*
+!data/processed/.gitkeep
+
+# Ignore results/logs
+results/*
+wandb/
+artifacts/
+
+# Ignore local models if you downloaded them to this folder
+models/*
+
+# Ignore credential files (Safety First!)
+secrets.json
+.env
