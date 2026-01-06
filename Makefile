@@ -5,13 +5,17 @@ setup:
 	pip install -r requirements.txt
 	pip install -e .
 
-# 2. Get the Data
+# 2. Download Multi-Dataset (500 samples per type)
 data:
-	python src/data/download_anthropic.py
+	python scripts/00_data_setup.py --samples 500
 
-# 3. Run the Baseline Experiment
+# 2b. Download Small Dataset for Testing (50 samples per type)
+data-small:
+	python scripts/00_data_setup.py --samples 50
+
+# 3. Run Baseline Evaluation on All 3 Datasets
 baseline:
-	python scripts/01_check_baseline.py
+	python scripts/01_run_baseline.py
 
 # 4. Run Tests
 test:
