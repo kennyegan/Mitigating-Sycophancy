@@ -29,3 +29,5 @@ models/*
 # Ignore credential files (Safety First!)
 secrets.json
 .env
+
+CLAUDE.md
