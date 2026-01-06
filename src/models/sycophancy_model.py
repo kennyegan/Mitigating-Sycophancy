@@ -80,25 +80,56 @@ class SycophancyModel:
     
     @torch.no_grad()
     def get_logits(
-        self, 
+        self,
         prompts: Union[str, List[str]],
         return_type: str = "logits"
     ) -> torch.Tensor:
         """
         Get the model's output logits for given prompts.
-        
+
         Args:
             prompts: Single prompt string or list of prompts
             return_type: What to return ("logits" or "loss")
-            
+
         Returns:
             Logits tensor of shape (batch, seq_len, vocab_size)
         """
         if isinstance(prompts, str):
             prompts = [prompts]
-        
+
         return self.model(prompts, return_type=return_type)
-    
+
+    @torch.no_grad()
+    def get_token_probability(
+        self,
+        prompt: str,
+        target_token: str
+    ) -> float:
+        """
+        Get the probability of a specific token at the next position.
+
+        Args:
+            prompt: Input prompt string
+            target_token: Target token string (e.g., " Yes", " (A)")
+
+        Returns:
+            Probability value between 0 and 1
+
+        Raises:
+            ValueError: If target_token tokenizes to multiple tokens
+        """
+        # Get logits for the prompt
+        logits = self.get_logits(prompt)
+        last_token_logits = logits[0, -1, :]  # Shape: (vocab_size,)
+
+        # Convert to probabilities
+        probs = torch.nn.functional.softmax(last_token_logits, dim=0)
+
+        # Get token ID (raises error if multi-token)
+        token_id = self.model.to_single_token(target_token)
+
+        return probs[token_id].item()
+
     @torch.no_grad()
     def get_activations(
         self,
