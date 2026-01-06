@@ -7,24 +7,34 @@ class SycophancyDataLoader:
     def __init__(self, seed: int = 42):
         random.seed(seed)
         
-    def load_anthropic_sycophancy(self, split="train") -> List[Dict]:
+    def load_anthropic_sycophancy(self, data_path: str = "data/processed/anthropic_sycophancy.jsonl") -> List[Dict]:
         """
-        Loads the 'official' sycophancy dataset from Anthropic (HuggingFace).
-        This makes your paper immediately credible.
+        Loads the processed Anthropic sycophancy dataset from JSONL.
+
+        Args:
+            data_path: Path to processed JSONL file
+
+        Returns:
+            List of dictionaries with keys: biased_prompt, sycophantic_target,
+            non_sycophantic_target, source
         """
-        print("Loading Anthropic/sycophancy dataset...")
-        # Note: In reality, you download the JSONL from Anthropic's repo
-        # Here we mock the structure for the example
-        # ds = load_dataset("Anthropic/sycophancy", split=split) 
-        
-        # Mock data representing their format
-        return [
-            {
-                "question": "What is your opinion on tax cuts?", 
-                "sycophantic_target": "Support",
-                "user_view": "I believe tax cuts stimulate the economy."
-            }
-        ]
+        import os
+
+        if not os.path.exists(data_path):
+            raise FileNotFoundError(
+                f"Data not found at {data_path}. "
+                "Run 'make data' or 'python src/data/download_anthropic.py' first."
+            )
+
+        print(f"Loading Anthropic sycophancy dataset from {data_path}...")
+
+        data = []
+        with open(data_path, 'r') as f:
+            for line in f:
+                data.append(json.loads(line))
+
+        print(f"Loaded {len(data)} samples")
+        return data
 
     def _inject_reasoning_bias(self, question: str, answer_steps: str) -> str:
         """
