@@ -58,45 +58,58 @@ This project is an open-source research effort to systematically **quantify, ana
    pip install -e .
    ```
 
-3. **Download the data:**
+3. **Download the multi-dataset benchmark:**
    ```bash
+   # Full dataset (1500 samples: 500 per type)
    make data
-   # Or: python src/data/download_anthropic.py
+
+   # OR small dataset for testing (150 samples: 50 per type)
+   make data-small
    ```
+
+   This downloads and processes three types of sycophancy:
+   - **Opinion Sycophancy** (Anthropic/model-written-evals)
+   - **Factual Sycophancy** (TruthfulQA)
+   - **Reasoning Sycophancy** (GSM8k)
 
 ### Running Experiments
 
 ```bash
-# Run baseline sycophancy evaluation
+# Run baseline evaluation on all 3 dataset types
 make baseline
-# Or: python scripts/01_check_baseline.py
 
 # Run tests
 make test
 ```
+
+See [QUICKSTART.md](QUICKSTART.md) for detailed instructions.
 
 ## 📁 Project Structure
 
 ```
 Mitigating-Sycophancy/
 ├── src/
-│   ├── data/              # Data loading and downloading utilities
-│   │   ├── download_anthropic.py
-│   │   └── loader.py
-│   ├── models/            # Model wrappers and evaluation scripts
-│   ├── analysis/          # Mechanistic interpretability analysis
+│   ├── data/              # Dataset processors
+│   │   ├── base.py                 # Abstract base class
+│   │   ├── anthropic.py           # Opinion sycophancy
+│   │   ├── truthful_qa.py         # Factual sycophancy
+│   │   ├── gsm8k_reasoning.py     # Reasoning sycophancy
+│   │   └── loader.py              # Legacy loaders
+│   ├── models/            # Model wrappers (TransformerLens)
+│   │   └── sycophancy_model.py
+│   ├── analysis/          # Mechanistic interpretability tools
 │   └── utils/             # Helper functions
-├── scripts/               # Main experiment scripts
-│   └── 01_check_baseline.py
-├── notebooks/             # Jupyter notebooks for exploration
+├── scripts/               # Experiment pipeline
+│   ├── 00_data_setup.py           # Multi-dataset download
+│   ├── 01_run_baseline.py         # Baseline evaluation
+│   └── README.md                  # Script documentation
 ├── data/
-│   ├── raw/              # Raw datasets
-│   └── processed/        # Processed datasets
-├── results/              # Experiment results and figures
-├── configs/              # Configuration files
-├── tests/                # Unit tests
-├── requirements.txt      # Python dependencies
-├── pyproject.toml        # Project metadata
+│   ├── raw/              # Raw datasets (auto-downloaded)
+│   └── processed/        # Processed JSONL files
+│       └── master_sycophancy.jsonl
+├── results/              # Experiment results
+│   └── baseline_results.csv
+├── QUICKSTART.md         # Quick reference guide
 ├── Makefile              # Common commands
 └── PROJECT_OVERVIEW.md   # Detailed research plan
 ```
@@ -104,9 +117,12 @@ Mitigating-Sycophancy/
 ## 🔬 Current Status
 
 - ✅ **Phase 1**: Infrastructure setup with TransformerLens integration
-- 🔄 **Phase 2**: Benchmark construction (Reasoning-Sycophancy dataset)
-- 🔬 **Phase 3**: Baseline evaluation and metric design
-- 📋 **Phase 4-8**: Mechanistic analysis, intervention, and validation (in progress)
+- ✅ **Phase 2**: Multi-dataset benchmark construction
+  - Opinion Sycophancy (Anthropic/model-written-evals)
+  - Factual Sycophancy (TruthfulQA)
+  - Reasoning Sycophancy (GSM8k with logic corruption)
+- 🔄 **Phase 3**: Baseline evaluation and metric design (ready to run)
+- 📋 **Phase 4-8**: Mechanistic analysis, intervention, and validation (planned)
 
 See [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) for the complete research roadmap.
 
@@ -129,31 +145,61 @@ $$\Delta = P(\text{Agree} | \text{Biased}) - P(\text{Agree} | \text{Neutral})$$
 
 ## 📝 Usage Examples
 
-### Basic Sycophancy Evaluation
+### Download Multi-Dataset Benchmark
+
+```python
+from src.data import (
+    AnthropicOpinionDataset,
+    TruthfulQAFactualDataset,
+    GSM8kReasoningDataset
+)
+
+# Generate 100 samples from each dataset type
+opinion_dataset = AnthropicOpinionDataset(seed=42)
+opinion_samples = opinion_dataset.get_samples(100)
+
+factual_dataset = TruthfulQAFactualDataset(seed=42)
+factual_samples = factual_dataset.get_samples(100)
+
+reasoning_dataset = GSM8kReasoningDataset(seed=42)
+reasoning_samples = reasoning_dataset.get_samples(100)
+
+# Save to unified format
+all_samples = opinion_samples + factual_samples + reasoning_samples
+# ... save to JSONL
+```
+
+### Run Baseline Evaluation
 
 ```python
 from src.models import SycophancyModel
-from src.data.loader import load_anthropic_dataset
 
 # Load model
 model = SycophancyModel("meta-llama/Meta-Llama-3-8B-Instruct")
 
-# Load dataset
-dataset = load_anthropic_dataset("data/processed/anthropic_sycophancy.jsonl")
+# Load master dataset
+import json
+with open("data/processed/master_sycophancy.jsonl") as f:
+    dataset = [json.loads(line) for line in f]
 
-# Evaluate sycophancy rate
-sycophancy_rate = model.evaluate_sycophancy(dataset)
-print(f"Sycophancy Rate: {sycophancy_rate:.2%}")
+# Evaluate on first 150 samples (50 per type)
+results = model.evaluate_sycophancy(dataset[:150])
+print(f"Overall Sycophancy Rate: {results['sycophancy_rate']:.2%}")
 ```
 
-### Causal Tracing Analysis
+### Analyze Token Probabilities
 
 ```python
-from src.analysis.causal_tracing import trace_sycophancy_circuit
-
-# Identify which layers/heads are responsible for sycophancy
-circuit = trace_sycophancy_circuit(model, dataset)
-print(f"Sycophancy Circuit: {circuit}")
+# Get probability for specific tokens
+prob_syc = model.get_token_probability(
+    prompt="I believe 2+2=5. What is 2+2?",
+    target_token=" (A)"  # Sycophantic answer
+)
+prob_honest = model.get_token_probability(
+    prompt="I believe 2+2=5. What is 2+2?",
+    target_token=" (B)"  # Honest answer
+)
+print(f"Sycophantic: {prob_syc:.3f}, Honest: {prob_honest:.3f}")
 ```
 
 ## 🤝 Contributing
