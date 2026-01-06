@@ -5,7 +5,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-## 🧠 Overview
+## Overview
 
 **Sycophancy** is a critical failure mode in language models, where the model prioritizes agreement with the user over factual accuracy or objective reasoning. This behavior undermines trustworthiness, especially in high-stakes applications like education, finance, and healthcare.
 
@@ -18,7 +18,7 @@ This project is an open-source research effort to systematically **quantify, ana
 - **Circuit Discovery**: Which specific model components (attention heads, MLP layers) are responsible for overriding internal knowledge?
 - **Inference-Time Mitigation**: Can we reduce sycophancy at runtime without expensive retraining?
 
-## 🎯 Goals
+## Goals
 
 1. **Define Sycophancy Operationally**  
    Formalize what constitutes sycophantic behavior using reproducible prompt templates and response criteria.
@@ -38,7 +38,7 @@ This project is an open-source research effort to systematically **quantify, ana
 6. **Create a Community Hub**  
    Publish results on arXiv, host community discussions, and invite contributions from alignment researchers, model evaluators, and LLM developers.
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Installation
 
@@ -116,13 +116,13 @@ Mitigating-Sycophancy/
 
 ## 🔬 Current Status
 
-- ✅ **Phase 1**: Infrastructure setup with TransformerLens integration
-- ✅ **Phase 2**: Multi-dataset benchmark construction
+- **Phase 1**: Infrastructure setup with TransformerLens integration
+- **Phase 2**: Multi-dataset benchmark construction
   - Opinion Sycophancy (Anthropic/model-written-evals)
   - Factual Sycophancy (TruthfulQA)
   - Reasoning Sycophancy (GSM8k with logic corruption)
-- 🔄 **Phase 3**: Baseline evaluation and metric design (ready to run)
-- 📋 **Phase 4-8**: Mechanistic analysis, intervention, and validation (planned)
+- **Phase 3**: Baseline evaluation and metric design (ready to run)
+- **Phase 4-8**: Mechanistic analysis, intervention, and validation (planned)
 
 See [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) for the complete research roadmap.
 
@@ -134,7 +134,7 @@ See [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) for the complete research roadmap
 - **Tracking**: Weights & Biases (`wandb`)
 - **Data**: `datasets`, `pandas`
 
-## 📊 Metrics
+## Metrics
 
 ### Primary Metric: Compliance Gap
 $$\Delta = P(\text{Agree} | \text{Biased}) - P(\text{Agree} | \text{Neutral})$$
@@ -143,7 +143,7 @@ $$\Delta = P(\text{Agree} | \text{Biased}) - P(\text{Agree} | \text{Neutral})$$
 - **Compliance Score**: High Probe Accuracy + Low Output Accuracy → Model is "lying" (Social Compliance)
 - **Corruption Score**: Low Probe Accuracy + Low Output Accuracy → Model is "confused" (Belief Corruption)
 
-## 📝 Usage Examples
+## Usage Examples
 
 ### Download Multi-Dataset Benchmark
 
@@ -202,7 +202,7 @@ prob_honest = model.get_token_probability(
 print(f"Sycophantic: {prob_syc:.3f}, Honest: {prob_honest:.3f}")
 ```
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! This is a research project, and we're particularly interested in:
 
@@ -213,22 +213,22 @@ Contributions are welcome! This is a research project, and we're particularly in
 
 Please feel free to open an issue or submit a pull request.
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 📚 References
+## References
 
 - Anthropic's Sycophancy Dataset
 - TransformerLens: [A Library for Mechanistic Interpretability](https://github.com/neelnanda-io/TransformerLens)
 - Related work on sycophancy and alignment
 
-## 👤 Author
+## Author
 
 **Kenneth Egan**  
 - Email: kenegan2005@gmail.com
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 This project builds on the work of the mechanistic interpretability community, particularly the TransformerLens library and Anthropic's research on sycophancy.
 
