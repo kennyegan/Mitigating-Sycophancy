@@ -12,6 +12,10 @@ venv/
 # --- Mac OS ---
 .DS_Store
 
+# --- IDE ---
+.vscode/
+.idea/
+
 # --- Project Specific (The Big Stuff) ---
 # Ignore the data folder but keep the gitkeep if you have one
 data/raw/*
