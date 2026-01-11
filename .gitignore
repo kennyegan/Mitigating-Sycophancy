@@ -31,3 +31,5 @@ secrets.json
 .env
 
 CLAUDE.md
+
+*.egg-info/
