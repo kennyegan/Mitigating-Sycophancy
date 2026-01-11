@@ -136,12 +136,13 @@ def load_data(data_path: str, max_samples: Optional[int] = None) -> List[Dict]:
 # Model Initialization
 # =============================================================================
 
-def initialize_model(model_name: str) -> SycophancyModel:
+def initialize_model(model_name: str, device: Optional[str] = None) -> SycophancyModel:
     """
     Initialize SycophancyModel with error handling.
 
     Args:
         model_name: HuggingFace model identifier
+        device: Device to load model on (None for auto-detect, "cpu", "cuda", "mps")
 
     Returns:
         Initialized model wrapper
@@ -150,7 +151,7 @@ def initialize_model(model_name: str) -> SycophancyModel:
         RuntimeError: If model loading fails
     """
     try:
-        model = SycophancyModel(model_name)
+        model = SycophancyModel(model_name, device=device)
         return model
     except Exception as e:
         raise RuntimeError(f"Failed to load {model_name}: {e}")
@@ -257,7 +258,8 @@ def check_generation_matches(
 def evaluate_sample_compliance_gap(
     model: SycophancyModel,
     item: Dict,
-    verify_generation: bool = False
+    verify_generation: bool = False,
+    debug: bool = False
 ) -> Optional[Dict]:
     """
     Evaluate a single sample for compliance gap.
@@ -272,6 +274,7 @@ def evaluate_sample_compliance_gap(
         model: SycophancyModel instance
         item: Dataset item with neutral_prompt, biased_prompt, targets
         verify_generation: Whether to verify with actual generation
+        debug: Whether to print skip reasons
 
     Returns:
         Dictionary with evaluation results, or None if evaluation fails
@@ -280,29 +283,50 @@ def evaluate_sample_compliance_gap(
     biased_prompt = item.get('biased_prompt')
 
     if not neutral_prompt or not biased_prompt:
+        if debug:
+            missing = []
+            if not neutral_prompt:
+                missing.append('neutral_prompt')
+            if not biased_prompt:
+                missing.append('biased_prompt')
+            print(f"  [SKIP] Missing required fields: {missing}")
+            print(f"         Available keys: {list(item.keys())}")
         return None
 
     honest_target = item.get('honest_target', item.get('non_sycophantic_target'))
     sycophantic_target = item.get('sycophantic_target')
 
     if not honest_target or not sycophantic_target:
+        if debug:
+            missing = []
+            if not honest_target:
+                missing.append('honest_target/non_sycophantic_target')
+            if not sycophantic_target:
+                missing.append('sycophantic_target')
+            print(f"  [SKIP] Missing target fields: {missing}")
         return None
 
     # Tokenize targets
     try:
         syc_tokens = model.model.to_tokens(sycophantic_target, prepend_bos=False)
         honest_tokens = model.model.to_tokens(honest_target, prepend_bos=False)
-    except Exception:
+    except Exception as e:
+        if debug:
+            print(f"  [SKIP] Target tokenization failed: {e}")
         return None
 
     if syc_tokens.shape[1] == 0 or honest_tokens.shape[1] == 0:
+        if debug:
+            print(f"  [SKIP] Empty tokens - syc: {syc_tokens.shape[1]}, honest: {honest_tokens.shape[1]}")
         return None
 
     # Tokenize prompts
     try:
         neutral_prompt_tokens = model.model.to_tokens(neutral_prompt, prepend_bos=True)
         biased_prompt_tokens = model.model.to_tokens(biased_prompt, prepend_bos=True)
-    except Exception:
+    except Exception as e:
+        if debug:
+            print(f"  [SKIP] Prompt tokenization failed: {e}")
         return None
 
     neutral_prompt_len = neutral_prompt_tokens.shape[1]
@@ -335,7 +359,9 @@ def evaluate_sample_compliance_gap(
         biased_log_honest = compute_target_log_probability(
             biased_honest_logits, honest_tokens, biased_prompt_len
         )
-    except Exception:
+    except Exception as e:
+        if debug:
+            print(f"  [SKIP] Forward pass failed: {e}")
         return None
 
     # Normalize probabilities
@@ -560,7 +586,8 @@ def compute_overall_statistics(results: List[Dict]) -> Dict:
 def evaluate_dataset(
     model: SycophancyModel,
     dataset: List[Dict],
-    verify_generation: bool = False
+    verify_generation: bool = False,
+    debug: bool = False
 ) -> Tuple[List[Dict], Dict]:
     """
     Evaluate full dataset and compute compliance gap statistics.
@@ -569,6 +596,7 @@ def evaluate_dataset(
         model: SycophancyModel instance
         dataset: List of dataset items
         verify_generation: Whether to verify with actual generation
+        debug: Whether to print skip reasons for failed samples
 
     Returns:
         Tuple of (results_list, summary_dict)
@@ -576,8 +604,19 @@ def evaluate_dataset(
     results = []
     skipped_count = 0
 
+    # Debug first sample to show data structure
+    if debug and len(dataset) > 0:
+        print("\n[DEBUG] First sample structure:")
+        print(f"  Keys: {list(dataset[0].keys())}")
+        for key, value in dataset[0].items():
+            preview = str(value)[:80] + "..." if len(str(value)) > 80 else str(value)
+            print(f"  {key}: {preview}")
+        print()
+
     for item in tqdm(dataset, desc="Evaluating compliance gap"):
-        result = evaluate_sample_compliance_gap(model, item, verify_generation)
+        # In debug mode, show details for first 5 skipped samples
+        show_debug = debug and skipped_count < 5
+        result = evaluate_sample_compliance_gap(model, item, verify_generation, debug=show_debug)
 
         if result is None:
             skipped_count += 1
@@ -899,6 +938,20 @@ Examples:
         help="Run sanity checks before evaluation"
     )
 
+    parser.add_argument(
+        '--debug',
+        action='store_true',
+        help="Print debug info for skipped samples (helps diagnose data issues)"
+    )
+
+    parser.add_argument(
+        '--device',
+        type=str,
+        default=None,
+        choices=['cpu', 'cuda', 'mps'],
+        help="Device to run model on (default: auto-detect). Use 'cpu' for large models that exceed GPU memory."
+    )
+
     return parser.parse_args()
 
 
@@ -922,7 +975,9 @@ def main():
     print(f"Max Samples:        {args.max_samples or 'all'}")
     print(f"Seed:               {args.seed}")
     print(f"Git Hash:           {get_git_hash() or 'N/A'}")
+    print(f"Device:             {args.device or 'auto'}")
     print(f"Verify Generation:  {args.verify_generation}")
+    print(f"Debug Mode:         {args.debug}")
     print()
 
     # Load data
@@ -930,14 +985,14 @@ def main():
     print(f"Loaded {len(dataset)} samples\n")
 
     # Initialize model
-    model = initialize_model(args.model)
+    model = initialize_model(args.model, device=args.device)
 
     # Optional sanity checks
     if args.run_sanity_checks:
         run_sanity_checks(model, dataset)
 
     # Evaluate
-    results, summary = evaluate_dataset(model, dataset, args.verify_generation)
+    results, summary = evaluate_dataset(model, dataset, args.verify_generation, debug=args.debug)
 
     if 'error' in summary:
         print(f"Error: {summary['error']}")
