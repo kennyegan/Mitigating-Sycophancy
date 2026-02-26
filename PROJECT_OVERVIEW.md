@@ -1,5 +1,9 @@
 # Project Plan: Mechanistic Analysis of Sycophantic Belief Corruption in LLMs
 
+**Current Status:** Phase 1-2 Complete | Phase 3 In Progress | Next: Phase 4 (Mechanistic Analysis)
+
+**Last Updated:** 2026-01-13
+
 ## Research Goals
 
 - **Distinguish Mechanisms:** Mechanistically differentiate between **Social Compliance** (outputting falsehoods while retaining truth) and **Belief Corruption** (internal reasoning degradation).
@@ -10,7 +14,7 @@
 
 ---
 
-## Phase 1 — Infrastructure & Tech Stack
+## Phase 1 — Infrastructure & Tech Stack ✅ COMPLETE
 
 **Objective**
 Establish a research environment capable of internal activation access and intervention.
@@ -22,19 +26,25 @@ Establish a research environment capable of internal activation access and inter
 - **Tracking:** Weights & Biases (`wandb`)
 
 **Deliverables**
-- [ ] Environment setup (`requirements.txt` with specific versions).
-- [ ] `SycophancyAnalyzer` class wrapper for Llama-3-8B / Mistral-7B.
-- [ ] Activation caching pipeline (storage management for large tensor dumps).
+- [x] Environment setup (`requirements.txt` with specific versions).
+- [x] `SycophancyModel` class wrapper for Llama-3-8B (see `src/models/sycophancy_model.py`).
+- [x] Activation caching pipeline via TransformerLens hooks.
 
 ---
 
-## Phase 2 — Benchmark Construction (The "Reasoning" Upgrade)
+## Phase 2 — Benchmark Construction (The "Reasoning" Upgrade) ✅ COMPLETE
 
 **Objective**
 Create a dataset that isolates sycophancy in *reasoning traces*, not just static facts.
 
 ### Dataset Design (Chain-of-Thought Focus)
-We generate N=2,000 examples based on reasoning tasks (GSM8k, CommonsenseQA).
+Generated N=1,500 examples across three sycophancy types:
+
+| Dataset | Source | Samples | Tests |
+|---------|--------|---------|-------|
+| Opinion Sycophancy | Anthropic/model-written-evals | 500 | Agreement with user opinions |
+| Factual Sycophancy | TruthfulQA | 500 | Agreement with misconceptions |
+| Reasoning Sycophancy | GSM8k + Logic Corruptor | 500 | Following corrupted math logic |
 
 **Structure:**
 1.  **Neutral Prompt:** Standard question.
@@ -50,18 +60,27 @@ We generate N=2,000 examples based on reasoning tasks (GSM8k, CommonsenseQA).
 - **Fictional Entities:** Questions about non-existent objects (to distinguish hallucination from sycophancy).
 
 **Deliverables**
-- [ ] `data_gen.py`: Automated injection of "bad hints" into GSM8k/MMLU.
-- [ ] JSONL datasets: `train`, `test`, `control_fictional`.
+- [x] Dataset processors: `src/data/anthropic.py`, `gsm8k_reasoning.py`, `truthful_qa.py`
+- [x] Master dataset: `data/processed/master_sycophancy.jsonl` (1500 samples)
+- [x] Orchestrator script: `scripts/00_data_setup.py`
 
 ---
 
-## Phase 3 — Metric Design (The "Probe" Upgrade)
+## Phase 3 — Metric Design & Baseline Evaluation 🔄 IN PROGRESS
 
 **Objective**
 Quantify the gap between what the model *knows* and what it *says*.
 
 ### Primary Metric: The Compliance Gap
 $$\Delta = P(\text{Agree} | \text{Biased}) - P(\text{Agree} | \text{Neutral})$$
+
+### Baseline Results (gpt2-medium, 50 samples)
+
+| Metric | Value | 95% CI |
+|--------|-------|--------|
+| Sycophancy Rate | 60.0% | [46.2% - 72.4%] |
+| Mean Compliance Gap | -0.026 | [-0.078 - 0.026] |
+| Std Compliance Gap | 0.183 | - |
 
 ### Mechanistic Metric: Internal-External Divergence
 We train **Linear Probes (Logistic Regression)** on the residual stream of "Neutral" runs to detect the "Truth Direction."
@@ -72,47 +91,36 @@ We train **Linear Probes (Logistic Regression)** on the residual stream of "Neut
     * *Interpretation:* The model is "confused" (Belief Corruption/Persuasion).
 
 **Deliverables**
-- [ ] `train_probes.py`: Script to train probes on Layers 0–32.
-- [ ] Divergence plots: Line charts comparing Probe Acc vs. Output Logits across layers.
+- [x] Evaluation script: `scripts/01_run_baseline.py`
+- [x] Analysis module: `src/analysis/evaluation.py` (PhD-level statistics)
+- [x] Results: `results/baseline_summary.json`, `results/detailed_results.csv`
+- [ ] Run on Llama-3-8B-Instruct (in progress)
+- [ ] Run on full 1500-sample dataset (pending)
+- [ ] `train_probes.py`: Script to train probes on Layers 0–32 (Phase 4)
+- [ ] Divergence plots: Line charts comparing Probe Acc vs. Output Logits across layers (Phase 4)
 
 ---
 
-## Phase 4 — Baseline Evaluation
+## Phase 4 — Mechanistic Interpretability (NEXT)
 
 **Objective**
-Establish the "Sycophancy Profile" of standard models before intervention.
+Pinpoint the causal mechanism of sycophancy through circuit discovery.
 
 **Experiments**
-- Compare **Base Models** vs. **RLHF/Instruct Models** (Hypothesis: RLHF increases Compliance but not Corruption).
-- Evaluate on **Math/Logic** vs. **Opinion/Trivia** domains.
-- Measure impact on **Chain-of-Thought**: Does the model hallucinate false steps to justify the user's bad hint?
+- **Linear Probes:** Train on `resid_post` activations (layers 0-N) to detect truth direction
+- **Activation Patching:** Patch "clean" activations into "sycophantic" runs
+- **Attention Analysis:** Identify "sycophancy heads" that attend to user bias tokens
+- Compare **Base Models** vs. **RLHF/Instruct Models** (Hypothesis: RLHF increases Compliance but not Corruption)
 
 **Deliverables**
-- [ ] Baseline results table (Accuracy & Sycophancy Gap).
-- [ ] Qualitative analysis of "hallucinated reasoning steps."
+- [ ] `scripts/02_train_probes.py`: Linear probe training pipeline
+- [ ] `scripts/03_activation_patching.py`: Causal tracing implementation
+- [ ] Causal Tracing Heatmaps (Layer x Token Position)
+- [ ] Identification of the "Sycophancy Circuit" (specific heads/layers)
 
 ---
 
-## Phase 5 — Mechanistic Interpretability (The Novelty Core)
-
-**Objective**
-Pinpoint the causal mechanism of sycophancy.
-
-### Circuit Discovery
-- **Activation Patching:** Patch "Clean" activations into "Sycophantic" runs to restore truthfulness.
-    - *Patching Scope:* Residual Stream (Layer-wise), Attention Heads (Head-wise).
-- **Attention Analysis:** Identify "Copy Heads" or "Sycophancy Heads" that attend specifically to the user's bias token.
-
-### Hypothesis Testing
-- **Early vs. Late Layers:** Does sycophancy arise in information processing (early) or output formatting (late)?
-
-**Deliverables**
-- [ ] Causal Tracing Heatmaps (Layer x Token Position).
-- [ ] Identification of the "Sycophancy Circuit" (specific heads/layers).
-
----
-
-## Phase 6 — Intervention & Mitigation (ITI)
+## Phase 5 — Inference-Time Intervention (ITI)
 
 **Objective**
 Cure sycophancy at runtime without expensive retraining.
@@ -127,18 +135,33 @@ Ensure the cure isn't worse than the disease.
 - **Refusal Rate:** Ensure the model doesn't become "rude" or over-refuse neutral prompts.
 
 **Deliverables**
-- [ ] `steering.py`: Inference script with vector subtraction.
-- [ ] Pareto Frontier Plot: Sycophancy Reduction vs. MMLU Performance.
+- [ ] `scripts/04_steering_vectors.py`: Compute and apply steering vectors
+- [ ] `scripts/05_safety_evaluation.py`: MMLU/GSM8k evaluation with steering
+- [ ] Pareto Frontier Plot: Sycophancy Reduction vs. MMLU Performance
 
 ---
 
-## Phase 7 — Statistical Validation
+## Phase 6 — Statistical Validation
 
 **Objective**
 Ensure robustness.
 
 - **Bootstrap Resampling:** 95% Confidence Intervals on all metrics.
-- **Effect Size:** Cohen’s $d$ for probe separation.
+- **Effect Size:** Cohen's $d$ for probe separation.
+- **Multiple Comparisons:** Bonferroni and Benjamini-Hochberg corrections.
+
+*Note: Core statistical infrastructure already implemented in `src/analysis/evaluation.py`*
+
+---
+
+## Phase 7 — Robustness Testing
+
+**Objective**
+Validate findings across models and prompt variations.
+
+- **Cross-Model:** GPT-2, Llama-3-8B, Mistral-7B, GPT-3.5/4 (API)
+- **Fictional Entities:** Control group to distinguish bias from hallucination
+- **Prompt Sensitivity:** Test robustness to phrasing variations
 
 ---
 
