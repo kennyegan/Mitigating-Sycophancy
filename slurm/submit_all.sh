@@ -36,7 +36,7 @@ echo "Project:   ${PROJECT_DIR}"
 echo ""
 
 # Build common sbatch flags
-COMMON_FLAGS="--partition=${SLURM_PARTITION} --gres=gpu:${GPUS_PER_NODE} --cpus-per-task=${CPUS_PER_TASK}"
+COMMON_FLAGS="--partition=${SLURM_PARTITION} --gres=gpu:${GPU_TYPE}:${GPUS_PER_NODE} --cpus-per-task=${CPUS_PER_TASK}"
 if [ -n "${SLURM_ACCOUNT}" ] && [ "${SLURM_ACCOUNT}" != "TODO_ACCOUNT" ]; then
     COMMON_FLAGS="${COMMON_FLAGS} --account=${SLURM_ACCOUNT}"
 fi
