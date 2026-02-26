@@ -1,9 +1,9 @@
-# Research Backup: Mechanistic Analysis of Sycophancy in LLMs
+# Research Backup: Sycophancy is Social Compliance, Not Belief Corruption
 
 **Author:** Kenneth Egan (kenegan2005@gmail.com)
 **Repository:** https://github.com/kennyegan/Mitigating-Sycophancy
-**Last Updated:** 2026-01-13
-**Current Status:** Phase 1-2 Complete, Phase 3 Baseline Results Available
+**Last Updated:** 2026-02-20
+**Current Status:** Phase 1-2 Complete | Phase 3 In Progress | Control groups missing — implement before Phase 4
 
 ---
 
@@ -40,9 +40,19 @@ Using linear probes on intermediate activations, we can detect whether the model
 | Open-source codebase | GitHub + TransformerLens | In Progress |
 | Benchmark dataset | HuggingFace "Reasoning-Sycophancy" | In Progress |
 
+### Models in Scope (from Research Proposal)
+
+| Model | Role |
+|-------|------|
+| **Llama-3-8B-Instruct** | Primary — all main results |
+| **Llama-3-8B-Base** | Comparison — tests whether RLHF introduces the circuit |
+| **Mistral-7B-Instruct** | Replication — validates generalization across families |
+
+> gpt2-medium was used for development/testing only. Not included in paper results.
+
 ### Key Innovation
 
-This research goes beyond opinion-based sycophancy to test **Chain-of-Thought reasoning corruption**. We inject corrupted logic hints (e.g., "multiply should be add") and test whether models follow flawed reasoning when users suggest it.
+This research goes beyond opinion-based sycophancy to test **Chain-of-Thought reasoning corruption**. We inject corrupted logic hints (e.g., "multiply should be add") and test whether models follow flawed reasoning when users suggest it. Crucially, steering targets **only the mechanistically-identified circuit components**, not the full residual stream — this is the claimed differentiator enabling capability preservation.
 
 ---
 
@@ -229,101 +239,101 @@ PhD-level statistical analysis including:
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| 1 | Infrastructure & Tech Stack | **Complete** |
-| 2 | Benchmark Construction | **Complete** |
-| 3 | Baseline Evaluation | **In Progress** (gpt2-medium done) |
-| 4 | Mechanistic Interpretability | Planned |
-| 5 | Inference-Time Intervention | Planned |
-| 6 | Statistical Validation | Planned |
-| 7 | Robustness Testing | Planned |
-| 8 | Publication & Release | Planned |
+| 1 | Infrastructure | **Complete** |
+| 2 | Benchmark (1,500 samples) | **Complete** |
+| 2b | Control groups | **⚠️ Missing — implement before Phase 4** |
+| 3 | Baseline evaluation (Llama-3-8B-Instruct) | **In Progress** |
+| 4 | Mechanistic analysis (probes + patching) | Pending |
+| 5 | Inference-time steering | Pending |
+| 6 | Mistral-7B replication | Pending |
+| 7 | Statistical validation | Pending |
+| 8 | Manuscript & release | Pending |
 
-### Phase 4: Mechanistic Interpretability (Next)
+### Phase 4: Mechanistic Analysis
 
-**Objective:** Pinpoint the causal mechanism of sycophancy.
+**4.1 Linear Probes (Social Compliance vs. Belief Corruption)**
 
-**Methods:**
-1. **Linear Probes:** Train on `resid_post` activations (layers 0-N)
-   - Predict: "Is the ground truth answer A or B?"
-   - Compare probe accuracy vs. output accuracy
+Train logistic regression probes on `resid_post` at each layer from neutral prompt runs. Evaluate jointly on sycophantic prompt runs:
 
-2. **Activation Patching:** Patch "clean" activations into "sycophantic" runs
-   - Layer-wise: Which layers are critical?
-   - Head-wise: Which attention heads contribute?
+| Pattern | Probe Acc | Output Acc | Interpretation |
+|---------|-----------|------------|----------------|
+| Social Compliance | High | Low | Model retains truth, suppresses in output |
+| Belief Corruption | Low | Low | User hint degrades internal truth |
+| Robust (control) | High | High | No sycophancy |
 
-3. **Attention Analysis:** Identify "sycophancy heads"
-   - Heads that attend specifically to user bias tokens
+**4.2 Causal Activation Patching**
 
-**Deliverables:**
-- `scripts/02_train_probes.py`
-- `scripts/03_activation_patching.py`
-- Causal tracing heatmaps
-- Internal-External Divergence plots
+Layer × token position heatmap. For each (L, T): substitute corrupted → clean activations, measure output recovery. Establishes causal (not merely correlational) circuit localization.
 
-### Phase 5: Inference-Time Intervention
+**4.3 Attention Head Analysis**
 
-**Objective:** Reduce sycophancy at runtime without retraining.
+Head-level patching within critical layers. Logit lens on sycophancy heads: what do they write to residual stream?
 
-**Method:**
-1. Compute steering vector: `mean(syc_activations) - mean(neutral_activations)`
-2. Subtract from residual stream during generation (scaled by alpha)
+**4.4 Base vs. Instruct Comparison**
 
-**Safety Evaluation:**
-- MMLU subset accuracy (must remain stable)
-- GSM8k accuracy with/without steering
-- Refusal rate monitoring (avoid over-refusal)
+Repeat 4.1–4.3 on Llama-3-8B-Base. Hypothesis: RLHF introduces the sycophancy circuit.
 
-**Deliverables:**
-- `scripts/04_steering_vectors.py`
-- `scripts/05_safety_evaluation.py`
-- Pareto frontier plot: Sycophancy reduction vs. capability
+### Phase 5: Inference-Time Steering
+
+**Critically:** targets only mechanistically-identified circuit components, not the full residual stream. This specificity is the claimed differentiator from prior steering work.
+
+1. Sycophancy vector: `mean(activations | sycophantic) − mean(activations | neutral)` at critical layers
+2. Subtract `α × sycophancy_vector` during generation; sweep `α ∈ {0.1, 0.5, 1.0, 2.0, 5.0}`
+
+**Quantified safety thresholds:**
+
+| Metric | Requirement | Method |
+|--------|-------------|--------|
+| MMLU Accuracy | ≥95% of baseline | 500-question subset |
+| GSM8k Accuracy | ≥95% of baseline | Full test set |
+| Refusal Rate | No increase | 500 neutral prompts |
+| Compliance Gap Δ | Reduction vs. baseline | Full 1,500-sample benchmark |
 
 ---
 
 ## 5. TODO List
 
-### Immediate (This Week)
+### Immediate — Unblocking Phase 4
 
-- [ ] Run baseline on Llama-3-8B-Instruct
-- [ ] Evaluate full 1500-sample dataset
-- [ ] Add GSM8k and TruthfulQA sources to evaluation
-- [ ] Create compliance gap distribution plots by source
+- [ ] **Control groups (⚠️ required for paper, currently missing)**
+  - Uncertain Knowledge: filter samples where Llama-3-8B-Instruct <60% confidence on neutral prompt
+  - Fictional Entities: synthetic samples about non-existent objects
+  - Adversarially-True Hints: user provides false hint that matches model's pre-existing bias
+- [ ] Run baseline on Llama-3-8B-Instruct, full 1,500-sample dataset
+- [ ] Per-domain breakdown: math vs. factual vs. opinion compliance gaps
+- [ ] Run baseline on Llama-3-8B-Base (RLHF hypothesis)
 
-### Phase 4 Implementation
+### Phase 4 — Mechanistic Analysis
 
 - [ ] `scripts/02_train_probes.py`
-  - Linear probes on residual stream activations
-  - Layer-wise probe accuracy curves
-  - Truth vs. sycophancy direction identification
+  - Logistic regression probes on `resid_post`, 5-fold CV, all layers
+  - Layer-wise accuracy curves: probe acc vs. output acc
+  - Test Ridge vs. Logistic architectures
 - [ ] `scripts/03_activation_patching.py`
-  - Causal tracing heatmaps
-  - Head-level importance scores
-  - MLP vs. attention contribution analysis
-- [ ] Add attention pattern visualization to notebook
+  - Causal tracing: layer × token position heatmap
+  - Head-level patching within critical layers
+  - Logit lens on sycophancy heads
+- [ ] Base vs. Instruct comparison on all of above
 
-### Phase 5 Implementation
+### Phase 5 — Steering
 
 - [ ] `scripts/04_steering_vectors.py`
-  - Compute and save steering vectors per layer
-  - Generation with steering applied
-  - Alpha hyperparameter sweep
+  - Circuit-targeted vectors (only identified components, not full residual stream)
+  - Alpha sweep: {0.1, 0.5, 1.0, 2.0, 5.0}
 - [ ] `scripts/05_safety_evaluation.py`
-  - MMLU subset evaluation
-  - GSM8k accuracy with/without steering
-  - Refusal rate monitoring
+  - MMLU 500-question subset (≥95% of baseline required)
+  - Full GSM8k test set (≥95% of baseline required)
+  - 500 neutral prompts refusal audit
+
+### Phase 6 — Mistral-7B Replication
+
+- [ ] Repeat Phases 3–5 on Mistral-7B-Instruct
 
 ### Infrastructure
 
 - [ ] Add wandb logging to all scripts
-- [ ] Expand pytest test suite
-- [ ] Add argparse CLI to scripts
-- [ ] Create `src/analysis/visualize.py`
-
-### Documentation
-
-- [x] Create docs/RESEARCH_BACKUP.md
-- [ ] Create docs/LITERATURE_REVIEW.md
-- [ ] Update PROJECT_OVERVIEW.md
+- [ ] Expand pytest test suite to cover data processors
+- [ ] `src/analysis/visualize.py` — compliance gap distributions, causal heatmaps, Pareto frontier
 
 ---
 

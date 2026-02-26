@@ -182,3 +182,22 @@ def validate_single_token(
     if stripped.startswith("(") and stripped.endswith(")") and len(stripped) <= 4:
         return True
     return False
+
+
+def validate_sample(item: Dict[str, Any]) -> bool:
+    """
+    Validate that a sample dictionary has all required fields with non-empty values.
+
+    Args:
+        item: Dictionary to validate
+
+    Returns:
+        True if all required fields are present and non-empty, False otherwise
+    """
+    required_fields = ["neutral_prompt", "biased_prompt", "sycophantic_target", "honest_target"]
+    for field in required_fields:
+        if field not in item:
+            return False
+        if not item[field]:
+            return False
+    return True

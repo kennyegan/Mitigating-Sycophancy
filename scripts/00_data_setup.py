@@ -63,6 +63,24 @@ def parse_args():
         action="store_true",
         help="Also save individual dataset files"
     )
+    parser.add_argument(
+        "--control-groups",
+        action="store_true",
+        help="Generate control group datasets (requires a model for filtering)"
+    )
+    parser.add_argument(
+        "--control-model",
+        type=str,
+        default="gpt2-medium",
+        help="Model for control group filtering (default: gpt2-medium)"
+    )
+    parser.add_argument(
+        "--control-device",
+        type=str,
+        default=None,
+        choices=["cpu", "cuda", "mps"],
+        help="Device for control group model (default: auto-detect)"
+    )
     return parser.parse_args()
 
 
@@ -185,6 +203,65 @@ def main():
     except Exception as e:
         print(f"Error processing Reasoning dataset: {e}")
         summaries.append({"dataset": "gsm8k_reasoning", "count": 0, "error": str(e)})
+
+    # Control groups
+    if args.control_groups and all_samples:
+        print("\n" + "=" * 70)
+        print("GENERATING CONTROL GROUPS")
+        print("=" * 70)
+
+        from src.data.control_groups import (
+            filter_uncertain_knowledge,
+            generate_fictional_entities,
+            filter_adversarially_true,
+        )
+        from src.models import SycophancyModel
+
+        control_dir = Path("data/processed/control_groups")
+        control_dir.mkdir(parents=True, exist_ok=True)
+
+        # Load all_samples as dicts for filtering
+        all_dicts = [s.to_dict() for s in all_samples]
+
+        # Initialize model for filtering
+        print(f"\nLoading model for control group filtering: {args.control_model}")
+        ctrl_model = SycophancyModel(args.control_model, device=args.control_device)
+
+        # 1. Fictional Entities (no model needed)
+        print("\n[Control 1/3] Fictional Entities...")
+        fictional_samples = generate_fictional_entities(num_samples=100, seed=args.seed)
+        save_samples(fictional_samples, str(control_dir / "fictional_entities.jsonl"))
+
+        # 2. Uncertain Knowledge
+        print("\n[Control 2/3] Uncertain Knowledge...")
+        uncertain, confident = filter_uncertain_knowledge(all_dicts, ctrl_model, threshold=0.60)
+        with open(control_dir / "uncertain_knowledge.jsonl", 'w') as f:
+            for item in uncertain:
+                f.write(json.dumps(item) + "\n")
+        print(f"  Saved {len(uncertain)} uncertain samples")
+
+        # 3. Adversarially-True Hints
+        print("\n[Control 3/3] Adversarially-True Hints...")
+        adversarial, clean = filter_adversarially_true(all_dicts, ctrl_model, confidence_threshold=0.70)
+        with open(control_dir / "adversarially_true.jsonl", 'w') as f:
+            for item in adversarial:
+                f.write(json.dumps(item) + "\n")
+        print(f"  Saved {len(adversarial)} adversarially-true samples")
+
+        # Save control group metadata
+        ctrl_metadata = {
+            "created_at": datetime.now().isoformat(),
+            "model": args.control_model,
+            "seed": args.seed,
+            "fictional_entities": len(fictional_samples),
+            "uncertain_knowledge": len(uncertain),
+            "adversarially_true": len(adversarial),
+            "clean_after_filters": len(clean),
+        }
+        with open(control_dir / "control_groups_metadata.json", 'w') as f:
+            json.dump(ctrl_metadata, f, indent=2)
+
+        print(f"\nControl group files saved to {control_dir}/")
 
     # Save master dataset
     print("\n" + "=" * 70)
