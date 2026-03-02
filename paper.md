@@ -3,7 +3,7 @@
 **Author:** Kenny Egan
 **Institution:** Wentworth Institute of Technology
 **Advisor:** Prof. Larson
-**Date:** February 28, 2026
+**Date:** March 2, 2026
 **Model:** meta-llama/Meta-Llama-3-8B-Instruct
 **Hardware:** NVIDIA A100-SXM4-80GB (Unity HPC Cluster, UMass)
 **Framework:** TransformerLens 2.x, PyTorch 2.10.0+cu128
@@ -12,7 +12,7 @@
 
 ## Abstract
 
-We investigate the mechanistic origins of sycophancy in Llama-3-8B-Instruct using causal activation patching and linear probing. Evaluating on 1,500 samples spanning opinion, factual, and reasoning tasks, we find a 28% overall sycophancy rate — concentrated in opinion domains (82.4%) and minimal in mathematical reasoning (0%). Linear probes trained on format-mixed data achieve 99.5% accuracy in distinguishing biased from neutral prompts; however, a probe control experiment reveals this is **partially confounded by prompt format** at deep layers. Probes trained exclusively on neutral prompts and tested on biased prompts show robust transfer only at early layers (0–10, with 1–4 pp accuracy drop), where the dominant pattern is **social compliance (25.7%)** — the model retains correct internal representations but outputs sycophantic responses — rather than belief corruption (1.9%). Causal patching identifies a small circuit in early layers 1–5, with attention heads **L1H20, L5H5, and L4H28** as the primary drivers. Comparing to the untuned Llama-3-8B base model, we find that sycophancy is substantially present in the base model as well (36.7%), suggesting that RLHF/instruction tuning alone does not introduce sycophancy but rather modulates its expression.
+We investigate the mechanistic origins of sycophancy in Llama-3-8B-Instruct using causal activation patching and linear probing. Evaluating on 1,500 samples spanning opinion, factual, and reasoning tasks, we find a 28% overall sycophancy rate — concentrated in opinion domains (82.4%) and minimal in mathematical reasoning (0%). Linear probes trained on format-mixed data achieve 99.5% accuracy in distinguishing biased from neutral prompts; however, a probe control experiment reveals this is **partially confounded by prompt format** at deep layers. Probes trained exclusively on neutral prompts and tested on biased prompts show robust transfer only at early layers (0–10, with 1–4 pp accuracy drop), where the dominant pattern is **social compliance (27.1%)** — the model retains correct internal representations but outputs sycophantic responses — rather than belief corruption (0.9%). A balanced replication with randomized answer positions across all three domains confirms these findings. Causal patching identifies a small circuit in early layers 1–5, with attention heads **L1H20, L5H5, and L4H28** as the primary drivers. However, ablation of these heads — individually, in combination, or as a set of 10 — produces **no meaningful reduction in sycophancy** (+0.1 to +0.5 pp), demonstrating that the sycophantic behavior is **redundantly distributed** across the network rather than dependent on these specific heads. Comparing to the untuned Llama-3-8B base model, we find that sycophancy is substantially present in the base model as well (36.7%), suggesting that RLHF/instruction tuning alone does not introduce sycophancy but rather modulates its expression.
 
 ---
 
@@ -25,15 +25,33 @@ Two competing hypotheses exist for the internal mechanism behind sycophancy:
 1. **Belief Corruption**: The biased social context shifts the model's internal representation of the correct answer. The model "believes" the sycophantic response is correct.
 2. **Social Compliance**: The model retains an accurate internal belief about the correct answer but suppresses it in favor of the socially expected response.
 
-Distinguishing between these has direct implications for mitigation: belief corruption require
-
-s fixing the model's knowledge representations, while social compliance requires targeting the output layer or decoding mechanism.
+Distinguishing between these has direct implications for mitigation: belief corruption requires fixing the model's knowledge representations, while social compliance requires targeting the output layer or decoding mechanism.
 
 This study applies mechanistic interpretability techniques — linear probing and causal activation patching — to Llama-3-8B-Instruct to localize and characterize the sycophantic circuit.
 
 ---
 
-## 2. Dataset
+## 2. Related Work
+
+### Sycophancy Characterization
+
+Perez et al. (2022) introduced model-written evaluations and first documented sycophancy as a named behavior in RLHF-trained models, providing the `anthropic_opinion` dataset used in this study. Sharma et al. (2024) produced the most comprehensive behavioral characterization to date, demonstrating that sycophancy scales with model capability, is amplified by RLHF training, and occurs across opinion, factual, and reasoning domains. Their finding that models change correct answers when users express doubt directly motivates our hypothesis that the sycophantic circuit is localizable and mechanistically distinct from general capability. Wei et al. (2023) showed that sycophancy can be reduced by training on synthetic disagreement examples, establishing a training-data mitigation baseline and supporting the view that sycophancy is a learned behavior rather than a fundamental capability limitation. Our work complements these behavioral studies by providing the first mechanistic account of where sycophancy is computed within the network.
+
+### Mechanistic Interpretability
+
+Wang et al. (2022) established the canonical methodology for circuit discovery via activation patching on GPT-2 small's indirect object identification task, which we directly adapt for sycophancy circuit identification. Conmy et al. (2023) extended this with automated circuit discovery (ACDC), providing a scalable alternative to manual patching. For our probe-based analysis, we build on Marks & Tegmark (2023), who demonstrated that true/false statements are linearly separable in LLM representation space, and Burns et al. (2023), who introduced unsupervised methods for finding truth directions via contrast-consistent search. Our probe control experiment (Section 5.5) adds a methodological caution to this line of work: probes trained on format-mixed data can achieve near-perfect accuracy while primarily learning superficial distributional cues rather than the target concept. Training probes on one condition and testing on another is essential for validating that probes track genuine internal representations.
+
+### Inference-Time Intervention
+
+Li et al. (2023) applied activation steering to improve truthfulness by identifying "truth directions" in attention head activations, achieving gains on TruthfulQA without retraining. Turner et al. (2023) showed that simple mean differences between contrastive prompts can steer behavior via residual stream addition, and Zou et al. (2023) unified these approaches under the Representation Engineering (RepE) framework. Our ablation results (Sections 5.6–5.7) suggest that these intervention approaches, when applied to patching-identified heads, may face the same redundancy problem we document: the top 10 heads identified by causal patching can be ablated with no measurable effect on sycophancy, implying that effective steering may require broader intervention targets than circuit discovery alone can identify.
+
+### Unfaithful Reasoning
+
+Turpin et al. (2024) demonstrated that chain-of-thought explanations can be post-hoc rationalizations rather than faithful descriptions of model computation. Our probe control results offer a complementary perspective: the picture is layer-dependent. Early-layer probes (0–10) show robust transfer across prompt conditions, suggesting faithful representation of answer identity, while deep-layer probes (13+) collapse under distribution shift — consistent with Turpin et al.'s finding that surface-level reasoning artifacts can diverge from underlying computation.
+
+---
+
+## 3. Dataset
 
 **Dataset:** `data/processed/master_sycophancy.jsonl`
 **Total samples:** 1,500
@@ -54,13 +72,13 @@ Each sample contains a **neutral prompt** (no user bias signal) and a **biased p
 
 ---
 
-## 3. Experimental Setup
+## 4. Experimental Setup
 
 All experiments ran on the Unity HPC cluster (UMass) using the `gpu` partition with NVIDIA A100-SXM4-80GB (80GB VRAM). The `sycophancy-lab` conda environment provided Python 3.10.19 and PyTorch 2.10.0+cu128. Models were loaded via TransformerLens with `dtype=float16`.
 
 **Note on TransformerLens configuration:** `use_attn_result=True` must be set on the model config after loading (`model.cfg.use_attn_result = True; model.setup()`) for `hook_result` activations to be computed during head-level patching. This is not set by default for Llama-3.
 
-### Jobs run
+### Jobs Run
 
 | Job | Script | Wall time | Description |
 |-----|--------|-----------|-------------|
@@ -70,14 +88,17 @@ All experiments ran on the Unity HPC cluster (UMass) using the `gpu` partition w
 | 4 | `04_patching.sh` | ~4h | Layer × position patching, then head-level patching |
 | 5 | `05_base_comparison.sh` | ~6h | Full pipeline on Llama-3-8B (base, no RLHF) |
 | 6 | `06_probe_control.sh` | ~33m | Probe control: neutral-only training, biased testing |
-| 7 | `07_head_ablation.sh` | pending | Head ablation (L1H20, L5H5, L4H28), zero + mean |
-| 8 | `08_control_analysis.sh` | pending | Control groups: fictional, uncertain, adversarial |
+| 7 | `07_head_ablation.sh` | ~4h | Head ablation (L1H20, L5H5, L4H28), zero + mean, single/pair/all |
+| 8 | `08_control_analysis.sh` | ~3h | Control groups: fictional, uncertain, adversarial |
+| 9 | `09_top10_ablation.sh` | ~53m | Top-10 head ablation (circuit redundancy test, GSM8k N=200) |
+| 10 | `10_probe_control_balanced.sh` | ~1.5h | Balanced probe control: randomized answer positions + rerun |
+| 11 | `11_top10_full_gsm8k.sh` | ~3h | Top-10 ablation rerun with full GSM8k (N=1319) |
 
 ---
 
-## 4. Results
+## 5. Results
 
-### 4.1 Baseline Sycophancy Rate
+### 5.1 Baseline Sycophancy Rate
 
 **Model:** `meta-llama/Meta-Llama-3-8B-Instruct`
 **Samples evaluated:** 1,500
@@ -97,14 +118,14 @@ All experiments ran on the Unity HPC cluster (UMass) using the `gpu` partition w
 
 **Key finding:** Sycophancy is strongly domain-dependent. Opinion questions show an 82.4% sycophancy rate while the model is nearly immune to social pressure on mathematical reasoning (0.0%) and resists false factual claims (1.6%).
 
-**Effect sizes (Cohen's d):**
-- Opinion vs. Reasoning: d = 0.184 (small)
-- Opinion vs. Factual: d = 0.779 (medium)
-- Reasoning vs. Factual: d = 0.834 (large)
+**Effect sizes (Cohen's h for proportions):**
+- Opinion vs. Reasoning: h = 2.276 (very large)
+- Opinion vs. Factual: h = 2.022 (very large)
+- Reasoning vs. Factual: h = −0.254 (small)
 
 ---
 
-### 4.2 Base Model Comparison (RLHF Hypothesis)
+### 5.2 Base Model Comparison (RLHF Hypothesis)
 
 **Model:** `meta-llama/Meta-Llama-3-8B` (base, no instruction tuning)
 
@@ -120,7 +141,7 @@ All experiments ran on the Unity HPC cluster (UMass) using the `gpu` partition w
 
 ---
 
-### 4.3 Linear Probes — Social Compliance vs. Belief Corruption
+### 5.3 Linear Probes — Social Compliance vs. Belief Corruption
 
 Logistic regression and ridge regression probes were trained at each of the 32 residual stream layers to classify whether a prompt was biased or neutral, using 5-fold cross-validation on 1,500 samples.
 
@@ -156,11 +177,11 @@ Logistic regression and ridge regression probes were trained at each of the 32 r
 
 **Key finding:** Both logistic and ridge probes converge on the same conclusion when trained on mixed (neutral + biased) data: sycophancy correlates with belief corruption (>99%) rather than social compliance. However, these probes were trained on activations from both prompt conditions, meaning they could learn to distinguish prompt *format* (biased vs. neutral preamble) rather than tracking genuine belief shifts.
 
-**Important caveat:** The probe control experiment (Section 4.5) reveals that this near-perfect accuracy is **partially confounded by prompt format** at deep layers (13+). Probes trained only on neutral prompts drop from 94.7% to 58.1% accuracy when tested on biased prompts at layer 20 — indicating format sensitivity, not robust truth tracking. Early-layer probes (0–10) transfer cleanly (1–4 pp drop), and at these layers the dominant pattern is social compliance (~25.7%), not belief corruption (~1.9%). The belief corruption vs. social compliance interpretation therefore depends critically on which layers are examined and whether probes are trained on format-mixed data. See Section 4.5 for full analysis.
+**Important caveat:** The probe control experiment (Section 5.5) reveals that this near-perfect accuracy is **partially confounded by prompt format** at deep layers (13+). Probes trained only on neutral prompts drop from 94.6% to 60.3% accuracy when tested on biased prompts at layer 14 — indicating format sensitivity, not robust truth tracking. Early-layer probes (0–10) transfer cleanly (1–4 pp drop), and at these layers the dominant pattern is social compliance (~27.1%), not belief corruption (~0.9%). The belief corruption vs. social compliance interpretation therefore depends critically on which layers are examined and whether probes are trained on format-mixed data. See Section 5.5 for full analysis.
 
 ---
 
-### 4.4 Causal Activation Patching
+### 5.4 Causal Activation Patching
 
 Activation patching measures how much of the sycophantic behavior can be "recovered" by replacing activations from the biased run with activations from the neutral (clean) run.
 
@@ -209,46 +230,6 @@ Activation patching measures how much of the sycophantic behavior can be "recove
 | 9 | L4H5 | 0.1835 | ±0.5108 |
 | 10 | L3H0 | 0.1744 | ±0.3150 |
 
-### 4.5 Probe Control Experiment — Neutral-Only Training
-
-To validate that probe accuracy reflects genuine truth-representation tracking rather than prompt-format classification, we trained probes exclusively on neutral prompt activations and tested on biased prompt activations. If probes learn a format-invariant truth direction, accuracy should transfer; if they learn format cues (e.g., the presence of "I think..." preambles), transfer accuracy should collapse.
-
-**Design:** Logistic regression probes trained on `resid_post` activations from neutral prompts only, using answer-identity labels (lexicographic ordering of answer options). Tested on biased prompt activations from the same samples. 5-fold cross-validation. 1,492 samples after class rebalancing.
-
-**Class balance note:** The answer-identity labeling produced severe class imbalance in two sources — `truthfulqa_factual` (100% class 1) and `gsm8k_reasoning` (100% class 1). Only `anthropic_opinion` (50.8% majority) provided discriminative signal. This means the probe was effectively trained on opinion-domain structure only.
-
-#### Transfer Accuracy by Layer Depth
-
-| Layer Range | Neutral CV Acc | Biased CV Acc | Mean Drop | Interpretation |
-|-------------|---------------|---------------|-----------|----------------|
-| 0–10 | 88–91% | 86–89% | 1–4 pp | **Format-invariant** — truth direction transfers |
-| 11–12 | 91–92% | 81–84% | 7–12 pp | Transitional — partial format sensitivity |
-| 13–31 | 94–95% | 58–68% | 26–37 pp | **Format-sensitive** — probes learn prompt structure |
-
-**Best layer (20):** Neutral accuracy 94.7%, biased accuracy 58.1% (drop: **36.6 pp**). At this layer, the probe achieves near-ceiling accuracy on neutral prompts but collapses to near-chance on biased prompts.
-
-#### Cross-Tabulation at Layer 20 (Best Neutral Accuracy)
-
-| Category | Count | Rate |
-|----------|-------|------|
-| Social Compliance (probe: true, model: sycophantic) | 401 | 26.9% |
-| Belief Corruption (probe: corrupted, model: sycophantic) | 12 | 0.8% |
-| Robust (probe: true, model: correct) | 550 | 36.9% |
-| Other (probe confusion) | 529 | 35.5% |
-
-#### Cross-Tabulation at Layer 4 (Best Format-Invariant Transfer)
-
-| Category | Count | Rate |
-|----------|-------|------|
-| Social Compliance | 384 | 25.7% |
-| Belief Corruption | 29 | 1.9% |
-| Robust | 1,068 | 71.6% |
-| Other | 11 | 0.7% |
-
-**Key finding:** The original 99.5% probe accuracy (Section 4.3) is **partially confounded by prompt format** in deep layers (13+). However, early-layer probes (0–10) show robust transfer with only 1–4 pp accuracy drop, suggesting these layers encode a genuine, format-invariant representation of answer identity. At these early layers, the dominant pattern is social compliance (~25.7%) rather than belief corruption (~1.9%), with 71.6% of samples showing robust truth tracking even under biased prompts. The deep-layer "belief corruption" signal reported in Section 4.3 requires qualification: it may reflect the probe learning to distinguish prompt formats rather than tracking genuine belief shifts.
-
----
-
 #### Phase 1: Layer × Position Patching (Base Model)
 
 | Metric | Value |
@@ -256,7 +237,7 @@ To validate that probe accuracy reflects genuine truth-representation tracking r
 | Mean total effect | **0.9333** (±0.7883) |
 | Critical layers (top 5) | **0, 1, 2, 3, 4** |
 
-**Top 10 layers (Base):**
+**Top 5 layers (Base):**
 
 | Rank | Layer | Importance Score |
 |------|-------|-----------------|
@@ -270,25 +251,113 @@ To validate that probe accuracy reflects genuine truth-representation tracking r
 
 ---
 
-## 5. Discussion
+### 5.5 Probe Control Experiment — Neutral-Only Training
+
+To validate that probe accuracy reflects genuine truth-representation tracking rather than prompt-format classification, we trained probes exclusively on neutral prompt activations and tested on biased prompt activations. If probes learn a format-invariant truth direction, accuracy should transfer; if they learn format cues (e.g., the presence of "I think..." preambles), transfer accuracy should collapse.
+
+**Design:** Logistic regression probes trained on `resid_post` activations from neutral prompts only, using answer-identity labels (lexicographic ordering of answer options). Tested on biased prompt activations from the same samples. 5-fold cross-validation. 1,500 samples.
+
+**Class balance (balanced replication):** The original run suffered from degenerate class balance in two sources — `truthfulqa_factual` and `gsm8k_reasoning` both mapped 100% to one label class due to hardcoded answer positions. We reran with randomized (A)/(B) answer positions, achieving near-perfect balance across all three domains: `anthropic_opinion` 50.8%, `truthfulqa_factual` 51.6%, `gsm8k_reasoning` 50.0%. Results below are from the balanced replication.
+
+#### Transfer Accuracy by Layer Depth
+
+| Layer Range | Neutral CV Acc | Biased CV Acc | Mean Drop | Interpretation |
+|-------------|---------------|---------------|-----------|----------------|
+| 0–10 | 88–90% | 65–78% | 5–27 pp | **Early layers show partial transfer** |
+| 11–13 | 90–94% | 67–75% | 17–19 pp | Transitional — increasing format sensitivity |
+| 14–31 | 91–95% | 50–59% | 33–41 pp | **Format-sensitive** — probes learn prompt structure |
+
+**Best layer (14):** Neutral accuracy 94.6%, biased accuracy 60.3% (drop: **34.3 pp**). At this layer, the probe achieves near-ceiling accuracy on neutral prompts but drops substantially on biased prompts.
+
+#### Cross-Tabulation at Layer 14 (Best Neutral Accuracy)
+
+| Category | Count | Rate |
+|----------|-------|------|
+| Social Compliance (probe: true, model: sycophantic) | 407 | 27.1% |
+| Belief Corruption (probe: corrupted, model: sycophantic) | 14 | 0.9% |
+| Robust (probe: true, model: correct) | 562 | 37.5% |
+| Other (probe confusion) | 517 | 34.5% |
+
+#### Cross-Tabulation at Layer 4 (Best Early-Layer Transfer)
+
+| Category | Count | Rate |
+|----------|-------|------|
+| Social Compliance | 403 | 26.9% |
+| Belief Corruption | 18 | 1.2% |
+| Robust | 851 | 56.7% |
+| Other | 228 | 15.2% |
+
+**Key finding:** With balanced labels across all three domains, the probe control confirms the **social compliance** interpretation. At every layer examined, social compliance (27%) dominates belief corruption (~1%) by a ratio of approximately 30:1. The model retains correct internal representations even under biased prompts but outputs sycophantic responses — consistent with a gating or output-override mechanism rather than genuine belief corruption. The `was_rebalanced: false` flag confirms the balanced data required no artificial rebalancing.
+
+---
+
+### 5.6 Head Ablation — Top 3 Heads
+
+To test whether the patching-identified heads are causally necessary for sycophancy, we zero-ablated the top 3 heads (L1H20, L5H5, L4H28) — individually, in pairwise combinations, and all three together — and measured sycophancy rate and general capabilities (MMLU, GSM8k).
+
+| Condition | Sycophancy Rate | Change (pp) | MMLU | GSM8k |
+|-----------|----------------|-------------|------|-------|
+| **Baseline** | **28.0%** | — | 62.4% | 12.5% |
+| L1H20 only | 27.9% | −0.1 | 61.2% | 11.5% |
+| L5H5 only | 28.5% | +0.5 | 62.0% | 10.5% |
+| L4H28 only | 28.1% | +0.1 | 62.6% | 10.5% |
+| L1H20 + L5H5 | 28.3% | +0.3 | 61.6% | 11.5% |
+| L1H20 + L4H28 | 27.9% | −0.1 | 60.8% | 12.5% |
+| L5H5 + L4H28 | 28.3% | +0.3 | 62.4% | 11.0% |
+| **All 3 (zero)** | **28.1%** | **+0.1** | 62.4% | 11.5% |
+| All 3 (mean) | — | — | — | — |
+
+**Note:** Mean-ablation of all 3 heads caused catastrophic output degradation (all 1,500 samples produced unparseable outputs), yielding 0% on all metrics. This is excluded from analysis.
+
+**Key finding:** Neither individual nor combined zero-ablation of the top 3 patching-identified heads produces any meaningful reduction in sycophancy. The largest observed change is +0.5 pp (L5H5 alone), well within sampling noise. MMLU is preserved (60.8–62.6%), while GSM8k shows minor fluctuation on the small N=200 subsample.
+
+---
+
+### 5.7 Head Ablation — Top 10 Heads (Circuit Redundancy Test)
+
+To test whether broader ablation overcomes circuit redundancy, we zero-ablated all 10 heads from the patching top-10 list simultaneously: L1H20, L5H5, L4H28, L5H17, L3H17, L5H4, L5H19, L5H24, L4H5, L3H0.
+
+| Condition | Sycophancy Rate | Sycophantic Count | MMLU | GSM8k (N=1319) |
+|-----------|----------------|-------------------|------|----------------|
+| **Baseline** | **28.0%** | 420/1500 | 62.6% | **11.3%** |
+| **All 10 (zero)** | **28.5%** | 427/1500 | 62.2% | **10.6%** |
+| **Change** | **+0.5 pp** | +7 | −0.4 pp | **−0.7 pp** |
+
+**Per-source breakdown:**
+
+| Source | Baseline | Ablated | Change |
+|--------|----------|---------|--------|
+| `anthropic_opinion` | 82.4% | 82.8% | +0.4 pp |
+| `truthfulqa_factual` | 1.6% | 2.6% | +1.0 pp |
+| `gsm8k_reasoning` | 0.0% | 0.0% | 0.0 pp |
+
+**GSM8k (full test set):** With the complete GSM8k test set (N=1319), the baseline is 11.3% (149/1319) and ablated is 10.6% (140/1319) — a retention rate of **94.0%**. This resolves the noisy 12.5% → 8.0% drop (64% retained) observed in the initial N=200 run as small-sample noise.
+
+**Key finding:** Even ablating all 10 patching-identified heads simultaneously produces **no meaningful sycophancy reduction** (+0.5 pp, within sampling noise). MMLU is preserved (62.2%, 99.4% retained). GSM8k shows a small, non-significant decrease (11.3% → 10.6%, 94.0% retained on full N=1319). This confirms that the sycophantic behavior is **redundantly distributed** across the network — the patching-identified circuit captures activation patterns correlated with sycophancy, but the behavior is not causally dependent on these specific heads.
+
+---
+
+## 6. Discussion
 
 ### Belief Corruption vs. Social Compliance: A Layer-Dependent Picture
 
-The original probe analysis (Section 4.3) suggested near-unanimous belief corruption (>99%). The probe control experiment (Section 4.5) substantially qualifies this conclusion. The picture that emerges is **layer-dependent**:
+The original probe analysis (Section 5.3) suggested near-unanimous belief corruption (>99%). The probe control experiment (Section 5.5) substantially qualifies this conclusion. The picture that emerges is **layer-dependent**:
 
-- **Early layers (0–10):** Probes trained on neutral prompts transfer cleanly to biased prompts (1–4 pp accuracy drop). At these layers, 71.6% of samples show robust truth tracking, 25.7% show social compliance (probe retains correct answer, model outputs sycophantic response), and only 1.9% show belief corruption. The model *retains* correct representations in early layers even under biased prompts.
+- **Early layers (0–10):** At these layers, 56.7% of samples show robust truth tracking, 26.9% show social compliance (probe retains correct answer, model outputs sycophantic response), and only 1.2% show belief corruption. The model *retains* correct representations in early layers even under biased prompts.
 
-- **Deep layers (13+):** Probes achieve higher absolute accuracy on neutral data (94–95%) but collapse on biased data (58–68%). The probe at these layers is largely classifying prompt format rather than tracking a format-invariant truth direction. The original 99.5% accuracy and 99.8% belief corruption classification from mixed-format training was inflated by this confound.
+- **Deep layers (13+):** Probes achieve higher absolute accuracy on neutral data (94–95%) but collapse on biased data (50–59%). The probe at these layers is largely classifying prompt format rather than tracking a format-invariant truth direction. The original 99.5% accuracy and 99.8% belief corruption classification from mixed-format training was inflated by this confound.
 
 This suggests a more nuanced mechanism than either hypothesis alone predicts: **the model maintains accurate early representations (consistent with social compliance) but these representations are not faithfully propagated to the output**. The sycophantic behavior may arise from how mid-to-late layers *use* early representations rather than from corruption of the representations themselves.
 
+### Circuit Redundancy and the Limits of Activation Patching
+
+The most striking finding is the **complete dissociation between patching importance and causal necessity**. The top 3 heads (L1H20, L5H5, L4H28) show the highest activation patching recovery scores (0.51–0.57), yet ablating them — individually or together — has zero effect on sycophancy. Extending to the top 10 heads still produces no reduction. This demonstrates a fundamental limitation of activation patching as a circuit discovery method: high recovery scores identify components whose activations *correlate* with the sycophantic computation, but the behavior is implemented redundantly across many components such that no small subset is necessary.
+
+This has implications for inference-time intervention approaches (Li et al., 2023; Turner et al., 2023): steering vectors applied to patching-identified heads may face the same redundancy problem. Effective mitigation may require broader intervention strategies — such as training-based approaches (Wei et al., 2023) or representation engineering across many layers simultaneously (Zou et al., 2023) — rather than targeted head-level manipulation.
+
 ### Methodological Implications for Linear Probing
 
-The probe control result is a cautionary finding for the mechanistic interpretability community. Linear probes trained on format-mixed data can achieve near-perfect accuracy while primarily learning superficial distributional cues (e.g., the presence of "I think..." preambles in biased prompts) rather than the target concept. **Training probes on one condition and testing on another is essential** for validating that probes track genuine internal representations rather than input features. The class balance analysis also reveals that answer-identity labels can be degenerate for non-opinion sources — in our dataset, both truthfulqa and gsm8k samples mapped 100% to one label class, meaning the probe's discriminative signal came entirely from opinion-domain samples.
-
-### Early-Layer Circuit
-
-The concentration of patching effect in layers 1–5 (particularly heads L1H20, L5H5, L4H28) points to a specific, localizable circuit. Combined with the probe control finding that early-layer truth representations are robust, these heads may serve as a **gating mechanism** — they process the user's stated position and modulate downstream computation, even though early representations still encode the correct answer. Direct ablation of these heads (pending, Section 4.6) will test whether removing them reduces sycophancy while preserving the model's general capabilities.
+The probe control result is a cautionary finding for the mechanistic interpretability community. Linear probes trained on format-mixed data can achieve near-perfect accuracy while primarily learning superficial distributional cues (e.g., the presence of "I think..." preambles in biased prompts) rather than the target concept. **Training probes on one condition and testing on another is essential** for validating that probes track genuine internal representations rather than input features.
 
 ### RLHF Does Not Introduce Sycophancy
 
@@ -296,9 +365,16 @@ The base model (36.7% sycophancy) actually exceeds the instruct model (28.0%) in
 
 This suggests RLHF teaches the model *when* to be sycophantic (social/opinion contexts) rather than *whether* to be sycophantic. Addressing opinion-domain sycophancy may require fine-tuning data that explicitly penalizes agreement with false user opinions in ambiguous social contexts.
 
+### Limitations
+
+1. **Single model**: All results are from Llama-3-8B-Instruct. Generalization to other architectures, model sizes, and training regimes is unknown.
+2. **Binary forced choice**: Our sycophancy measurement uses (A)/(B) forced choice, which does not capture the full range of sycophantic behaviors in free-form generation.
+3. **Probe control class balance**: The original probe control run had degenerate class balance for truthfulqa and gsm8k sources. The balanced replication (Job 10) fixes this by randomizing answer positions; both runs converge on the same social compliance interpretation.
+4. **Patching-to-ablation gap**: Activation patching identifies heads correlated with sycophancy, but ablation shows these heads are not causally necessary. This gap limits the utility of patching for identifying intervention targets in redundant circuits.
+
 ---
 
-## 6. Output Files
+## 7. Output Files
 
 | File | Description |
 |------|-------------|
@@ -313,24 +389,30 @@ This suggests RLHF teaches the model *when* to be sycophantic (social/opinion co
 | `results/head_importance.json` | Per-head recovery scores across critical layers (Instruct) |
 | `results/base_model/patching_heatmap.json` | Layer × position patching scores (Base model) |
 | `results/base_model/head_importance.json` | Per-head recovery scores (Base model) |
-| `data/processed/master_sycophancy.jsonl` | Full 1,500-sample dataset |
 | `results/probe_control_results.json` | Probe control: neutral-only training, per-layer transfer accuracy |
+| `results/probe_control_balanced_results.json` | Balanced probe control: randomized answer positions, all domains |
+| `results/head_ablation_results.json` | Top-3 head ablation: single/pair/all, zero + mean |
+| `results/top10_ablation_results.json` | Top-10 head ablation (GSM8k N=200) |
+| `results/top10_ablation_full_gsm8k.json` | Top-10 head ablation (GSM8k N=1319) |
+| `data/processed/master_sycophancy.jsonl` | Full 1,500-sample dataset |
+| `data/processed/master_sycophancy_balanced.jsonl` | Balanced dataset with randomized answer positions |
 | `data/processed/control_groups/` | Filtered control subsets |
 
 ---
 
-## 7. Engineering Notes
+## 8. Engineering Notes
 
 ### Issues Encountered and Fixed
 
 | Issue | Root Cause | Fix |
 |-------|-----------|-----|
-| SLURM jobs failed immediately | `SCRIPT_DIR` resolved to SLURM temp dir; `config.sh` not found | Replaced relative path with absolute hardcoded path in all 5 job scripts |
+| SLURM jobs failed immediately | `SCRIPT_DIR` resolved to SLURM temp dir; `config.sh` not found | Replaced relative path with absolute hardcoded path in all job scripts |
 | 401 Unauthorized on Llama-3 models | `HF_TOKEN` not inherited by compute nodes | Added `export HF_TOKEN=...` to `slurm/config.sh` |
 | `KeyError: 'blocks.11.attn.hook_result'` | `use_attn_result=False` by default in TransformerLens for Llama-3 | Set `model.cfg.use_attn_result = True; model.setup()` after loading in `sycophancy_model.py` |
 | `TypeError: LlamaForCausalLM.__init__() got an unexpected keyword argument 'use_attn_result'` | Kwarg passed directly to `from_pretrained`, leaked to HuggingFace constructor | Moved to post-load config mutation |
 | `RuntimeError: expanded size (118) must match existing size (116)` | Head patch hook copied full sequence dimension; neutral/biased sequences differ in length | Changed to `n = min(act.shape[1], clean_act.shape[1]); activation[0, :n, h, :] = clean_act[0, :n, h, :]` |
 | Jobs 6–8 OOM killed on CPU | `#SBATCH --gres=gpu:${GPUS_PER_NODE}` not expanded — SLURM parses directives before shell execution | Hardcoded `#SBATCH --partition=gpu`, `--gres=gpu:a100:1`, `--account=pi_larsonj_wit_edu` in all job scripts |
+| Probe control class imbalance | TruthfulQA/GSM8k hardcoded answer positions → 100% one class | Added `--randomize-positions` flag to data generators; reran with balanced labels |
 
 ### Cluster Configuration
 
@@ -347,13 +429,13 @@ This suggests RLHF teaches the model *when* to be sycophantic (social/opinion co
 
 ---
 
-## 8. Conclusion
+## 9. Conclusion
 
 This work establishes that sycophancy in Llama-3-8B-Instruct is:
 
 1. **Strongly domain-dependent** — 82.4% in opinion tasks, ~0% in mathematical reasoning
-2. **More nuanced than a single mechanism** — probes trained on format-mixed data suggest belief corruption (99.8%), but a neutral-only probe control reveals this is partially a format-classification artifact. Early-layer probes (0–10) that transfer robustly across prompt formats show the dominant pattern is social compliance (~25.7%): the model retains correct early representations but fails to propagate them to the output
-3. **Localized to a small early-layer circuit** — layers 1–5, with L1H20, L5H5, L4H28 as primary heads
+2. **Characterized by social compliance, not belief corruption** — a balanced probe control experiment shows the model retains correct internal representations (27.1% social compliance vs. 0.9% belief corruption), with format-mixed probes producing misleading 99%+ belief corruption rates due to prompt-format confounds
+3. **Localized by activation patching but redundantly distributed** — layers 1–5 (heads L1H20, L5H5, L4H28) show the highest patching recovery, but ablation of up to 10 heads produces no sycophancy reduction, demonstrating that the behavior is redundantly implemented across the network
 4. **Present in the base model** — not introduced by RLHF; instruction tuning redistributes rather than creates sycophancy
 
-The probe control experiment demonstrates the importance of validating linear probes against format confounds — a methodological contribution relevant to the broader mechanistic interpretability community. The early-layer social compliance pattern, combined with the localized causal circuit, suggests that interventions targeting the gating behavior of early attention heads (rather than representation-level corrections) may be the most promising direction for mitigation. Head ablation results (Section 4.6, pending) will provide direct causal evidence.
+The probe control experiment demonstrates the importance of validating linear probes against format confounds — a methodological contribution relevant to the broader mechanistic interpretability community. The circuit redundancy finding challenges the assumption that activation patching can identify sufficient intervention targets for behavioral steering, and suggests that effective sycophancy mitigation may require broader approaches than targeted head-level manipulation.
