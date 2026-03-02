@@ -37,3 +37,4 @@ secrets.json
 CLAUDE.md
 
 *.egg-info/
+.cache
