@@ -1,0 +1,25 @@
+============================================
+SLURM Job: Head Ablation Experiment
+Model: meta-llama/Meta-Llama-3-8B-Instruct
+Heads: L1H20, L5H5, L4H28
+Node: gypsum-gpu065
+GPU: No devices were found
+N/A
+Time: Mon Mar  2 02:53:37 UTC 2026
+============================================
+================================================================================
+HEAD ABLATION EXPERIMENT — Causal Intervention on Sycophancy Heads
+================================================================================
+Model:               meta-llama/Meta-Llama-3-8B-Instruct
+Data:                data/processed/master_sycophancy.jsonl
+Heads to ablate:     ['L1H20', 'L5H5', 'L4H28']
+Max Samples:         all
+Eval capabilities:   True
+MMLU samples:        500
+GSM8k samples:       200
+Seed:                42
+Git Hash:            95b77fb3
+
+Loaded 1500 samples
+
+Loading meta-llama/Meta-Llama-3-8B-Instruct on cpu with dtype=torch.float16...

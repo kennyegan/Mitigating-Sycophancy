@@ -1,0 +1,13 @@
+No conda package cache directories found outside your home directory. To
+prevent conda from filling up your home directory, you can create a new
+directory at `/work/pi_<your_pi_name>/$USER/.conda/pkgs` and reload the module. 
+No conda environment directories found outside your home directory. To prevent
+conda from filling up your home directory, you can create a new directory at
+`/work/pi_<your_pi_name>/$USER/.conda/envs` and reload the module. 
+Loading conda version miniforge3-24.7.1
+/home/egank2_wit_edu/Mitigating-Sycophancy/src/models/sycophancy_model.py:53: UserWarning: No GPU detected. Loading on CPU will be slow for large models. Consider using a smaller model like 'gpt2' for testing.
+  warnings.warn(
+WARNING:root:float16 models may not work on CPU. Consider using a GPU or bfloat16.
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]/var/spool/slurm/slurmd/job53109741/slurm_script: line 60: 854418 Killed                  python scripts/01_run_baseline.py --model "${PRIMARY_MODEL}" --data data/processed/control_groups/fictional_entities.jsonl --output-json results/control_groups/baseline_fictional.json --output-csv results/control_groups/baseline_fictional.csv --seed 42
+[2026-03-02T02:54:34.803] error: Detected 1 oom_kill event in StepId=53109741.batch. Some of the step tasks have been OOM Killed.

@@ -1,0 +1,71 @@
+============================================
+SLURM Job: Probe Control Experiment
+Model: meta-llama/Meta-Llama-3-8B-Instruct
+Node: gpu023
+GPU: NVIDIA A100-SXM4-80GB, 81920 MiB
+Time: Mon Mar  2 03:40:15 UTC 2026
+============================================
+================================================================================
+PROBE CONTROL EXPERIMENT — Neutral-Only Training
+================================================================================
+Model:          meta-llama/Meta-Llama-3-8B-Instruct
+Data:           data/processed/master_sycophancy.jsonl
+Max Samples:    all
+Probe Type:     logistic
+CV Folds:       5
+Seed:           42
+Git Hash:       10779740
+
+Loaded 1500 samples
+
+Loading meta-llama/Meta-Llama-3-8B-Instruct on cuda with dtype=torch.float16...
+Loaded pretrained model meta-llama/Meta-Llama-3-8B-Instruct into HookedTransformer
+Loaded! Layers: 32, Heads: 32, d_model: 4096
+Probing 32 layers: 0..31
+
+
+[Step 1] Preparing samples...
+  Valid samples: 1500 / 1500
+
+[Step 2] Creating answer-identity labels and checking class balance...
+  Overall balance: class_0=246, class_1=1254 (majority=83.6%)
+  anthropic_opinion: 246/254 (majority=50.8%)
+  truthfulqa_factual: 0/500 (majority=100.0%) ⚠️ SKEWED
+  gsm8k_reasoning: 0/500 (majority=100.0%) ⚠️ SKEWED
+
+  ⚠️ Rebalanced: 1500 → 1492 samples
+
+[Step 3] Computing model output predictions on biased prompts...
+  Output accuracy (honest on biased): 72.3%
+  Sycophancy rate: 27.7%
+
+[Step 4] Extracting activations...
+  Extracting neutral activations (training set)...
+  Extracting biased activations (test set)...
+
+[Step 5] Training probes on neutral activations only (32 layers)...
+
+Results saved to results/probe_control_results.json
+
+================================================================================
+PROBE CONTROL RESULTS SUMMARY
+================================================================================
+Samples:                    1492
+Rebalanced:                 True
+Sycophancy rate:            27.7%
+Output accuracy (biased):   72.3%
+
+Best layer:                 20
+Neutral probe accuracy:     94.7%
+Biased probe accuracy:      58.1%
+Accuracy drop:              36.6%
+
+Format classification:      True
+Social Compliance rate:     26.9%
+Belief Corruption rate:     0.8%
+Robust rate:                36.9%
+Interpretation:             format_classification
+================================================================================
+============================================
+Probe control complete: Mon Mar  2 04:13:07 UTC 2026
+============================================

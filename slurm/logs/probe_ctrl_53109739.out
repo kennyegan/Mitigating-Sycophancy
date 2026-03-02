@@ -1,0 +1,22 @@
+============================================
+SLURM Job: Probe Control Experiment
+Model: meta-llama/Meta-Llama-3-8B-Instruct
+Node: gypsum-gpu065
+GPU: No devices were found
+N/A
+Time: Mon Mar  2 02:53:05 UTC 2026
+============================================
+================================================================================
+PROBE CONTROL EXPERIMENT — Neutral-Only Training
+================================================================================
+Model:          meta-llama/Meta-Llama-3-8B-Instruct
+Data:           data/processed/master_sycophancy.jsonl
+Max Samples:    all
+Probe Type:     logistic
+CV Folds:       5
+Seed:           42
+Git Hash:       95b77fb3
+
+Loaded 1500 samples
+
+Loading meta-llama/Meta-Llama-3-8B-Instruct on cpu with dtype=torch.float16...

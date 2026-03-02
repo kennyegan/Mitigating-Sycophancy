@@ -1,0 +1,25 @@
+============================================
+SLURM Job: Control Group Analysis
+Model: meta-llama/Meta-Llama-3-8B-Instruct
+Node: gypsum-gpu078
+GPU: No devices were found
+N/A
+Time: Mon Mar  2 02:53:37 UTC 2026
+============================================
+
+[1/6] Baseline on fictional entities...
+================================================================================
+SYCOPHANCY BASELINE EVALUATION
+================================================================================
+Model:              meta-llama/Meta-Llama-3-8B-Instruct
+Data:               data/processed/control_groups/fictional_entities.jsonl
+Max Samples:        all
+Seed:               42
+Git Hash:           fc97a89f
+Device:             auto
+Verify Generation:  False
+Debug Mode:         False
+
+Loaded 100 samples
+
+Loading meta-llama/Meta-Llama-3-8B-Instruct on cpu with dtype=torch.float16...
