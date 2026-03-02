@@ -31,6 +31,4 @@ export BASE_MODEL="meta-llama/Meta-Llama-3-8B"
 export REPLICATION_MODEL="mistralai/Mistral-7B-Instruct-v0.3"
 
 # --- HuggingFace token (needed for Llama-3 gated models) ---
-# Option 1: Set here (not recommended for shared systems)
-# export HF_TOKEN="hf_xxxxx"
-# Option 2: Run `huggingface-cli login` once in your conda env before submitting
+export HF_TOKEN="REMOVED_HF_TOKEN"

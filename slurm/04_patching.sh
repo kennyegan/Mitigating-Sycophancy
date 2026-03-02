@@ -21,8 +21,7 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/config.sh"
+source "/home/egank2_wit_edu/Mitigating-Sycophancy/slurm/config.sh"
 
 #SBATCH --partition=${SLURM_PARTITION}
 #SBATCH --gres=gpu:${GPUS_PER_NODE}

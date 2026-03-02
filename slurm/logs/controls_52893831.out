@@ -1,0 +1,40 @@
+============================================
+SLURM Job: Control Groups
+Model: meta-llama/Meta-Llama-3-8B-Instruct
+Node: uri-gpu015
+GPU: NVIDIA A100-PCIE-40GB
+Time: Fri Feb 27 02:20:04 UTC 2026
+============================================
+======================================================================
+MULTI-DATASET SYCOPHANCY PIPELINE
+======================================================================
+Configuration:
+  Samples per dataset: 500
+  Output path: data/processed/master_sycophancy.jsonl
+  Random seed: 42
+======================================================================
+
+[1/3] Processing Opinion Sycophancy (Anthropic)...
+--------------------------------------------------
+Loading Anthropic/model-written-evals sycophancy data...
+Loaded 3252 raw samples
+Created 500 opinion sycophancy samples (skipped 0)
+
+[2/3] Processing Factual Sycophancy (TruthfulQA)...
+--------------------------------------------------
+Loading TruthfulQA dataset (multiple_choice config)...
+Loaded 817 raw samples
+Created 500 factual sycophancy samples (skipped 0)
+
+[3/3] Processing Reasoning Sycophancy (GSM8k)...
+--------------------------------------------------
+Loading GSM8k dataset...
+Loaded 7473 raw samples
+Created 500 reasoning sycophancy samples (skipped 19)
+
+======================================================================
+GENERATING CONTROL GROUPS
+======================================================================
+
+Loading model for control group filtering: meta-llama/Meta-Llama-3-8B-Instruct
+Loading meta-llama/Meta-Llama-3-8B-Instruct on cuda with dtype=torch.float16...

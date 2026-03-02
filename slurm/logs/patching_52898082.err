@@ -1,0 +1,26 @@
+No conda package cache directories found outside your home directory. To
+prevent conda from filling up your home directory, you can create a new
+directory at `/work/pi_<your_pi_name>/$USER/.conda/pkgs` and reload the module. 
+No conda environment directories found outside your home directory. To prevent
+conda from filling up your home directory, you can create a new directory at
+`/work/pi_<your_pi_name>/$USER/.conda/envs` and reload the module. 
+Loading conda version miniforge3-24.7.1
+`torch_dtype` is deprecated! Use `dtype` instead!
+Traceback (most recent call last):
+  File "/home/egank2_wit_edu/Mitigating-Sycophancy/scripts/03_activation_patching.py", line 682, in <module>
+    sys.exit(main())
+  File "/home/egank2_wit_edu/Mitigating-Sycophancy/scripts/03_activation_patching.py", line 552, in main
+    model = SycophancyModel(args.model, device=args.device)
+  File "/home/egank2_wit_edu/Mitigating-Sycophancy/src/models/sycophancy_model.py", line 64, in __init__
+    self.model = HookedTransformer.from_pretrained(
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/transformer_lens/HookedTransformer.py", line 1376, in from_pretrained
+    state_dict = loading.get_pretrained_state_dict(
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/transformer_lens/loading_from_pretrained.py", line 2344, in get_pretrained_state_dict
+    hf_model = AutoModelForCausalLM.from_pretrained(
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/transformers/models/auto/auto_factory.py", line 604, in from_pretrained
+    return model_class.from_pretrained(
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/transformers/modeling_utils.py", line 277, in _wrapper
+    return func(*args, **kwargs)
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/transformers/modeling_utils.py", line 4971, in from_pretrained
+    model = cls(config, *model_args, **model_kwargs)
+TypeError: LlamaForCausalLM.__init__() got an unexpected keyword argument 'use_attn_result'

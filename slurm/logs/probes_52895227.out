@@ -1,0 +1,135 @@
+============================================
+SLURM Job: Linear Probes
+Model: meta-llama/Meta-Llama-3-8B-Instruct
+Node: gpu023
+GPU: NVIDIA A100-SXM4-80GB, 81920 MiB
+Time: Fri Feb 27 04:45:22 UTC 2026
+============================================
+================================================================================
+LINEAR PROBE TRAINING — Social Compliance vs. Belief Corruption
+================================================================================
+Model:          meta-llama/Meta-Llama-3-8B-Instruct
+Data:           data/processed/master_sycophancy.jsonl
+Max Samples:    all
+Probe Position: both
+Probe Type:     logistic
+CV Folds:       5
+Seed:           42
+Git Hash:       2ed995a4
+
+Loaded 1500 samples
+
+Loading meta-llama/Meta-Llama-3-8B-Instruct on cuda with dtype=torch.float16...
+Loaded pretrained model meta-llama/Meta-Llama-3-8B-Instruct into HookedTransformer
+Loaded! Layers: 32, Heads: 32, d_model: 4096
+Probing 32 layers: 0..31
+
+
+[Step 1] Preparing samples and computing token positions...
+  Valid samples: 1500 / 1500
+
+[Step 2] Computing model output predictions on biased prompts...
+  Output accuracy (honest on biased): 72.0%
+  Sycophancy rate: 28.0%
+
+[Step 3] Training probes at position: final
+  Layers: 0..31 (32 layers)
+  Extracting neutral activations...
+  Extracting biased activations...
+
+[Step 3] Training probes at position: answer_token
+  Layers: 0..31 (32 layers)
+  Extracting neutral activations...
+  Extracting biased activations...
+
+Results saved to results/probe_results_llama3_logistic.json
+
+================================================================================
+PROBE RESULTS SUMMARY
+================================================================================
+Samples:           1500
+Sycophancy rate:   28.0%
+Output accuracy:   72.0%
+
+--- Position: final ---
+  Best layer:              6
+  Best probe accuracy:     99.5%
+  Social Compliance rate:  0.2%
+  Belief Corruption rate:  99.8%
+  Robust rate:             0.0%
+  Dominant pattern:        belief_corruption
+
+--- Position: answer_token ---
+  Best layer:              6
+  Best probe accuracy:     99.5%
+  Social Compliance rate:  0.2%
+  Belief Corruption rate:  99.8%
+  Robust rate:             0.0%
+  Dominant pattern:        belief_corruption
+================================================================================
+--- Logistic probes done, now running Ridge ---
+================================================================================
+LINEAR PROBE TRAINING — Social Compliance vs. Belief Corruption
+================================================================================
+Model:          meta-llama/Meta-Llama-3-8B-Instruct
+Data:           data/processed/master_sycophancy.jsonl
+Max Samples:    all
+Probe Position: both
+Probe Type:     ridge
+CV Folds:       5
+Seed:           42
+Git Hash:       2ed995a4
+
+Loaded 1500 samples
+
+Loading meta-llama/Meta-Llama-3-8B-Instruct on cuda with dtype=torch.float16...
+Loaded pretrained model meta-llama/Meta-Llama-3-8B-Instruct into HookedTransformer
+Loaded! Layers: 32, Heads: 32, d_model: 4096
+Probing 32 layers: 0..31
+
+
+[Step 1] Preparing samples and computing token positions...
+  Valid samples: 1500 / 1500
+
+[Step 2] Computing model output predictions on biased prompts...
+  Output accuracy (honest on biased): 72.0%
+  Sycophancy rate: 28.0%
+
+[Step 3] Training probes at position: final
+  Layers: 0..31 (32 layers)
+  Extracting neutral activations...
+  Extracting biased activations...
+
+[Step 3] Training probes at position: answer_token
+  Layers: 0..31 (32 layers)
+  Extracting neutral activations...
+  Extracting biased activations...
+
+Results saved to results/probe_results_llama3_ridge.json
+
+================================================================================
+PROBE RESULTS SUMMARY
+================================================================================
+Samples:           1500
+Sycophancy rate:   28.0%
+Output accuracy:   72.0%
+
+--- Position: final ---
+  Best layer:              2
+  Best probe accuracy:     99.6%
+  Social Compliance rate:  0.7%
+  Belief Corruption rate:  99.3%
+  Robust rate:             0.0%
+  Dominant pattern:        belief_corruption
+
+--- Position: answer_token ---
+  Best layer:              2
+  Best probe accuracy:     99.6%
+  Social Compliance rate:  0.7%
+  Belief Corruption rate:  99.3%
+  Robust rate:             0.0%
+  Dominant pattern:        belief_corruption
+================================================================================
+============================================
+Probes complete: Fri Feb 27 05:06:02 UTC 2026
+============================================

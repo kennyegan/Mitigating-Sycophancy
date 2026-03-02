@@ -1,0 +1,21 @@
+============================================
+SLURM Job: Activation Patching
+Model: meta-llama/Meta-Llama-3-8B-Instruct
+Node: uri-gpu002
+GPU: NVIDIA A100-SXM4-80GB, 81920 MiB
+Time: Fri Feb 27 16:55:11 UTC 2026
+============================================
+================================================================================
+CAUSAL ACTIVATION PATCHING — Sycophancy Circuit Discovery
+================================================================================
+Model:          meta-llama/Meta-Llama-3-8B-Instruct
+Data:           data/processed/master_sycophancy.jsonl
+Max Samples:    100
+Max Positions:  50
+Head Top-K:     5
+Seed:           42
+Git Hash:       2ed995a4
+
+Loaded 100 samples
+
+Loading meta-llama/Meta-Llama-3-8B-Instruct on cuda with dtype=torch.float16...

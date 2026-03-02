@@ -1,22 +1,20 @@
 #!/bin/bash
-#SBATCH --job-name=syc-probes
-#SBATCH --output=slurm/logs/probes_%j.out
-#SBATCH --error=slurm/logs/probes_%j.err
+#SBATCH --job-name=syc-probe-ctrl
+#SBATCH --output=slurm/logs/probe_ctrl_%j.out
+#SBATCH --error=slurm/logs/probe_ctrl_%j.err
 #SBATCH --time=08:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 
 # =============================================================================
-# Job 3: Linear Probes — Social Compliance vs. Belief Corruption
+# Job 6: Probe Control Experiment — Neutral-Only Training
 #
-# Extracts resid_post at all 32 layers for 1,500 samples (neutral + biased),
-# then trains logistic regression probes with 5-fold CV at each layer.
-#
-# This is the most memory-intensive job: ~40GB activations cached.
-# Requests 80GB RAM to be safe.
+# Validates that probe accuracy reflects genuine truth-representation tracking
+# rather than prompt-format classification. Trains probes on neutral prompts
+# only, then tests on biased prompt activations.
 #
 # Expected runtime: ~4-6 hours on A100
-# Output: results/probe_results_llama3.json
+# Output: results/probe_control_results.json
 # =============================================================================
 
 set -euo pipefail
@@ -43,37 +41,22 @@ export TOKENIZERS_PARALLELISM=false
 mkdir -p results slurm/logs
 
 echo "============================================"
-echo "SLURM Job: Linear Probes"
+echo "SLURM Job: Probe Control Experiment"
 echo "Model: ${PRIMARY_MODEL}"
 echo "Node: $(hostname)"
 echo "GPU: $(nvidia-smi --query-gpu=name,memory.total --format=csv,noheader 2>/dev/null || echo 'N/A')"
 echo "Time: $(date)"
 echo "============================================"
 
-# Run probes at both positions with logistic regression
-python scripts/02_train_probes.py \
+python scripts/02b_probe_control.py \
     --model "${PRIMARY_MODEL}" \
     --data data/processed/master_sycophancy.jsonl \
-    --probe-position both \
     --probe-type logistic \
     --batch-size 8 \
     --n-folds 5 \
     --seed 42 \
-    --output results/probe_results_llama3_logistic.json
-
-echo "--- Logistic probes done, now running Ridge ---"
-
-# Also run with Ridge for comparison (proposal says test both)
-python scripts/02_train_probes.py \
-    --model "${PRIMARY_MODEL}" \
-    --data data/processed/master_sycophancy.jsonl \
-    --probe-position both \
-    --probe-type ridge \
-    --batch-size 8 \
-    --n-folds 5 \
-    --seed 42 \
-    --output results/probe_results_llama3_ridge.json
+    --output results/probe_control_results.json
 
 echo "============================================"
-echo "Probes complete: $(date)"
+echo "Probe control complete: $(date)"
 echo "============================================"

@@ -1,22 +1,23 @@
 #!/bin/bash
-#SBATCH --job-name=syc-probes
-#SBATCH --output=slurm/logs/probes_%j.out
-#SBATCH --error=slurm/logs/probes_%j.err
-#SBATCH --time=08:00:00
+#SBATCH --job-name=syc-ablation
+#SBATCH --output=slurm/logs/ablation_%j.out
+#SBATCH --error=slurm/logs/ablation_%j.err
+#SBATCH --time=16:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 
 # =============================================================================
-# Job 3: Linear Probes — Social Compliance vs. Belief Corruption
+# Job 7: Head Ablation — Causal Intervention on Sycophancy Heads
 #
-# Extracts resid_post at all 32 layers for 1,500 samples (neutral + biased),
-# then trains logistic regression probes with 5-fold CV at each layer.
+# Ablates L1H20, L5H5, L4H28 (zero + mean ablation) and measures:
+# - Effect on sycophancy rate (primary metric)
+# - MMLU accuracy (capability preservation)
+# - GSM8k accuracy (reasoning preservation)
 #
-# This is the most memory-intensive job: ~40GB activations cached.
-# Requests 80GB RAM to be safe.
+# 9 conditions × (1500 syc + 500 MMLU + 200 GSM8k) evaluations
 #
-# Expected runtime: ~4-6 hours on A100
-# Output: results/probe_results_llama3.json
+# Expected runtime: ~12-16 hours on A100
+# Output: results/head_ablation_results.json
 # =============================================================================
 
 set -euo pipefail
@@ -43,37 +44,24 @@ export TOKENIZERS_PARALLELISM=false
 mkdir -p results slurm/logs
 
 echo "============================================"
-echo "SLURM Job: Linear Probes"
+echo "SLURM Job: Head Ablation Experiment"
 echo "Model: ${PRIMARY_MODEL}"
+echo "Heads: L1H20, L5H5, L4H28"
 echo "Node: $(hostname)"
 echo "GPU: $(nvidia-smi --query-gpu=name,memory.total --format=csv,noheader 2>/dev/null || echo 'N/A')"
 echo "Time: $(date)"
 echo "============================================"
 
-# Run probes at both positions with logistic regression
-python scripts/02_train_probes.py \
+python scripts/04_head_ablation.py \
     --model "${PRIMARY_MODEL}" \
     --data data/processed/master_sycophancy.jsonl \
-    --probe-position both \
-    --probe-type logistic \
-    --batch-size 8 \
-    --n-folds 5 \
+    --heads "L1H20,L5H5,L4H28" \
+    --eval-capabilities \
+    --mmlu-samples 500 \
+    --gsm8k-samples 200 \
     --seed 42 \
-    --output results/probe_results_llama3_logistic.json
-
-echo "--- Logistic probes done, now running Ridge ---"
-
-# Also run with Ridge for comparison (proposal says test both)
-python scripts/02_train_probes.py \
-    --model "${PRIMARY_MODEL}" \
-    --data data/processed/master_sycophancy.jsonl \
-    --probe-position both \
-    --probe-type ridge \
-    --batch-size 8 \
-    --n-folds 5 \
-    --seed 42 \
-    --output results/probe_results_llama3_ridge.json
+    --output results/head_ablation_results.json
 
 echo "============================================"
-echo "Probes complete: $(date)"
+echo "Head ablation complete: $(date)"
 echo "============================================"

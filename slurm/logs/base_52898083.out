@@ -1,0 +1,23 @@
+============================================
+SLURM Job: Base vs. Instruct Comparison
+Model: meta-llama/Meta-Llama-3-8B
+Node: uri-gpu002
+GPU: NVIDIA A100-SXM4-80GB, 81920 MiB
+Time: Fri Feb 27 16:55:43 UTC 2026
+============================================
+[1/3] Running baseline on base model...
+================================================================================
+SYCOPHANCY BASELINE EVALUATION
+================================================================================
+Model:              meta-llama/Meta-Llama-3-8B
+Data:               data/processed/master_sycophancy.jsonl
+Max Samples:        all
+Seed:               42
+Git Hash:           2ed995a4
+Device:             auto
+Verify Generation:  False
+Debug Mode:         False
+
+Loaded 1500 samples
+
+Loading meta-llama/Meta-Llama-3-8B on cuda with dtype=torch.float16...

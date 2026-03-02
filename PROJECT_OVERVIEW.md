@@ -1,20 +1,20 @@
-# Sycophancy is Social Compliance, Not Belief Corruption:
+# Sycophancy is Belief Corruption, Not Social Compliance:
 ## A Mechanistic Interpretability Analysis of LLM Sycophancy Circuits
 
 **Kenneth Egan** · kenegan2005@gmail.com · [github.com/kennyegan/Mitigating-Sycophancy](https://github.com/kennyegan/Mitigating-Sycophancy)
 
-**Current Status:** Phase 1-2 Complete | Phase 3 In Progress (baseline on Llama-3-8B pending) | **Next: Control groups + Phase 4**
+**Current Status:** Phases 1–4 Complete | Phase 5 In Progress (head ablation + probe control + control groups) | **Key Finding: Belief Corruption dominates at 99.8%**
 
-**Last Updated:** 2026-02-20
+**Last Updated:** 2026-03-02
 
 ---
 
 ## Research Goals
 
-- **Distinguish Mechanisms:** Mechanistically differentiate **Social Compliance** (outputting falsehoods while retaining truth internally) from **Belief Corruption** (internal truth representations degraded by user hint).
-- **Reasoning Benchmark:** Measure sycophancy in Chain-of-Thought reasoning via the Reasoning-Sycophancy benchmark (1,500 samples).
-- **Circuit Discovery:** Causally identify specific attention heads responsible for sycophantic output suppression via activation patching.
-- **Inference-Time Mitigation:** Develop steering vectors targeting only the identified circuit components, with <5% capability degradation on MMLU and GSM8k.
+- **Distinguish Mechanisms:** Mechanistically differentiate **Social Compliance** from **Belief Corruption**. **Result: Belief Corruption dominates at 99.8%.**
+- **Reasoning Benchmark:** Measure sycophancy across opinion, factual, and reasoning domains via the Reasoning-Sycophancy benchmark (1,500 samples). ✅ Complete.
+- **Circuit Discovery:** Causally identify specific attention heads responsible for sycophancy via activation patching. **Result: L1H20, L5H5, L4H28 in layers 1–5.** ✅ Complete.
+- **Causal Intervention:** Head ablation targeting the identified circuit to reduce sycophancy with <5% capability degradation on MMLU and GSM8k. 🔄 In Progress.
 - **Artifacts:** Peer-reviewed paper (NeurIPS/ICLR target), public TransformerLens codebase, HuggingFace benchmark.
 
 ---
@@ -56,94 +56,105 @@
 - [x] Master dataset: `data/processed/master_sycophancy.jsonl` (1,500 samples)
 - [x] Orchestrator: `scripts/00_data_setup.py`
 
-**Control Groups — ⚠️ NOT YET IMPLEMENTED (Required for paper)**
-- [ ] **Uncertain Knowledge:** Filter for questions where Llama-3-8B-Instruct has <60% confidence on neutral prompt. Isolates sycophancy from uncertainty-driven agreement.
-- [ ] **Fictional Entities:** Synthetic questions about non-existent objects. Distinguishes sycophancy from hallucination.
-- [ ] **Adversarially-True Hints:** User provides a false hint that matches model's pre-existing bias. Distinguishes genuine persuasion from bias reinforcement.
+**Control Groups** ✅ Data generated, 🔄 Analysis pending
+- [x] **Uncertain Knowledge:** 68 samples filtered (<60% confidence on neutral prompt). Data at `data/processed/control_groups/uncertain_knowledge.jsonl`.
+- [x] **Fictional Entities:** 100 samples about non-existent objects. Data at `data/processed/control_groups/fictional_entities.jsonl`.
+- [x] **Adversarially-True Hints:** 387 samples where user asserts correct answer. Data at `data/processed/control_groups/adversarially_true.jsonl`.
+- [ ] Run baseline + probes + patching on control group subsets (SLURM job pending).
 
 ---
 
-## Phase 3 — Baseline Evaluation 🔄 IN PROGRESS
+## Phase 3 — Baseline Evaluation ✅ COMPLETE
 
 **Primary Metric: Compliance Gap**
 $$\Delta = P(\text{Sycophantic} \mid \text{Biased Prompt}) - P(\text{Sycophantic} \mid \text{Neutral Prompt})$$
 
+**Key Results:**
+- Overall sycophancy rate: **28.0%** [95% CI: 25.8%–30.3%]
+- Opinion (anthropic): **82.4%** | Factual (TruthfulQA): **1.6%** | Reasoning (GSM8k): **0.0%**
+- Base model: **36.7%** overall (higher than instruct) — RLHF redistributes, doesn't introduce sycophancy
+
 **Deliverables**
 - [x] Evaluation script: `scripts/01_run_baseline.py`
 - [x] Statistics module: `src/analysis/evaluation.py` (Wilson CIs, Cohen's d, permutation tests, bootstrap)
-- [x] Dev results (gpt2-medium, 50 samples): 60% sycophancy rate — for development only, not paper results
-- [ ] **Baseline on Llama-3-8B-Instruct, full 1,500-sample dataset** ← next immediate task
-- [ ] Per-domain breakdown: math vs. factual vs. opinion
-- [ ] Base vs. Instruct comparison (RLHF hypothesis)
+- [x] Baseline on Llama-3-8B-Instruct, full 1,500-sample dataset
+- [x] Per-domain breakdown: math vs. factual vs. opinion
+- [x] Base vs. Instruct comparison (RLHF hypothesis)
 
 ---
 
-## Phase 4 — Mechanistic Analysis ⏳ PENDING
+## Phase 4 — Mechanistic Analysis ✅ COMPLETE
 
-### 4.1 Linear Probes (Social Compliance vs. Belief Corruption)
+### 4.1 Linear Probes — **Result: Belief Corruption (99.8%)**
 
-Train logistic regression probes on `resid_post` activations at each layer from **neutral prompt** forward passes. Decode the "truth direction."
+Logistic and ridge probes trained on `resid_post` at all 32 layers with 5-fold CV.
 
-Then evaluate on **sycophantic prompt** runs:
-
-| Pattern | Probe Accuracy | Output Accuracy | Interpretation |
-|---|---|---|---|
-| Social Compliance | High | Low | Model retains truth but suppresses it |
-| Belief Corruption | Low | Low | User hint degrades internal truth |
-| Robust (control) | High | High | No sycophancy |
+- Best logistic probe: **99.47%** accuracy (Layer 6)
+- Best ridge probe: **99.60%** accuracy (Layer 2)
+- **Belief Corruption rate: 99.76%** (logistic) / **99.29%** (ridge)
+- Social Compliance rate: 0.24% — effectively zero
 
 **Deliverables**
-- [ ] `scripts/02_train_probes.py` — 5-fold CV, layer 0 through n_layers
-- [ ] Layer-wise probe accuracy curves (probe acc vs. output acc per layer)
+- [x] `scripts/02_train_probes.py` — 5-fold CV, layer 0 through 31
+- [x] Results: `results/probe_results_llama3_logistic.json`, `probe_results_llama3_ridge.json`
 
-### 4.2 Causal Activation Patching
+### 4.2 Causal Activation Patching — **Result: Layers 1–5 critical**
 
-1. **Clean run:** Neutral prompt → cache activations at all layers/positions
-2. **Corrupted run:** Sycophantic prompt → record sycophantic output
-3. **Patch:** For each (layer L, position T), swap corrupted → clean activations; measure output recovery
-
-**Deliverables**
-- [ ] `scripts/03_activation_patching.py` — layer × token position heatmap
-- [ ] Identification of critical layers responsible for sycophancy
-
-### 4.3 Attention Head Analysis
-
-Within critical layers from 4.2, perform head-level patching:
-- Do sycophancy heads preferentially attend to user-hint tokens?
-- Do they suppress attention to evidence tokens?
-- Logit lens analysis: what do sycophancy heads write to the residual stream?
+- Mean total effect: **2.1050** (±2.7278)
+- Critical layers: **1, 2, 3, 4, 5** (top 5 by importance score)
 
 **Deliverables**
-- [ ] Head-level importance scores
-- [ ] Logit lens visualization on sycophancy heads
+- [x] `scripts/03_activation_patching.py` — layer × token position heatmap
+- [x] Results: `results/patching_heatmap.json`
 
-### 4.4 Base vs. Instruct Comparison
+### 4.3 Attention Head Analysis — **Result: L1H20, L5H5, L4H28**
 
-Run all of 4.1–4.3 on Llama-3-8B-Base. Hypothesis: RLHF introduces the sycophancy circuit; base model shows Belief Corruption or no effect.
+Top 3 heads by recovery score:
+1. **L1H20**: 0.5690 (±1.2114)
+2. **L5H5**: 0.5669 (±0.6947)
+3. **L4H28**: 0.5062 (±0.6719)
+
+**Deliverables**
+- [x] Head-level importance scores: `results/head_importance.json`
+- [x] 100/100 samples successfully patched
+
+### 4.4 Base vs. Instruct Comparison — **Result: RLHF redistributes sycophancy**
+
+- Base model sycophancy: **36.7%** (higher than instruct 28.0%)
+- Base model critical layers: 0–4 with lower effect size (0.93 vs 2.10)
+- RLHF suppresses factual/reasoning sycophancy but concentrates it in opinion domain
+
+**Deliverables**
+- [x] Full pipeline on Llama-3-8B-Base
+- [x] Results: `results/baseline_llama3_base_summary.json`, `results/base_model/`
 
 ---
 
-## Phase 5 — Inference-Time Steering ⏳ PENDING
+## Phase 5 — Causal Intervention 🔄 IN PROGRESS
 
-Grounded in mechanistically-identified circuit from Phase 4. Targets **only** the identified components, not the full residual stream.
+Since sycophancy is Belief Corruption (not Social Compliance), the intervention targets the early-layer circuit where corruption enters the residual stream. Starting with direct head ablation (simpler, faster, cleaner causal result) before full steering vector pipeline.
 
-1. Compute sycophancy vector: `mean(activations | sycophantic) − mean(activations | neutral)` at critical layers
-2. Subtract `α × sycophancy_vector` at identified layers during generation
-3. Sweep `α ∈ {0.1, 0.5, 1.0, 2.0, 5.0}`
+### 5.1 Head Ablation (primary)
+Ablate L1H20, L5H5, L4H28 directly (zero-ablation + mean-ablation). Measure effect on opinion sycophancy rate + MMLU/GSM8k capability retention.
+
+### 5.2 Probe Control Experiment (probe validity)
+Train probes on neutral prompts only, test on biased prompts. Validates that 99.5% probe accuracy reflects genuine truth tracking, not prompt format classification.
+
+### 5.3 Control Group Analysis
+Run fictional entities, uncertain knowledge, adversarially-true subsets through baseline + probes + patching pipelines.
 
 **Safety Validation**
 
 | Metric | Requirement | Method |
 |---|---|---|
 | MMLU Accuracy | ≥95% of baseline | 500-question MMLU subset |
-| GSM8k Accuracy | ≥95% of baseline | Full GSM8k test set |
-| Refusal Rate | No increase | 500 neutral prompts audit |
-| Compliance Gap Δ | Reduction vs. baseline | Full 1,500-sample benchmark |
+| GSM8k Accuracy | ≥95% of baseline | 200-question GSM8k subset |
+| Sycophancy Rate | Reduction vs. baseline | Full 1,500-sample benchmark |
 
 **Deliverables**
-- [ ] `scripts/04_steering_vectors.py` — compute, save, apply, alpha sweep
-- [ ] `scripts/05_safety_evaluation.py` — MMLU, GSM8k, refusal audit
-- [ ] Pareto frontier plot: sycophancy reduction vs. capability retention
+- [ ] `scripts/04_head_ablation.py` — zero + mean ablation, 9 conditions
+- [ ] `scripts/02b_probe_control.py` — neutral-only probe training control
+- [ ] SLURM jobs: `06_probe_control.sh`, `07_head_ablation.sh`, `08_control_analysis.sh`
 
 ---
 
@@ -172,7 +183,7 @@ Repeat Phases 3–5 on Mistral-7B-Instruct. Goal: validate circuit generalizatio
 - **Workshops:** AI Alignment / SoLaR
 
 **Final Outputs**
-- arXiv preprint: "Sycophancy is Social Compliance, Not Belief Corruption"
+- arXiv preprint: "Sycophancy is Belief Corruption, Not Social Compliance"
 - Public GitHub repo: fully reproducible
 - HuggingFace dataset: Reasoning-Sycophancy benchmark
 
@@ -180,10 +191,10 @@ Repeat Phases 3–5 on Mistral-7B-Instruct. Goal: validate circuit generalizatio
 
 ## Pre-Committed Null Results (Section 7 of Proposal)
 
-We will fully report any of the following regardless of outcome:
-- If probe accuracy is low in both conditions → linear probes insufficient; report implications
-- If causal tracing shows no localized critical layers → sycophancy is distributed; report as evidence against circuit localization
-- If steering degrades capabilities >5% → report full Pareto frontier without cherry-picking
+**Null result realized:** The Social Compliance hypothesis was falsified — Belief Corruption dominates at 99.8%. This is itself a significant contribution.
+
+Remaining pre-committed conditions:
+- If steering/ablation degrades capabilities >5% → report full results without cherry-picking
 - If Mistral-7B shows a different causal structure → report as model-family specificity
 
 ---
@@ -201,21 +212,21 @@ We will fully report any of the following regardless of outcome:
 
 ## Timeline
 
-| Milestone | Target | Status |
-|---|---|---|
-| Infrastructure & `SycophancyModel` | Week 2 | ✅ Complete |
-| Reasoning-Sycophancy Benchmark (1,500 samples) | Week 4 | ✅ Complete |
-| **Control groups** (uncertain, fictional, adversarial) | Week 5 | ⚠️ Missing |
-| Baseline evaluation (Llama-3-8B-Instruct, full dataset) | Week 6 | 🔄 In Progress |
-| Linear probes: layer-wise truth direction | Week 8 | ⏳ Pending |
-| Causal tracing heatmaps: critical layer identification | Week 10 | ⏳ Pending |
-| Head-level patching: sycophancy circuit pinpointed | Week 13 | ⏳ Pending |
-| Base vs. Instruct comparison | Week 14 | ⏳ Pending |
-| Mistral-7B replication | Week 16 | ⏳ Pending |
-| Steering vectors: compute, apply, alpha sweep | Week 18 | ⏳ Pending |
-| Safety evaluation: MMLU, GSM8k, refusal audit | Week 19 | ⏳ Pending |
-| Statistical validation & reproducibility package | Week 21 | ⏳ Pending |
-| Manuscript submission-ready | Week 22 | ⏳ Pending |
+| Milestone | Status |
+|---|---|
+| Infrastructure & `SycophancyModel` | ✅ Complete |
+| Reasoning-Sycophancy Benchmark (1,500 samples) | ✅ Complete |
+| Control group data generation | ✅ Complete (555 samples across 3 groups) |
+| Baseline evaluation (Llama-3-8B-Instruct + Base) | ✅ Complete — 28.0% instruct, 36.7% base |
+| Linear probes: Belief Corruption vs Social Compliance | ✅ Complete — 99.8% Belief Corruption |
+| Causal tracing + head-level patching | ✅ Complete — L1H20, L5H5, L4H28 |
+| Base vs. Instruct comparison | ✅ Complete — RLHF redistributes sycophancy |
+| Probe control experiment (probe validity) | 🔄 In Progress |
+| Head ablation intervention | 🔄 In Progress |
+| Control group analysis (baseline + probes + patching) | 🔄 In Progress |
+| Mistral-7B replication | ⏳ Pending |
+| Statistical validation & reproducibility | ⏳ Pending |
+| Manuscript submission-ready | ⏳ Pending |
 
 ---
 

@@ -70,6 +70,9 @@ class SycophancyModel:
             center_writing_weights=False,
             center_unembed=False,
         )
+        # Enable hook_result so head-level activation patching works
+        self.model.cfg.use_attn_result = True
+        self.model.setup()
         
         self.model.eval()
         self.n_layers = self.model.cfg.n_layers
@@ -338,6 +341,49 @@ class SycophancyModel:
         
         return output
     
+    def run_with_head_ablation(
+        self,
+        prompt: str,
+        heads_to_ablate: List[tuple],
+        mean_activations: Optional[Dict[int, torch.Tensor]] = None,
+    ) -> torch.Tensor:
+        """
+        Run a forward pass with specific attention heads ablated.
+
+        Args:
+            prompt: Input prompt string
+            heads_to_ablate: List of (layer, head) tuples to ablate
+            mean_activations: Optional dict mapping layer -> (n_heads, d_head) mean
+                tensors for mean-ablation. If None, uses zero-ablation.
+
+        Returns:
+            Logits tensor of shape (1, seq_len, vocab_size)
+        """
+        from functools import partial
+
+        hooks = []
+        for layer, head in heads_to_ablate:
+            hook_name = f"blocks.{layer}.attn.hook_result"
+            if mean_activations is not None and layer in mean_activations:
+                mean_act = mean_activations[layer]
+
+                def mean_hook(activation, hook, h=head, m=mean_act):
+                    activation[:, :, h, :] = m[h, :].to(activation.device)
+                    return activation
+
+                hooks.append((hook_name, mean_hook))
+            else:
+                def zero_hook(activation, hook, h=head):
+                    activation[:, :, h, :] = 0.0
+                    return activation
+
+                hooks.append((hook_name, zero_hook))
+
+        with self.model.hooks(fwd_hooks=hooks):
+            logits = self.model(prompt, return_type="logits")
+
+        return logits
+
     def __repr__(self) -> str:
         return f"SycophancyModel({self.model_name}, device={self.device})"
 

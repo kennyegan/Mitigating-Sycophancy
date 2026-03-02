@@ -17,8 +17,7 @@
 set -euo pipefail
 
 # Load cluster config
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/config.sh"
+source "/home/egank2_wit_edu/Mitigating-Sycophancy/slurm/config.sh"
 
 # Apply SLURM resource settings from config
 #SBATCH --partition=${SLURM_PARTITION}
