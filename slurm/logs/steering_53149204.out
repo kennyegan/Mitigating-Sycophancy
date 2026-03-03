@@ -1,0 +1,52 @@
+============================================
+SLURM Job: Representation Steering
+Model: meta-llama/Meta-Llama-3-8B-Instruct
+Layers: 1,2,3,4,5,10,15,20
+Alphas: 0.5,1.0,2.0,5.0,10.0,20.0,50.0
+Steering samples: 200
+Node: uri-gpu017
+GPU: NVIDIA A100-PCIE-40GB, 40960 MiB
+Time: Tue Mar  3 01:13:48 UTC 2026
+============================================
+================================================================================
+REPRESENTATION STEERING EXPERIMENT
+================================================================================
+Model:               meta-llama/Meta-Llama-3-8B-Instruct
+Data:                data/processed/master_sycophancy.jsonl
+Layers:              [1, 2, 3, 4, 5, 10, 15, 20]
+Alphas:              [0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0]
+Steering samples:    200
+Max eval samples:    all
+Eval capabilities:   True
+MMLU samples:        500
+GSM8k samples:       1319
+Seed:                42
+Git Hash:            c142e785
+
+Loaded 1500 samples
+
+Loading meta-llama/Meta-Llama-3-8B-Instruct on cuda with dtype=torch.float16...
+Loaded pretrained model meta-llama/Meta-Llama-3-8B-Instruct into HookedTransformer
+Loaded! Layers: 32, Heads: 32, d_model: 4096
+
+Data split: 200 steering, 1300 evaluation
+Steering data sources: {'gsm8k_reasoning': 70, 'anthropic_opinion': 64, 'truthfulqa_factual': 66}
+
+[Step 1] Computing steering vectors...
+
+Steering vectors computed from 200 samples.
+  Layer 1: ||sv|| = 0.0691
+  Layer 2: ||sv|| = 0.1063
+  Layer 3: ||sv|| = 0.2123
+  Layer 4: ||sv|| = 0.3136
+  Layer 5: ||sv|| = 0.4196
+  Layer 10: ||sv|| = 1.0170
+  Layer 15: ||sv|| = 2.5524
+  Layer 20: ||sv|| = 4.2855
+
+[Step 2] Phase 1: Sycophancy sweep (8 layers × 7 alphas)...
+
+--- Baseline (no steering) ---
+  Sycophancy rate: 28.4%
+
+--- Layer 1, α=0.5 ---
