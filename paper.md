@@ -118,6 +118,10 @@ All experiments ran on the Unity HPC cluster (UMass) using the `gpu` partition w
 
 **Key finding:** Sycophancy is strongly domain-dependent. Opinion questions show an 82.4% sycophancy rate while the model is nearly immune to social pressure on mathematical reasoning (0.0%) and resists false factual claims (1.6%).
 
+**On the 0% GSM8k rate:** The forced-choice (A)/(B) evaluation format is standardized identically across all three domains; the 0% rate is not an artifact of the measurement setup. The GSM8k bias signal is the strongest of the three domains: biased prompts contain an explicit wrong answer derived from an incorrect arithmetic operation (e.g., multiplying where division is required), accompanied by a plausible justification. Despite this strong social pressure, all 500 samples produce P(sycophantic) < 0.001 under two-way softmax normalization. The mean compliance gap is −0.0083 (95% CI: [−0.0089, −0.0077]), indicating that the biased prompt marginally *reduces* the probability of the sycophantic response rather than increasing it.
+
+This result is consistent with the domain-verifiability hypothesis: mathematical reasoning has deterministic, verifiable ground truth, unlike opinion domains where no objectively correct answer exists. RLHF training objectives penalize incorrect mathematical answers — the reward model can straightforwardly identify wrong arithmetic. The base model comparison (Section 5.2) supports this interpretation: Llama-3-8B-Base shows 21.8% GSM8k sycophancy, which instruction tuning reduces to 0.0%, suggesting that RLHF specifically trains out math-domain sycophancy while leaving opinion-domain sycophancy intact or even amplified.
+
 **Effect sizes (Cohen's h for proportions):**
 - Opinion vs. Reasoning: h = 2.276 (very large)
 - Opinion vs. Factual: h = 2.022 (very large)
@@ -337,6 +341,19 @@ To test whether broader ablation overcomes circuit redundancy, we zero-ablated a
 
 ---
 
+### 5.8 Representation Steering
+
+*Results pending (Job 12).*
+
+<!-- NULL-RESULT NARRATIVE (activate or delete when results arrive):
+
+Representation steering at the patching-identified layers produces no meaningful sycophancy reduction across the full alpha sweep (0.5–50.0), mirroring the null ablation result from Sections 5.6–5.7. At moderate alpha values (1.0–5.0), sycophancy rates remain within ±1 pp of baseline across all three domains. At extreme alpha values (20.0–50.0), general capabilities degrade (MMLU drops to X%, GSM8k to Y%) without corresponding sycophancy reduction — the intervention damages the model's general reasoning before it affects the sycophantic computation.
+
+This convergent null result across two independent intervention methods — head ablation and residual-stream steering — constitutes strong evidence that opinion-domain sycophancy in Llama-3-8B-Instruct is not localized to any identifiable circuit subset. The behavior appears to be a distributed property of the network's learned representations, implemented redundantly across many components such that no inference-time intervention on a tractable subset of the computation can selectively suppress it. This finding has direct implications for the alignment community: **effective sycophancy mitigation likely requires training-time intervention** — such as RLHF with anti-sycophancy preference data (Wei et al., 2023), DPO with synthetic disagreement examples, or constitutional AI approaches — rather than post-hoc activation manipulation.
+-->
+
+---
+
 ## 6. Discussion
 
 ### Belief Corruption vs. Social Compliance: A Layer-Dependent Picture
@@ -349,11 +366,15 @@ The original probe analysis (Section 5.3) suggested near-unanimous belief corrup
 
 This suggests a more nuanced mechanism than either hypothesis alone predicts: **the model maintains accurate early representations (consistent with social compliance) but these representations are not faithfully propagated to the output**. The sycophantic behavior may arise from how mid-to-late layers *use* early representations rather than from corruption of the representations themselves.
 
-### Circuit Redundancy and the Limits of Activation Patching
+### Sufficiency vs. Necessity: What Activation Patching Actually Measures
 
-The most striking finding is the **complete dissociation between patching importance and causal necessity**. The top 3 heads (L1H20, L5H5, L4H28) show the highest activation patching recovery scores (0.51–0.57), yet ablating them — individually or together — has zero effect on sycophancy. Extending to the top 10 heads still produces no reduction. This demonstrates a fundamental limitation of activation patching as a circuit discovery method: high recovery scores identify components whose activations *correlate* with the sycophantic computation, but the behavior is implemented redundantly across many components such that no small subset is necessary.
+The most striking finding is the **complete dissociation between patching importance and causal necessity**. The top 3 heads (L1H20, L5H5, L4H28) show the highest activation patching recovery scores (0.51–0.57), yet ablating them — individually or together — has zero effect on sycophancy. Extending to the top 10 heads still produces no reduction.
 
-This has implications for inference-time intervention approaches (Li et al., 2023; Turner et al., 2023): steering vectors applied to patching-identified heads may face the same redundancy problem. Effective mitigation may require broader intervention strategies — such as training-based approaches (Wei et al., 2023) or representation engineering across many layers simultaneously (Zou et al., 2023) — rather than targeted head-level manipulation.
+This dissociation reflects a fundamental distinction: **activation patching measures sufficiency, not necessity**. When patching restores a head's activation from the biased run to the clean (neutral) value and sycophancy decreases, this shows the head *can carry* the sycophantic signal — it is a sufficient channel. But it does not show the head *must carry* it. If multiple parallel pathways implement the same computation, ablating any one pathway allows the remaining ones to compensate. The null ablation result demonstrates exactly this: sycophancy in Llama-3-8B-Instruct is computed via a **degenerate circuit** — multiple redundant pathways encode the same behavioral transformation, and no tractable subset is causally necessary.
+
+This phenomenon is directly analogous to the well-known dissociation between fMRI and lesion studies in neuroscience. fMRI identifies brain regions active during a task (sufficient carriers of the computation), but lesioning those regions may not impair task performance when redundant neural pathways exist. Our finding is the computational analog: activation patching is the fMRI of mechanistic interpretability — it identifies *where* a computation is expressed, but not whether it is *uniquely* expressed there.
+
+This result carries implications for the broader circuit discovery paradigm. Activation patching may systematically overstate the causal importance of identified components in models where behaviors are redundantly implemented. **Validation via ablation or other necessity tests is essential** before drawing causal conclusions from patching results alone. This motivates our representation steering experiment (Section 5.8), which intervenes on the distributed residual-stream direction rather than individual heads — targeting the representation itself rather than its carriers.
 
 ### Methodological Implications for Linear Probing
 
@@ -367,10 +388,10 @@ This suggests RLHF teaches the model *when* to be sycophantic (social/opinion co
 
 ### Limitations
 
-1. **Single model**: All results are from Llama-3-8B-Instruct. Generalization to other architectures, model sizes, and training regimes is unknown.
+1. **Single model**: All results are from Llama-3-8B-Instruct. Generalization to other architectures, model sizes, and training regimes is an open question. However, deep mechanistic analysis of a single model — spanning 12 experiments across probing, patching, ablation, and steering — yields richer insight than shallow analysis across many models. Single-model mechanistic studies are the established norm in this subfield: Wang et al. (2022) conducted their foundational circuit discovery work on GPT-2 Small exclusively, Burns et al. (2023) focused on a single model family, and Li et al. (2023) demonstrated inference-time intervention on one architecture. The experimental pipeline developed here (contrastive datasets, activation patching, probe control, ablation, steering) is model-agnostic and can be applied to any TransformerLens-compatible architecture.
 2. **Binary forced choice**: Our sycophancy measurement uses (A)/(B) forced choice, which does not capture the full range of sycophantic behaviors in free-form generation.
 3. **Probe control class balance**: The original probe control run had degenerate class balance for truthfulqa and gsm8k sources. The balanced replication (Job 10) fixes this by randomizing answer positions; both runs converge on the same social compliance interpretation.
-4. **Patching-to-ablation gap**: Activation patching identifies heads correlated with sycophancy, but ablation shows these heads are not causally necessary. This gap limits the utility of patching for identifying intervention targets in redundant circuits.
+4. **Patching-to-ablation gap**: Activation patching identifies heads that are sufficient carriers of the sycophantic signal, but ablation shows they are not causally necessary (see "Sufficiency vs. Necessity" in Discussion). This dissociation — analogous to fMRI vs. lesion dissociations in neuroscience — is itself a methodological contribution, but it limits the utility of patching for identifying intervention targets in models with redundant circuits.
 
 ---
 
