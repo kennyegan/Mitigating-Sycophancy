@@ -1,133 +1,55 @@
-# Experiment Scripts
+# Script Reference
 
-This directory contains the experiment pipeline scripts for sycophancy research.
+## Pipeline Order
 
-## Script Execution Order
+1. `00_data_setup.py`
+2. `01_run_baseline.py`
+3. `02_train_probes.py` / `02b_probe_control.py`
+4. `03_activation_patching.py`
+5. `04_head_ablation.py`
+6. `05_representation_steering.py`
+7. `99_collect_result_manifest.py`
 
-### Phase 1: Data Preparation
+## Key Interface Changes
 
-#### `00_data_setup.py` - Multi-Dataset Download & Processing
-**Purpose:** Download and process samples from all three sycophancy datasets.
+### `00_data_setup.py`
 
-**Usage:**
-```bash
-# Default: 500 samples per dataset (1500 total)
-python scripts/00_data_setup.py
+- Added `--randomize-positions`
+- Writes deterministic `sample_id` on each record
+- Stores randomization metadata per sample
 
-# Custom sample count
-python scripts/00_data_setup.py --samples 100
+### `02_train_probes.py`
 
-# Save individual dataset files too
-python scripts/00_data_setup.py --save-individual
+- Added `--analysis-mode {neutral_transfer,mixed_diagnostic}`
+- Default is `neutral_transfer` (claim-bearing)
+- Outputs schema fields:
+  - `schema_version`
+  - `analysis_mode`
+  - `split_definition`
+  - CI fields for transfer/pattern rates
 
-# Custom output path
-python scripts/00_data_setup.py --output data/custom_path.jsonl
-```
+### `02b_probe_control.py`
 
-**Output:**
-- `data/processed/master_sycophancy.jsonl` - Unified dataset
-- `data/processed/master_sycophancy_metadata.json` - Dataset statistics
+- Aligned to `02_train_probes.py` neutral-transfer semantics and schema
+- Keeps dedicated probe-control entrypoint for SLURM workflows
 
-**Datasets Processed:**
-1. **Opinion Sycophancy** (Anthropic/model-written-evals)
-2. **Factual Sycophancy** (TruthfulQA)
-3. **Reasoning Sycophancy** (GSM8k)
+### `05_representation_steering.py`
 
----
+- Added checkpoint/resume controls:
+  - `--checkpoint-path`
+  - `--resume-from-checkpoint`
+  - `--save-every-condition` / `--no-save-every-condition`
+- Saves partial JSON progress after each condition by default
+- Uses strict capability scoring + CI reporting
 
-### Phase 2: Baseline Evaluation
+## Consolidated Manifest
 
-#### `01_run_baseline.py` - Compliance Gap Baseline Evaluation
-**Purpose:** Evaluate sycophancy using the industry-standard **Compliance Gap** metric.
+`99_collect_result_manifest.py` validates expected artifacts and writes:
 
-**Key Metric:**
-```
-Delta = P(Sycophantic | Biased) - P(Sycophantic | Neutral)
-```
-This measures how much user bias shifts the model toward sycophantic responses, distinguishing true sycophancy from baseline model tendencies.
+- `results/full_rerun_manifest.json`
 
-**Usage:**
-```bash
-# Run with default settings (150 samples, Llama-3-8B)
-python scripts/01_run_baseline.py
-```
-
-**Configuration** (edit the script):
-```python
-DATA_PATH = "data/processed/master_sycophancy.jsonl"
-CSV_OUTPUT = "results/detailed_results.csv"
-JSON_OUTPUT = "results/baseline_summary.json"
-MODEL_NAME = "meta-llama/Meta-Llama-3-8B-Instruct"  # or "gpt2" for testing
-MAX_SAMPLES = 150  # 50 from each dataset type
-```
-
-**Outputs:**
-- `results/detailed_results.csv` - Per-sample data with all probabilities
-- `results/baseline_summary.json` - Aggregated stats and top sycophantic prompts
-
-**CSV Columns:**
-- `source` - Dataset type (anthropic_opinion/truthfulqa_factual/gsm8k_reasoning)
-- `prompt_preview` - First 100 chars of biased prompt
-- `sycophantic_target` / `honest_target` - Token targets
-- `neutral_prob_syc` / `neutral_prob_honest` - Probabilities without user bias
-- `biased_prob_syc` / `biased_prob_honest` - Probabilities with user bias
-- `compliance_gap` - The key metric (biased_prob_syc - neutral_prob_syc)
-- `is_sycophantic` - Boolean (biased_prob_syc > biased_prob_honest)
-
-**JSON Summary Contains:**
-- Model metadata and timestamp
-- Overall sycophancy rate and mean compliance gap
-- Per-source breakdown with standard errors
-- Top 5 most sycophantic prompts (highest compliance gap)
-
----
-
-## Complete Workflow
+Usage:
 
 ```bash
-# Step 1: Download data (only need to run once)
-python scripts/00_data_setup.py --samples 500
-
-# Step 2: Run baseline evaluation
-python scripts/01_run_baseline.py
-
-# Step 3: Analyze results
-cat results/baseline_summary.json | python -m json.tool
-head results/detailed_results.csv
+python scripts/99_collect_result_manifest.py --output results/full_rerun_manifest.json
 ```
-
----
-
-## Quick Testing
-
-For rapid iteration without GPU:
-
-```bash
-# Generate small dataset
-python scripts/00_data_setup.py --samples 10
-
-# Edit 01_run_baseline.py:
-#   MODEL_NAME = "gpt2"
-#   MAX_SAMPLES = 30
-
-# Run baseline
-python scripts/01_run_baseline.py
-```
-
----
-
-## Future Scripts (Planned)
-
-- `02_train_probes.py` - Linear probe training for compliance detection
-- `03_activation_patching.py` - Circuit discovery via activation patching
-- `04_steering_vectors.py` - Compute and test steering vectors
-- `05_safety_evaluation.py` - MMLU + refusal rate checks
-
----
-
-## Notes
-
-- All scripts use `seed=42` for reproducibility
-- Data download only needs to be run once
-- Master dataset format is standardized via `SycophancySample` dataclass
-- All prompts use Llama-3 Instruct chat template

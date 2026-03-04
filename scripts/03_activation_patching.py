@@ -53,6 +53,7 @@ from src.models import SycophancyModel
 DEFAULT_DATA_PATH = "data/processed/master_sycophancy.jsonl"
 DEFAULT_OUTPUT_DIR = "results"
 DEFAULT_MODEL_NAME = "gpt2-medium"
+DEFAULT_SCHEMA_VERSION = "2.1"
 RANDOM_SEED = 42
 
 # How many top layers to analyze at head level
@@ -92,6 +93,36 @@ def set_seeds(seed: int = RANDOM_SEED):
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
+
+
+def write_manifest(
+    output_dir: str,
+    model_name: str,
+    data_path: str,
+    seed: int,
+    started_at: datetime,
+    ended_at: datetime,
+) -> None:
+    manifest = {
+        "script": "scripts/03_activation_patching.py",
+        "status": "completed",
+        "command": " ".join(sys.argv),
+        "git_hash": get_git_hash(),
+        "model": model_name,
+        "data": data_path,
+        "seed": seed,
+        "started_at": started_at.isoformat(),
+        "ended_at": ended_at.isoformat(),
+        "artifacts": [
+            str(Path(output_dir) / "patching_heatmap.json"),
+            str(Path(output_dir) / "head_importance.json"),
+        ],
+    }
+    manifest_dir = Path(output_dir) / "manifests"
+    manifest_dir.mkdir(parents=True, exist_ok=True)
+    manifest_path = manifest_dir / f"patching_{ended_at.strftime('%Y%m%dT%H%M%SZ')}.json"
+    with open(manifest_path, "w") as f:
+        json.dump(manifest, f, indent=2)
 
 
 # =============================================================================
@@ -192,10 +223,13 @@ def patch_attention_head(
     """
     _model = model.model
     hook_name = f"blocks.{layer}.attn.hook_result"
-    d_head = _model.cfg.d_head
-
     def head_patch_hook(activation, hook, clean_act, h):
-        activation[0, :, h, :] = clean_act[0, :, h, :]
+        # Neutral and biased sequences can have different token lengths.
+        # Patch the shared suffix so answer tokens remain aligned.
+        shared_len = min(activation.shape[1], clean_act.shape[1])
+        if shared_len == 0:
+            return activation
+        activation[0, -shared_len:, h, :] = clean_act[0, -shared_len:, h, :]
         return activation
 
     clean_act = clean_cache[hook_name]
@@ -526,6 +560,7 @@ Examples:
 
 def main():
     args = parse_args()
+    started_at = datetime.now(timezone.utc)
 
     global RANDOM_SEED, HEAD_ANALYSIS_TOP_K
     RANDOM_SEED = args.seed
@@ -592,6 +627,9 @@ def main():
     output_dir.mkdir(parents=True, exist_ok=True)
 
     layer_output = {
+        'schema_version': DEFAULT_SCHEMA_VERSION,
+        'analysis_mode': 'activation_patching_layer_scan',
+        'split_definition': 'Random subset from dataset using fixed seed when --max-samples is set.',
         'metadata': {
             'model_name': args.model,
             'timestamp': datetime.now(timezone.utc).isoformat(),
@@ -632,6 +670,9 @@ def main():
             head_agg = aggregate_head_results(head_results)
 
             head_output = {
+                'schema_version': DEFAULT_SCHEMA_VERSION,
+                'analysis_mode': 'activation_patching_head_scan',
+                'split_definition': 'Head scan restricted to critical layers selected from layer scan.',
                 'metadata': {
                     'model_name': args.model,
                     'timestamp': datetime.now(timezone.utc).isoformat(),
@@ -675,6 +716,15 @@ def main():
         print(f"  Layer {layer_str:>3s}: {importance:.4f}")
 
     print("=" * 80)
+    ended_at = datetime.now(timezone.utc)
+    write_manifest(
+        output_dir=args.output_dir,
+        model_name=args.model,
+        data_path=args.data,
+        seed=args.seed,
+        started_at=started_at,
+        ended_at=ended_at,
+    )
     return 0
 
 

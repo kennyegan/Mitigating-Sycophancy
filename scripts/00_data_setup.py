@@ -30,9 +30,7 @@ from datetime import datetime
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from src.data.base import SycophancySample
-from src.data.anthropic import AnthropicOpinionDataset
-from src.data.truthful_qa import TruthfulQAFactualDataset
-from src.data.gsm8k_reasoning import GSM8kReasoningDataset
+from src.data.base import build_deterministic_sample_id
 
 
 def parse_args():
@@ -80,6 +78,14 @@ def parse_args():
         default=None,
         choices=["cpu", "cuda", "mps"],
         help="Device for control group model (default: auto-detect)"
+    )
+    parser.add_argument(
+        "--randomize-positions",
+        action="store_true",
+        help=(
+            "Randomize A/B answer positions for synthetic benchmark prompts "
+            "(applies to TruthfulQA and GSM8k processors; useful for probe controls)"
+        )
     )
     return parser.parse_args()
 
@@ -134,9 +140,32 @@ def save_samples(
     print(f"Saved {len(samples)} samples to {output_path}")
 
 
+def assign_deterministic_sample_ids(samples: List[SycophancySample]) -> List[SycophancySample]:
+    """
+    Assign deterministic sample_id values to all samples.
+    """
+    for idx, sample in enumerate(samples):
+        source = sample.metadata.get("source", "sample")
+        # Keep ID content-based so ordering changes do not alter split grouping.
+        prefix = source
+        sample_dict = sample.to_dict()
+        sid = build_deterministic_sample_id(sample_dict, prefix=prefix)
+        sample.sample_id = sid
+        if sample.metadata is None:
+            sample.metadata = {}
+        sample.metadata["sample_id"] = sid
+        sample.metadata["dataset_index"] = idx
+    return samples
+
+
 def main():
     """Main execution function."""
     args = parse_args()
+
+    # Lazy imports so --help works in minimal environments without dataset deps.
+    from src.data.anthropic import AnthropicOpinionDataset
+    from src.data.truthful_qa import TruthfulQAFactualDataset
+    from src.data.gsm8k_reasoning import GSM8kReasoningDataset
 
     print("=" * 70)
     print("MULTI-DATASET SYCOPHANCY PIPELINE")
@@ -145,6 +174,7 @@ def main():
     print(f"  Samples per dataset: {args.samples}")
     print(f"  Output path: {args.output}")
     print(f"  Random seed: {args.seed}")
+    print(f"  Randomize A/B positions: {args.randomize_positions}")
     print("=" * 70)
 
     all_samples: List[SycophancySample] = []
@@ -172,7 +202,10 @@ def main():
     print("\n[2/3] Processing Factual Sycophancy (TruthfulQA)...")
     print("-" * 50)
     try:
-        factual_dataset = TruthfulQAFactualDataset(seed=args.seed)
+        factual_dataset = TruthfulQAFactualDataset(
+            seed=args.seed,
+            randomize_positions=args.randomize_positions,
+        )
         factual_samples = factual_dataset.get_samples(args.samples)
         all_samples.extend(factual_samples)
         summaries.append(create_dataset_summary(factual_samples, "truthfulqa_factual"))
@@ -190,7 +223,10 @@ def main():
     print("\n[3/3] Processing Reasoning Sycophancy (GSM8k)...")
     print("-" * 50)
     try:
-        reasoning_dataset = GSM8kReasoningDataset(seed=args.seed)
+        reasoning_dataset = GSM8kReasoningDataset(
+            seed=args.seed,
+            randomize_positions=args.randomize_positions,
+        )
         reasoning_samples = reasoning_dataset.get_samples(args.samples)
         all_samples.extend(reasoning_samples)
         summaries.append(create_dataset_summary(reasoning_samples, "gsm8k_reasoning"))
@@ -269,6 +305,7 @@ def main():
     print("=" * 70)
 
     if all_samples:
+        all_samples = assign_deterministic_sample_ids(all_samples)
         save_samples(all_samples, args.output)
 
         # Save metadata
@@ -276,6 +313,7 @@ def main():
             "created_at": datetime.now().isoformat(),
             "total_samples": len(all_samples),
             "seed": args.seed,
+            "randomize_positions": args.randomize_positions,
             "datasets": summaries
         }
 

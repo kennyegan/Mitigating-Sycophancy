@@ -26,11 +26,13 @@ import sys
 import os
 import json
 import math
+import re
 import argparse
 import subprocess
 import torch
 import torch.nn.functional as F
 import numpy as np
+from decimal import Decimal, InvalidOperation
 from datetime import datetime, timezone
 from tqdm import tqdm
 from pathlib import Path
@@ -40,6 +42,7 @@ from itertools import combinations
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.models import SycophancyModel
+from src.analysis import evaluation as eval_utils
 
 
 # =============================================================================
@@ -50,6 +53,7 @@ DEFAULT_DATA_PATH = "data/processed/master_sycophancy.jsonl"
 DEFAULT_OUTPUT = "results/head_ablation_results.json"
 DEFAULT_MODEL_NAME = "gpt2-medium"
 DEFAULT_HEADS = "L1H20,L5H5,L4H28"
+DEFAULT_SCHEMA_VERSION = "2.1"
 RANDOM_SEED = 42
 
 
@@ -86,6 +90,34 @@ def set_seeds(seed: int = RANDOM_SEED):
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
+
+
+def write_manifest(
+    output_path: str,
+    model_name: str,
+    data_path: str,
+    seed: int,
+    started_at: datetime,
+    ended_at: datetime,
+) -> None:
+    manifest = {
+        "script": "scripts/04_head_ablation.py",
+        "status": "completed",
+        "command": " ".join(sys.argv),
+        "git_hash": get_git_hash(),
+        "model": model_name,
+        "data": data_path,
+        "seed": seed,
+        "started_at": started_at.isoformat(),
+        "ended_at": ended_at.isoformat(),
+        "artifacts": [output_path],
+    }
+    output = Path(output_path)
+    manifest_dir = output.parent / "manifests"
+    manifest_dir.mkdir(parents=True, exist_ok=True)
+    manifest_path = manifest_dir / f"head_ablation_{ended_at.strftime('%Y%m%dT%H%M%SZ')}.json"
+    with open(manifest_path, "w") as f:
+        json.dump(manifest, f, indent=2)
 
 
 # =============================================================================
@@ -252,17 +284,21 @@ def evaluate_sycophancy_with_ablation(
         total_evaluated += 1
 
     overall_rate = total_sycophantic / total_evaluated if total_evaluated > 0 else 0.0
+    ci_low, ci_high = eval_utils.compute_wilson_ci(total_sycophantic, total_evaluated)
 
     per_source_rates = {}
     for source, counts in results_per_source.items():
+        src_low, src_high = eval_utils.compute_wilson_ci(counts['sycophantic'], counts['total'])
         per_source_rates[source] = {
             'sycophancy_rate': counts['sycophantic'] / counts['total'] if counts['total'] > 0 else 0.0,
+            'sycophancy_rate_ci': [float(src_low), float(src_high)],
             'sycophantic_count': counts['sycophantic'],
             'total': counts['total'],
         }
 
     return {
         'overall_sycophancy_rate': overall_rate,
+        'overall_sycophancy_rate_ci': [float(ci_low), float(ci_high)],
         'total_sycophantic': total_sycophantic,
         'total_evaluated': total_evaluated,
         'skipped': skipped,
@@ -274,6 +310,137 @@ def evaluate_sycophancy_with_ablation(
 # MMLU Evaluation
 # =============================================================================
 
+def build_ablation_hooks(
+    heads_to_ablate: Optional[List[Tuple[int, int]]],
+    mean_activations: Optional[Dict[int, torch.Tensor]] = None,
+) -> List[Tuple[str, callable]]:
+    hooks = []
+    if not heads_to_ablate:
+        return hooks
+
+    for layer, head in heads_to_ablate:
+        hook_name = f"blocks.{layer}.attn.hook_result"
+        if mean_activations is not None and layer in mean_activations:
+            mean_act = mean_activations[layer]
+
+            def mean_hook(activation, hook, h=head, m=mean_act):
+                activation[:, :, h, :] = m[h, :].to(activation.device)
+                return activation
+
+            hooks.append((hook_name, mean_hook))
+        else:
+            def zero_hook(activation, hook, h=head):
+                activation[:, :, h, :] = 0.0
+                return activation
+
+            hooks.append((hook_name, zero_hook))
+    return hooks
+
+
+def _choice_variants(choice: str) -> List[str]:
+    return [
+        choice,
+        f" {choice}",
+        f"({choice}",
+        f"({choice})",
+        f"{choice})",
+        choice.lower(),
+        f" {choice.lower()}",
+    ]
+
+
+def _choice_score(last_logits: torch.Tensor, _model, choice: str) -> float:
+    scores = []
+    for variant in _choice_variants(choice):
+        try:
+            toks = _model.to_tokens(variant, prepend_bos=False)
+            if toks.shape[1] == 1:
+                token_id = toks[0, 0].item()
+                scores.append(float(last_logits[token_id].item()))
+        except Exception:
+            continue
+    return max(scores) if scores else float("-inf")
+
+
+def _normalize_numeric_answer(raw: str) -> Optional[str]:
+    if raw is None:
+        return None
+    clean = raw.strip().replace(",", "")
+    if clean.startswith("+"):
+        clean = clean[1:]
+    if not clean:
+        return None
+
+    try:
+        value = Decimal(clean)
+    except InvalidOperation:
+        return None
+
+    if value == value.to_integral_value():
+        return str(int(value))
+
+    text = format(value.normalize(), "f")
+    if "." in text:
+        text = text.rstrip("0").rstrip(".")
+    return text
+
+
+def _extract_last_numeric(text: str) -> Optional[str]:
+    matches = re.findall(r"[-+]?\d[\d,]*(?:\.\d+)?", text or "")
+    if not matches:
+        return None
+    return _normalize_numeric_answer(matches[-1])
+
+
+def _extract_gsm8k_gold(answer_text: str) -> Optional[str]:
+    if not answer_text:
+        return None
+    if "####" in answer_text:
+        return _normalize_numeric_answer(answer_text.split("####")[-1].strip())
+    return _extract_last_numeric(answer_text)
+
+
+def bootstrap_retention_ci(
+    baseline_flags: List[int],
+    condition_flags: List[int],
+    confidence: float = 0.95,
+    n_bootstrap: int = 2000,
+    seed: int = RANDOM_SEED,
+) -> List[float]:
+    if not baseline_flags or not condition_flags:
+        return [0.0, 0.0]
+
+    n = min(len(baseline_flags), len(condition_flags))
+    base = np.asarray(baseline_flags[:n], dtype=float)
+    cond = np.asarray(condition_flags[:n], dtype=float)
+    if n < 2:
+        base_mean = float(np.mean(base)) if n else 0.0
+        cond_mean = float(np.mean(cond)) if n else 0.0
+        ratio = cond_mean / base_mean if base_mean > 0 else 0.0
+        return [ratio, ratio]
+
+    rng = np.random.RandomState(seed)
+    ratios = []
+    for _ in range(n_bootstrap):
+        idx = rng.randint(0, n, size=n)
+        base_mean = float(np.mean(base[idx]))
+        cond_mean = float(np.mean(cond[idx]))
+        ratios.append(cond_mean / base_mean if base_mean > 0 else 0.0)
+
+    alpha = 1.0 - confidence
+    return [
+        float(np.percentile(ratios, 100 * alpha / 2)),
+        float(np.percentile(ratios, 100 * (1 - alpha / 2))),
+    ]
+
+
+def _paired_flags(base: Dict, cond: Dict) -> Tuple[List[int], List[int]]:
+    base_map = {x['id']: int(x['correct']) for x in base.get('per_example', [])}
+    cond_map = {x['id']: int(x['correct']) for x in cond.get('per_example', [])}
+    shared = sorted(set(base_map.keys()) & set(cond_map.keys()))
+    return [base_map[i] for i in shared], [cond_map[i] for i in shared]
+
+
 @torch.no_grad()
 def evaluate_mmlu(
     model: SycophancyModel,
@@ -282,33 +449,14 @@ def evaluate_mmlu(
     mean_activations: Optional[Dict[int, torch.Tensor]] = None,
     seed: int = RANDOM_SEED,
 ) -> Dict:
-    """Evaluate MMLU accuracy with optional head ablation."""
+    """Evaluate MMLU accuracy with tokenization-robust MCQ scoring."""
     try:
         from datasets import load_dataset
     except ImportError:
         return {'error': 'datasets library not installed', 'accuracy': 0.0, 'n_evaluated': 0}
 
     _model = model.model
-
-    # Build hooks
-    hooks = []
-    if heads_to_ablate:
-        for layer, head in heads_to_ablate:
-            hook_name = f"blocks.{layer}.attn.hook_result"
-            if mean_activations is not None and layer in mean_activations:
-                mean_act = mean_activations[layer]
-
-                def mean_hook(activation, hook, h=head, m=mean_act):
-                    activation[:, :, h, :] = m[h, :].to(activation.device)
-                    return activation
-
-                hooks.append((hook_name, mean_hook))
-            else:
-                def zero_hook(activation, hook, h=head):
-                    activation[:, :, h, :] = 0.0
-                    return activation
-
-                hooks.append((hook_name, zero_hook))
+    hooks = build_ablation_hooks(heads_to_ablate, mean_activations)
 
     try:
         ds = load_dataset("cais/mmlu", "all", split="test", trust_remote_code=True)
@@ -324,6 +472,7 @@ def evaluate_mmlu(
 
     correct = 0
     evaluated = 0
+    per_example = []
     choices = ["A", "B", "C", "D"]
 
     for idx in tqdm(indices, desc="MMLU evaluation"):
@@ -335,11 +484,11 @@ def evaluate_mmlu(
         if not question or len(answer_choices) < 4:
             continue
 
-        # Format as MCQ
-        prompt = f"Question: {question}\n"
+        prompt = "Answer with one letter only (A, B, C, or D).\n"
+        prompt += f"Question: {question}\n"
         for i, choice in enumerate(answer_choices):
             prompt += f"({choices[i]}) {choice}\n"
-        prompt += "Answer: ("
+        prompt += "Answer:"
 
         try:
             prompt_tokens = _model.to_tokens(prompt, prepend_bos=True)
@@ -348,31 +497,27 @@ def evaluate_mmlu(
                 with _model.hooks(fwd_hooks=hooks):
                     logits = _model(prompt_tokens)
             else:
-                logits = _model(prompt_tokens)
+                    logits = _model(prompt_tokens)
 
             last_logits = logits[0, -1, :]
-
-            # Get logits for A, B, C, D
-            choice_logits = []
-            for c in choices:
-                try:
-                    token_id = _model.to_single_token(c)
-                    choice_logits.append(last_logits[token_id].item())
-                except Exception:
-                    choice_logits.append(float('-inf'))
-
+            choice_logits = [_choice_score(last_logits, _model, c) for c in choices]
             predicted = int(np.argmax(choice_logits))
-            if predicted == correct_idx:
-                correct += 1
+            is_correct = int(predicted == correct_idx)
+            correct += is_correct
             evaluated += 1
+            per_example.append({'id': int(idx), 'correct': is_correct})
         except Exception:
             continue
 
     accuracy = correct / evaluated if evaluated > 0 else 0.0
+    ci_low, ci_high = eval_utils.compute_wilson_ci(correct, evaluated)
     return {
         'accuracy': accuracy,
+        'accuracy_ci': [float(ci_low), float(ci_high)],
         'correct': correct,
         'n_evaluated': evaluated,
+        'per_example': per_example,
+        'scoring': 'max-logit over tokenization variants for A/B/C/D',
     }
 
 
@@ -388,33 +533,14 @@ def evaluate_gsm8k(
     mean_activations: Optional[Dict[int, torch.Tensor]] = None,
     seed: int = RANDOM_SEED,
 ) -> Dict:
-    """Evaluate GSM8k accuracy with optional head ablation (logit-based)."""
+    """Evaluate GSM8k with strict normalized numeric extraction from generation."""
     try:
         from datasets import load_dataset
     except ImportError:
         return {'error': 'datasets library not installed', 'accuracy': 0.0, 'n_evaluated': 0}
 
     _model = model.model
-
-    # Build hooks
-    hooks = []
-    if heads_to_ablate:
-        for layer, head in heads_to_ablate:
-            hook_name = f"blocks.{layer}.attn.hook_result"
-            if mean_activations is not None and layer in mean_activations:
-                mean_act = mean_activations[layer]
-
-                def mean_hook(activation, hook, h=head, m=mean_act):
-                    activation[:, :, h, :] = m[h, :].to(activation.device)
-                    return activation
-
-                hooks.append((hook_name, mean_hook))
-            else:
-                def zero_hook(activation, hook, h=head):
-                    activation[:, :, h, :] = 0.0
-                    return activation
-
-                hooks.append((hook_name, zero_hook))
+    hooks = build_ablation_hooks(heads_to_ablate, mean_activations)
 
     try:
         ds = load_dataset("openai/gsm8k", "main", split="test")
@@ -427,6 +553,7 @@ def evaluate_gsm8k(
 
     correct = 0
     evaluated = 0
+    per_example = []
 
     for idx in tqdm(indices, desc="GSM8k evaluation"):
         item = ds[int(idx)]
@@ -436,67 +563,54 @@ def evaluate_gsm8k(
         if not question or not answer_text:
             continue
 
-        # Extract numeric answer from GSM8k format (after ####)
-        if '####' in answer_text:
-            true_answer = answer_text.split('####')[-1].strip().replace(',', '')
-        else:
+        true_answer = _extract_gsm8k_gold(answer_text)
+        if true_answer is None:
             continue
 
-        try:
-            true_num = float(true_answer)
-        except ValueError:
-            continue
-
-        # Simple evaluation: present the problem and check if model generates
-        # the correct first number token
-        prompt = f"Q: {question}\nA: The answer is "
+        prompt = (
+            "Solve the math problem. End with a numeric final answer.\n"
+            f"Question: {question}\n"
+            "Answer:"
+        )
 
         try:
             prompt_tokens = _model.to_tokens(prompt, prepend_bos=True)
 
-            if hooks:
-                with _model.hooks(fwd_hooks=hooks):
-                    logits = _model(prompt_tokens)
-            else:
-                logits = _model(prompt_tokens)
-
-            # Generate a few tokens greedily to get the answer
             generated_tokens = []
-            current_logits = logits
             current_tokens = prompt_tokens
 
-            for _ in range(10):  # Generate up to 10 tokens
-                next_token = current_logits[0, -1, :].argmax().unsqueeze(0).unsqueeze(0)
-                generated_tokens.append(next_token[0, 0].item())
-                current_tokens = torch.cat([current_tokens, next_token], dim=1)
-
+            for _ in range(96):
                 if hooks:
                     with _model.hooks(fwd_hooks=hooks):
                         current_logits = _model(current_tokens)
                 else:
                     current_logits = _model(current_tokens)
 
-            generated_text = _model.to_string(generated_tokens)
+                next_token = int(torch.argmax(current_logits[0, -1, :]).item())
+                generated_tokens.append(next_token)
+                next_tensor = torch.tensor([[next_token]], device=current_tokens.device)
+                current_tokens = torch.cat([current_tokens, next_tensor], dim=1)
+                if next_token in {0, 2}:  # EOS variants
+                    break
 
-            # Extract number from generated text
-            import re
-            numbers = re.findall(r'-?\d+\.?\d*', generated_text)
-            if numbers:
-                try:
-                    pred_num = float(numbers[0].replace(',', ''))
-                    if abs(pred_num - true_num) < 0.01:
-                        correct += 1
-                except ValueError:
-                    pass
+            generated_text = _model.to_string(generated_tokens)
+            pred_answer = _extract_last_numeric(generated_text)
+            is_correct = int(pred_answer is not None and pred_answer == true_answer)
+            correct += is_correct
             evaluated += 1
+            per_example.append({'id': int(idx), 'correct': is_correct})
         except Exception:
             continue
 
     accuracy = correct / evaluated if evaluated > 0 else 0.0
+    ci_low, ci_high = eval_utils.compute_wilson_ci(correct, evaluated)
     return {
         'accuracy': accuracy,
+        'accuracy_ci': [float(ci_low), float(ci_high)],
         'correct': correct,
         'n_evaluated': evaluated,
+        'per_example': per_example,
+        'scoring': 'strict normalized numeric equality on generated completion',
     }
 
 
@@ -702,10 +816,29 @@ def run_ablation_pipeline(
         if baseline_mmlu is not None and 'mmlu' in cond_result:
             mmlu_acc = cond_result['mmlu'].get('accuracy', 0)
             cond_result['mmlu_retained'] = mmlu_acc / baseline_mmlu if baseline_mmlu > 0 else 0.0
+            base_flags, cond_flags = _paired_flags(results['baseline']['mmlu'], cond_result['mmlu'])
+            cond_result['mmlu_retained_ci'] = bootstrap_retention_ci(
+                base_flags,
+                cond_flags,
+                seed=seed + 1,
+            )
 
         if baseline_gsm8k is not None and 'gsm8k' in cond_result:
             gsm8k_acc = cond_result['gsm8k'].get('accuracy', 0)
             cond_result['gsm8k_retained'] = gsm8k_acc / baseline_gsm8k if baseline_gsm8k > 0 else 0.0
+            base_flags, cond_flags = _paired_flags(results['baseline']['gsm8k'], cond_result['gsm8k'])
+            cond_result['gsm8k_retained_ci'] = bootstrap_retention_ci(
+                base_flags,
+                cond_flags,
+                seed=seed + 2,
+            )
+
+    # Keep JSON artifacts compact while preserving metrics/CIs.
+    for cond_result in results.values():
+        if 'mmlu' in cond_result and 'per_example' in cond_result['mmlu']:
+            cond_result['mmlu'].pop('per_example', None)
+        if 'gsm8k' in cond_result and 'per_example' in cond_result['gsm8k']:
+            cond_result['gsm8k'].pop('per_example', None)
 
     return results
 
@@ -755,6 +888,7 @@ Examples:
 
 def main():
     args = parse_args()
+    started_at = datetime.now(timezone.utc)
     set_seeds(args.seed)
 
     heads = parse_heads(args.heads)
@@ -796,6 +930,12 @@ def main():
 
     # Add metadata
     output = {
+        'schema_version': DEFAULT_SCHEMA_VERSION,
+        'analysis_mode': 'head_ablation_intervention',
+        'split_definition': (
+            'Ablation conditions evaluated on shared benchmark dataset; '
+            'capability subsets use fixed-seed sampling for paired retention estimates.'
+        ),
         'metadata': {
             'model_name': args.model,
             'timestamp': datetime.now(timezone.utc).isoformat(),
@@ -844,6 +984,15 @@ def main():
         print(line)
 
     print("=" * 80)
+    ended_at = datetime.now(timezone.utc)
+    write_manifest(
+        output_path=args.output,
+        model_name=args.model,
+        data_path=args.data,
+        seed=args.seed,
+        started_at=started_at,
+        ended_at=ended_at,
+    )
     return 0
 
 
