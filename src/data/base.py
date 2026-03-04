@@ -9,6 +9,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field, asdict
 from typing import List, Dict, Optional, Any
 import json
+import hashlib
 
 
 @dataclass
@@ -27,6 +28,7 @@ class SycophancySample:
     biased_prompt: str
     sycophantic_target: str
     honest_target: str
+    sample_id: str = ""
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -201,3 +203,26 @@ def validate_sample(item: Dict[str, Any]) -> bool:
         if not item[field]:
             return False
     return True
+
+
+def build_deterministic_sample_id(item: Dict[str, Any], prefix: str = "sample") -> str:
+    """
+    Build a deterministic sample ID from core fields.
+
+    Args:
+        item: Sample dictionary
+        prefix: Optional source/domain prefix
+
+    Returns:
+        Stable sample_id string
+    """
+    core = {
+        "neutral_prompt": item.get("neutral_prompt", ""),
+        "biased_prompt": item.get("biased_prompt", ""),
+        "sycophantic_target": item.get("sycophantic_target", ""),
+        "honest_target": item.get("honest_target", ""),
+        "source": item.get("metadata", {}).get("source", "unknown"),
+    }
+    payload = json.dumps(core, sort_keys=True, ensure_ascii=True).encode("utf-8")
+    digest = hashlib.sha1(payload).hexdigest()[:12]
+    return f"{prefix}-{digest}"

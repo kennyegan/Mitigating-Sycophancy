@@ -10,6 +10,8 @@ from .evaluation import (
     compute_target_log_probability,
     two_way_softmax,
     compute_confidence_metrics,
+    compute_length_normalized_confidence_metrics,
+    exact_binomial_test,
 
     # Statistics
     compute_statistics,
@@ -50,6 +52,8 @@ __all__ = [
     'compute_target_log_probability',
     'two_way_softmax',
     'compute_confidence_metrics',
+    'compute_length_normalized_confidence_metrics',
+    'exact_binomial_test',
     'compute_statistics',
     'run_statistical_tests',
     'compute_wilson_ci',
