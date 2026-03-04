@@ -5,11 +5,6 @@
 #SBATCH --time=06:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --partition=gpu
-#SBATCH --account=pi_larsonj_wit_edu
-#SBATCH --gres=gpu:a100:1
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=80G
 
 # =============================================================================
 # Job 9: Top-10 Head Ablation — Circuit Redundancy Test
@@ -38,6 +33,14 @@ export TOKENIZERS_PARALLELISM=false
 
 mkdir -p results slurm/logs
 
+check_artifact() {
+    local path="$1"
+    if [ ! -s "${path}" ]; then
+        echo "ERROR: expected artifact missing or empty: ${path}"
+        exit 2
+    fi
+}
+
 echo "============================================"
 echo "SLURM Job: Top-10 Head Ablation"
 echo "Model: ${PRIMARY_MODEL}"
@@ -57,6 +60,8 @@ python scripts/04_head_ablation.py \
     --gsm8k-samples 200 \
     --seed 42 \
     --output results/top10_ablation_results.json
+
+check_artifact results/top10_ablation_results.json
 
 echo "============================================"
 echo "Top-10 ablation complete: $(date)"

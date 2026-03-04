@@ -21,14 +21,7 @@ set -euo pipefail
 
 source "/home/egank2_wit_edu/Mitigating-Sycophancy/slurm/config.sh"
 
-#SBATCH --partition=${SLURM_PARTITION}
-#SBATCH --gres=gpu:${GPUS_PER_NODE}
-#SBATCH --cpus-per-task=${CPUS_PER_TASK}
-#SBATCH --mem=${MEM}
 
-if [ -n "${SLURM_ACCOUNT}" ] && [ "${SLURM_ACCOUNT}" != "TODO_ACCOUNT" ]; then
-    export SBATCH_ACCOUNT="${SLURM_ACCOUNT}"
-fi
 
 module load ${CONDA_MODULE}
 conda activate ${CONDA_ENV}
@@ -39,6 +32,14 @@ export TORCH_HOME="${TORCH_HOME}"
 export TOKENIZERS_PARALLELISM=false
 
 mkdir -p data/processed/control_groups slurm/logs
+
+check_artifact() {
+    local path="$1"
+    if [ ! -s "${path}" ]; then
+        echo "ERROR: expected artifact missing or empty: ${path}"
+        exit 2
+    fi
+}
 
 echo "============================================"
 echo "SLURM Job: Control Groups"
@@ -53,6 +54,11 @@ python scripts/00_data_setup.py \
     --seed 42 \
     --control-groups \
     --control-model "${PRIMARY_MODEL}"
+
+check_artifact data/processed/control_groups/fictional_entities.jsonl
+check_artifact data/processed/control_groups/uncertain_knowledge.jsonl
+check_artifact data/processed/control_groups/adversarially_true.jsonl
+check_artifact data/processed/control_groups/control_groups_metadata.json
 
 echo "============================================"
 echo "Control groups complete: $(date)"

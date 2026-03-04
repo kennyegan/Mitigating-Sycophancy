@@ -23,14 +23,7 @@ set -euo pipefail
 
 source "/home/egank2_wit_edu/Mitigating-Sycophancy/slurm/config.sh"
 
-#SBATCH --partition=${SLURM_PARTITION}
-#SBATCH --gres=gpu:${GPUS_PER_NODE}
-#SBATCH --cpus-per-task=${CPUS_PER_TASK}
-#SBATCH --mem=${MEM}
 
-if [ -n "${SLURM_ACCOUNT}" ] && [ "${SLURM_ACCOUNT}" != "TODO_ACCOUNT" ]; then
-    export SBATCH_ACCOUNT="${SLURM_ACCOUNT}"
-fi
 
 module load ${CONDA_MODULE}
 conda activate ${CONDA_ENV}
@@ -41,6 +34,14 @@ export TORCH_HOME="${TORCH_HOME}"
 export TOKENIZERS_PARALLELISM=false
 
 mkdir -p results slurm/logs
+
+check_artifact() {
+    local path="$1"
+    if [ ! -s "${path}" ]; then
+        echo "ERROR: expected artifact missing or empty: ${path}"
+        exit 2
+    fi
+}
 
 echo "============================================"
 echo "SLURM Job: Activation Patching"
@@ -58,6 +59,9 @@ python scripts/03_activation_patching.py \
     --head-top-k 5 \
     --seed 42 \
     --output-dir results
+
+check_artifact results/patching_heatmap.json
+check_artifact results/head_importance.json
 
 echo "============================================"
 echo "Patching complete: $(date)"

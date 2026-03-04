@@ -2,14 +2,9 @@
 #SBATCH --job-name=syc-steer
 #SBATCH --output=slurm/logs/steering_%j.out
 #SBATCH --error=slurm/logs/steering_%j.err
-#SBATCH --time=08:00:00
+#SBATCH --time=2-00:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --partition=gpu
-#SBATCH --account=pi_larsonj_wit_edu
-#SBATCH --gres=gpu:a100:1
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=80G
 
 # =============================================================================
 # Job 12: Representation Steering
@@ -40,6 +35,22 @@ export TOKENIZERS_PARALLELISM=false
 
 mkdir -p results slurm/logs
 
+check_artifact() {
+    local path="$1"
+    if [ ! -s "${path}" ]; then
+        echo "ERROR: expected artifact missing or empty: ${path}"
+        exit 2
+    fi
+}
+
+STEERING_OUT="results/steering_results.json"
+STEERING_CKPT="${STEERING_OUT}.checkpoint.json"
+RESUME_FLAG=()
+if [ -s "${STEERING_CKPT}" ]; then
+    echo "Existing checkpoint detected, resuming: ${STEERING_CKPT}"
+    RESUME_FLAG=(--resume-from-checkpoint)
+fi
+
 echo "============================================"
 echo "SLURM Job: Representation Steering"
 echo "Model: ${PRIMARY_MODEL}"
@@ -61,7 +72,13 @@ python scripts/05_representation_steering.py \
     --mmlu-samples 500 \
     --gsm8k-samples 1319 \
     --seed 42 \
-    --output results/steering_results.json
+    --checkpoint-path "${STEERING_CKPT}" \
+    "${RESUME_FLAG[@]}" \
+    --save-every-condition \
+    --output "${STEERING_OUT}"
+
+check_artifact "${STEERING_OUT}"
+check_artifact "${STEERING_CKPT}"
 
 echo "============================================"
 echo "Representation steering complete: $(date)"

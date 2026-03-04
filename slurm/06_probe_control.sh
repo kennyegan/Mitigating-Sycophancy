@@ -21,14 +21,7 @@ set -euo pipefail
 
 source "/home/egank2_wit_edu/Mitigating-Sycophancy/slurm/config.sh"
 
-#SBATCH --partition=${SLURM_PARTITION}
-#SBATCH --gres=gpu:${GPUS_PER_NODE}
-#SBATCH --cpus-per-task=${CPUS_PER_TASK}
-#SBATCH --mem=80G
 
-if [ -n "${SLURM_ACCOUNT}" ] && [ "${SLURM_ACCOUNT}" != "TODO_ACCOUNT" ]; then
-    export SBATCH_ACCOUNT="${SLURM_ACCOUNT}"
-fi
 
 module load ${CONDA_MODULE}
 conda activate ${CONDA_ENV}
@@ -39,6 +32,14 @@ export TORCH_HOME="${TORCH_HOME}"
 export TOKENIZERS_PARALLELISM=false
 
 mkdir -p results slurm/logs
+
+check_artifact() {
+    local path="$1"
+    if [ ! -s "${path}" ]; then
+        echo "ERROR: expected artifact missing or empty: ${path}"
+        exit 2
+    fi
+}
 
 echo "============================================"
 echo "SLURM Job: Probe Control Experiment"
@@ -56,6 +57,8 @@ python scripts/02b_probe_control.py \
     --n-folds 5 \
     --seed 42 \
     --output results/probe_control_results.json
+
+check_artifact results/probe_control_results.json
 
 echo "============================================"
 echo "Probe control complete: $(date)"

@@ -5,11 +5,6 @@
 #SBATCH --time=06:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --partition=gpu
-#SBATCH --account=pi_larsonj_wit_edu
-#SBATCH --gres=gpu:a100:1
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=80G
 
 # =============================================================================
 # Job 10: Balanced Probe Control — Class Balance Fix
@@ -40,6 +35,14 @@ export TOKENIZERS_PARALLELISM=false
 
 mkdir -p data/processed results slurm/logs
 
+check_artifact() {
+    local path="$1"
+    if [ ! -s "${path}" ]; then
+        echo "ERROR: expected artifact missing or empty: ${path}"
+        exit 2
+    fi
+}
+
 echo "============================================"
 echo "SLURM Job: Balanced Probe Control"
 echo "Model: ${PRIMARY_MODEL}"
@@ -57,6 +60,9 @@ python scripts/00_data_setup.py \
     --output data/processed/master_sycophancy_balanced.jsonl \
     --seed 42
 
+check_artifact data/processed/master_sycophancy_balanced.jsonl
+check_artifact data/processed/master_sycophancy_balanced_metadata.json
+
 echo ""
 echo "[Phase 2] Running probe control on balanced data..."
 echo ""
@@ -66,6 +72,8 @@ python scripts/02b_probe_control.py \
     --data data/processed/master_sycophancy_balanced.jsonl \
     --output results/probe_control_balanced_results.json \
     --seed 42
+
+check_artifact results/probe_control_balanced_results.json
 
 echo "============================================"
 echo "Balanced probe control complete: $(date)"

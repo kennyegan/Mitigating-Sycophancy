@@ -1,0 +1,37 @@
+============================================
+SLURM Job: Activation Patching
+Model: meta-llama/Meta-Llama-3-8B-Instruct
+Node: gpu023
+GPU: NVIDIA A100-SXM4-80GB, 81920 MiB
+Time: Wed Mar  4 04:50:03 UTC 2026
+============================================
+================================================================================
+CAUSAL ACTIVATION PATCHING — Sycophancy Circuit Discovery
+================================================================================
+Model:          meta-llama/Meta-Llama-3-8B-Instruct
+Data:           data/processed/master_sycophancy.jsonl
+Max Samples:    100
+Max Positions:  50
+Head Top-K:     5
+Seed:           42
+Git Hash:       38765470
+
+Loaded 100 samples
+
+Loading meta-llama/Meta-Llama-3-8B-Instruct on cuda with dtype=torch.float16...
+Loaded pretrained model meta-llama/Meta-Llama-3-8B-Instruct into HookedTransformer
+Loaded! Layers: 32, Heads: 32, d_model: 4096
+Patching 32 layers: 0..31
+
+[Phase 1] Layer × Position Patching
+------------------------------------------------------------
+
+  Successful: 34 | Skipped: 66
+
+  Critical layers (top 5): [1, 2, 4, 3, 5]
+  Mean total effect: 2.1050
+
+Layer results saved to results/patching_heatmap.json
+
+[Phase 2] Head-Level Patching (layers [1, 2, 4, 3, 5])
+------------------------------------------------------------

@@ -22,14 +22,7 @@ set -euo pipefail
 
 source "/home/egank2_wit_edu/Mitigating-Sycophancy/slurm/config.sh"
 
-#SBATCH --partition=${SLURM_PARTITION}
-#SBATCH --gres=gpu:${GPUS_PER_NODE}
-#SBATCH --cpus-per-task=${CPUS_PER_TASK}
-#SBATCH --mem=80G
 
-if [ -n "${SLURM_ACCOUNT}" ] && [ "${SLURM_ACCOUNT}" != "TODO_ACCOUNT" ]; then
-    export SBATCH_ACCOUNT="${SLURM_ACCOUNT}"
-fi
 
 module load ${CONDA_MODULE}
 conda activate ${CONDA_ENV}
@@ -40,6 +33,14 @@ export TORCH_HOME="${TORCH_HOME}"
 export TOKENIZERS_PARALLELISM=false
 
 mkdir -p results/control_groups slurm/logs
+
+check_artifact() {
+    local path="$1"
+    if [ ! -s "${path}" ]; then
+        echo "ERROR: expected artifact missing or empty: ${path}"
+        exit 2
+    fi
+}
 
 echo "============================================"
 echo "SLURM Job: Control Group Analysis"
@@ -114,6 +115,14 @@ python scripts/03_activation_patching.py \
     --head-top-k 5 \
     --seed 42 \
     --output-dir results/control_groups/patching_fictional
+
+check_artifact results/control_groups/baseline_fictional.json
+check_artifact results/control_groups/baseline_uncertain.json
+check_artifact results/control_groups/baseline_adversarial.json
+check_artifact results/control_groups/probe_fictional.json
+check_artifact results/control_groups/probe_adversarial.json
+check_artifact results/control_groups/patching_fictional/patching_heatmap.json
+check_artifact results/control_groups/patching_fictional/head_importance.json
 
 echo ""
 echo "============================================"

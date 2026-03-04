@@ -16,21 +16,14 @@
 # Requests 80GB RAM to be safe.
 #
 # Expected runtime: ~4-6 hours on A100
-# Output: results/probe_results_llama3.json
+# Output: results/probe_results_neutral_transfer.json, results/probe_results_mixed_diagnostic.json
 # =============================================================================
 
 set -euo pipefail
 
 source "/home/egank2_wit_edu/Mitigating-Sycophancy/slurm/config.sh"
 
-#SBATCH --partition=${SLURM_PARTITION}
-#SBATCH --gres=gpu:${GPUS_PER_NODE}
-#SBATCH --cpus-per-task=${CPUS_PER_TASK}
-#SBATCH --mem=80G
 
-if [ -n "${SLURM_ACCOUNT}" ] && [ "${SLURM_ACCOUNT}" != "TODO_ACCOUNT" ]; then
-    export SBATCH_ACCOUNT="${SLURM_ACCOUNT}"
-fi
 
 module load ${CONDA_MODULE}
 conda activate ${CONDA_ENV}
@@ -42,6 +35,14 @@ export TOKENIZERS_PARALLELISM=false
 
 mkdir -p results slurm/logs
 
+check_artifact() {
+    local path="$1"
+    if [ ! -s "${path}" ]; then
+        echo "ERROR: expected artifact missing or empty: ${path}"
+        exit 2
+    fi
+}
+
 echo "============================================"
 echo "SLURM Job: Linear Probes"
 echo "Model: ${PRIMARY_MODEL}"
@@ -50,29 +51,35 @@ echo "GPU: $(nvidia-smi --query-gpu=name,memory.total --format=csv,noheader 2>/d
 echo "Time: $(date)"
 echo "============================================"
 
-# Run probes at both positions with logistic regression
+# Claim-bearing run: neutral_transfer
 python scripts/02_train_probes.py \
     --model "${PRIMARY_MODEL}" \
     --data data/processed/master_sycophancy.jsonl \
     --probe-position both \
     --probe-type logistic \
+    --analysis-mode neutral_transfer \
     --batch-size 8 \
     --n-folds 5 \
     --seed 42 \
-    --output results/probe_results_llama3_logistic.json
+    --output results/probe_results_neutral_transfer.json
 
-echo "--- Logistic probes done, now running Ridge ---"
+check_artifact results/probe_results_neutral_transfer.json
 
-# Also run with Ridge for comparison (proposal says test both)
+echo "--- Neutral-transfer complete, now running mixed diagnostic ---"
+
+# Diagnostic run: mixed_diagnostic (format-confound risk estimate)
 python scripts/02_train_probes.py \
     --model "${PRIMARY_MODEL}" \
     --data data/processed/master_sycophancy.jsonl \
     --probe-position both \
-    --probe-type ridge \
+    --probe-type logistic \
+    --analysis-mode mixed_diagnostic \
     --batch-size 8 \
     --n-folds 5 \
     --seed 42 \
-    --output results/probe_results_llama3_ridge.json
+    --output results/probe_results_mixed_diagnostic.json
+
+check_artifact results/probe_results_mixed_diagnostic.json
 
 echo "============================================"
 echo "Probes complete: $(date)"

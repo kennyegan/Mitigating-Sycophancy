@@ -31,4 +31,4 @@ export BASE_MODEL="meta-llama/Meta-Llama-3-8B"
 export REPLICATION_MODEL="mistralai/Mistral-7B-Instruct-v0.3"
 
 # --- HuggingFace token (needed for Llama-3 gated models) ---
-export HF_TOKEN="REMOVED_HF_TOKEN"
+export HF_TOKEN="${HF_TOKEN:-}"

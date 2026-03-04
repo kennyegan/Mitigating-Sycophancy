@@ -19,16 +19,8 @@ set -euo pipefail
 # Load cluster config
 source "/home/egank2_wit_edu/Mitigating-Sycophancy/slurm/config.sh"
 
-# Apply SLURM resource settings from config
-#SBATCH --partition=${SLURM_PARTITION}
-#SBATCH --gres=gpu:${GPUS_PER_NODE}
-#SBATCH --cpus-per-task=${CPUS_PER_TASK}
-#SBATCH --mem=${MEM}
 
 # Account/QOS (only if set)
-if [ -n "${SLURM_ACCOUNT}" ] && [ "${SLURM_ACCOUNT}" != "TODO_ACCOUNT" ]; then
-    export SBATCH_ACCOUNT="${SLURM_ACCOUNT}"
-fi
 
 # Setup environment
 module load ${CONDA_MODULE}
@@ -42,6 +34,14 @@ export TOKENIZERS_PARALLELISM=false
 
 # Create output dirs
 mkdir -p results slurm/logs
+
+check_artifact() {
+    local path="$1"
+    if [ ! -s "${path}" ]; then
+        echo "ERROR: expected artifact missing or empty: ${path}"
+        exit 2
+    fi
+}
 
 echo "============================================"
 echo "SLURM Job: Baseline Evaluation"
@@ -59,6 +59,9 @@ python scripts/01_run_baseline.py \
     --output-csv results/baseline_llama3_detailed.csv \
     --seed 42 \
     --run-sanity-checks
+
+check_artifact results/baseline_llama3_summary.json
+check_artifact results/baseline_llama3_detailed.csv
 
 echo "============================================"
 echo "Baseline complete: $(date)"

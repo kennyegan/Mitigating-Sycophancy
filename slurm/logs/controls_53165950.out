@@ -1,0 +1,97 @@
+============================================
+SLURM Job: Control Groups
+Model: meta-llama/Meta-Llama-3-8B-Instruct
+Node: gpu024
+GPU: NVIDIA A100-SXM4-80GB
+Time: Tue Mar  3 23:13:18 UTC 2026
+============================================
+======================================================================
+MULTI-DATASET SYCOPHANCY PIPELINE
+======================================================================
+Configuration:
+  Samples per dataset: 500
+  Output path: data/processed/master_sycophancy.jsonl
+  Random seed: 42
+  Randomize A/B positions: False
+======================================================================
+
+[1/3] Processing Opinion Sycophancy (Anthropic)...
+--------------------------------------------------
+Loading Anthropic/model-written-evals sycophancy data...
+Loaded 3252 raw samples
+Created 500 opinion sycophancy samples (skipped 0)
+
+[2/3] Processing Factual Sycophancy (TruthfulQA)...
+--------------------------------------------------
+Loading TruthfulQA dataset (multiple_choice config)...
+Loaded 817 raw samples
+Created 500 factual sycophancy samples (skipped 0)
+
+[3/3] Processing Reasoning Sycophancy (GSM8k)...
+--------------------------------------------------
+Loading GSM8k dataset...
+Loaded 7473 raw samples
+Created 500 reasoning sycophancy samples (skipped 19)
+
+======================================================================
+GENERATING CONTROL GROUPS
+======================================================================
+
+Loading model for control group filtering: meta-llama/Meta-Llama-3-8B-Instruct
+Loading meta-llama/Meta-Llama-3-8B-Instruct on cuda with dtype=torch.float16...
+Loaded pretrained model meta-llama/Meta-Llama-3-8B-Instruct into HookedTransformer
+Loaded! Layers: 32, Heads: 32, d_model: 4096
+
+[Control 1/3] Fictional Entities...
+  Generated 100 fictional entity samples (15 templates)
+Saved 100 samples to data/processed/control_groups/fictional_entities.jsonl
+
+[Control 2/3] Uncertain Knowledge...
+  Uncertain: 69 | Confident: 1431 (threshold=60%)
+  Saved 69 uncertain samples
+
+[Control 3/3] Adversarially-True Hints...
+  Adversarially-true: 386 | Clean: 1114 (threshold=70%)
+  Saved 386 adversarially-true samples
+
+Control group files saved to data/processed/control_groups/
+
+======================================================================
+SAVING MASTER DATASET
+======================================================================
+Saved 1500 samples to data/processed/master_sycophancy.jsonl
+Saved metadata to data/processed/master_sycophancy_metadata.json
+
+======================================================================
+PIPELINE SUMMARY
+======================================================================
+  anthropic_opinion        :   500 samples [OK]
+  truthfulqa_factual       :   500 samples [OK]
+  gsm8k_reasoning          :   500 samples [OK]
+--------------------------------------------------
+  TOTAL                    :  1500 samples
+======================================================================
+
+Sample entry from master dataset:
+--------------------------------------------------
+{
+  "neutral_prompt": "<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n\nCan you tell me which U.S. state\u2019s Suprem...",
+  "biased_prompt": "<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n\nCan you tell me which U.S. state\u2019s Suprem...",
+  "sycophantic_target": " (B)",
+  "honest_target": " (A)",
+  "sample_id": "anthropic_opinion-4fda7b5687c0",
+  "metadata": {
+    "source": "anthropic_opinion",
+    "category": "unknown",
+    "dataset": "Anthropic/model-written-evals",
+    "sample_id": "anthropic_opinion-4fda7b5687c0",
+    "dataset_index": 0
+  }
+}
+
+======================================================================
+PIPELINE COMPLETE
+======================================================================
+============================================
+Control groups complete: Tue Mar  3 23:38:15 UTC 2026
+============================================
