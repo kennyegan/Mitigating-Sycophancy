@@ -3,7 +3,7 @@
 **Author:** Kenny Egan
 **Institution:** Wentworth Institute of Technology
 **Advisor:** Prof. Larson
-**Date:** March 2, 2026
+**Date:** March 3, 2026
 **Model:** meta-llama/Meta-Llama-3-8B-Instruct
 **Hardware:** NVIDIA A100-SXM4-80GB (Unity HPC Cluster, UMass)
 **Framework:** TransformerLens 2.x, PyTorch 2.10.0+cu128
@@ -12,7 +12,20 @@
 
 ## Abstract
 
-We investigate the mechanistic origins of sycophancy in Llama-3-8B-Instruct using causal activation patching and linear probing. Evaluating on 1,500 samples spanning opinion, factual, and reasoning tasks, we find a 28% overall sycophancy rate — concentrated in opinion domains (82.4%) and minimal in mathematical reasoning (0%). Linear probes trained on format-mixed data achieve 99.5% accuracy in distinguishing biased from neutral prompts; however, a probe control experiment reveals this is **partially confounded by prompt format** at deep layers. Probes trained exclusively on neutral prompts and tested on biased prompts show robust transfer only at early layers (0–10, with 1–4 pp accuracy drop), where the dominant pattern is **social compliance (27.1%)** — the model retains correct internal representations but outputs sycophantic responses — rather than belief corruption (0.9%). A balanced replication with randomized answer positions across all three domains confirms these findings. Causal patching identifies a small circuit in early layers 1–5, with attention heads **L1H20, L5H5, and L4H28** as the primary drivers. However, ablation of these heads — individually, in combination, or as a set of 10 — produces **no meaningful reduction in sycophancy** (+0.1 to +0.5 pp), demonstrating that the sycophantic behavior is **redundantly distributed** across the network rather than dependent on these specific heads. Comparing to the untuned Llama-3-8B base model, we find that sycophancy is substantially present in the base model as well (36.7%), suggesting that RLHF/instruction tuning alone does not introduce sycophancy but rather modulates its expression.
+This paper reports a mechanistic sycophancy pipeline on Llama-3-8B-Instruct and Llama-3-8B-Base, including baseline evaluation, probe analysis, activation patching, ablation, and representation steering. As of March 3, 2026, the implementation has been upgraded to remove known confounds (probe mode split, leakage-safe grouping, answer-position randomization, length-normalized confidence, and steering checkpoint/resume), but **full corrected SLURM reruns are still in progress**. Therefore, quantitative claims below should be treated as **provisional** unless explicitly marked confirmed by rerun-backed artifacts. The central hypotheses under current evaluation are: (1) whether neutral-transfer probes support social-compliance interpretation in early layers, (2) whether patching-identified heads remain non-causal under upgraded capability scoring, and (3) whether representation steering can reduce sycophancy while preserving MMLU/GSM8k under strict scoring and CI reporting.
+
+## Rerun Status (March 3, 2026)
+
+| Experiment Track | Status | Artifact Contract |
+|---|---|---|
+| Data regeneration (`--randomize-positions`) | Ready | `data/processed/master_sycophancy_balanced.jsonl` + metadata |
+| Baseline rerun (instruct/base) | Pending SLURM execution | `results/baseline_*_summary.json` |
+| Probes (`neutral_transfer`, `mixed_diagnostic`) | Pending SLURM execution | `results/probe_results_neutral_transfer.json`, `results/probe_results_mixed_diagnostic.json` |
+| Probe-control balanced rerun | Pending SLURM execution | `results/probe_control_balanced_results.json` |
+| Patching/head ranking rerun | Pending SLURM execution | `results/patching_heatmap.json`, `results/head_importance.json` |
+| Ablation rerun (top heads + top10) | Pending SLURM execution | `results/head_ablation_results.json`, `results/top10_ablation_*.json` |
+| Steering rerun (checkpoint/resume) | Pending SLURM execution | `results/steering_results.json` + checkpoint JSON |
+| Consolidated manifest | Pending post-rerun | `results/full_rerun_manifest.json` |
 
 ---
 
@@ -78,13 +91,13 @@ All experiments ran on the Unity HPC cluster (UMass) using the `gpu` partition w
 
 **Note on TransformerLens configuration:** `use_attn_result=True` must be set on the model config after loading (`model.cfg.use_attn_result = True; model.setup()`) for `hook_result` activations to be computed during head-level patching. This is not set by default for Llama-3.
 
-### Jobs Run
+### SLURM Rerun Matrix (Configured)
 
 | Job | Script | Wall time | Description |
 |-----|--------|-----------|-------------|
 | 1 | `01_baseline.sh` | ~1h | Baseline sycophancy rate, Llama-3-8B-Instruct |
 | 2 | `02_control_groups.sh` | ~1h | Control group filtering |
-| 3 | `03_probes.sh` | ~1h | Linear probes (logistic + ridge), 32 layers, 5-fold CV |
+| 3 | `03_probes.sh` | ~1h | Probe reruns in `neutral_transfer` and `mixed_diagnostic` modes |
 | 4 | `04_patching.sh` | ~4h | Layer × position patching, then head-level patching |
 | 5 | `05_base_comparison.sh` | ~6h | Full pipeline on Llama-3-8B (base, no RLHF) |
 | 6 | `06_probe_control.sh` | ~33m | Probe control: neutral-only training, biased testing |
@@ -93,10 +106,14 @@ All experiments ran on the Unity HPC cluster (UMass) using the `gpu` partition w
 | 9 | `09_top10_ablation.sh` | ~53m | Top-10 head ablation (circuit redundancy test, GSM8k N=200) |
 | 10 | `10_probe_control_balanced.sh` | ~1.5h | Balanced probe control: randomized answer positions + rerun |
 | 11 | `11_top10_full_gsm8k.sh` | ~3h | Top-10 ablation rerun with full GSM8k (N=1319) |
+| 12 | `12_steering.sh` | ~4–8h | Steering sweep with checkpoint/resume + capability CIs |
+| 13 | `13_collect_manifest.sh` | ~5m | Consolidate artifact status + key metrics |
 
 ---
 
 ## 5. Results
+
+**Status note:** The subsection values below reflect the latest pre-upgrade or partially upgraded runs and are retained for transparency. Final claim-bearing numbers will be locked only after the corrected rerun matrix (Section "Rerun Status") completes and `results/full_rerun_manifest.json` validates all required artifacts.
 
 ### 5.1 Baseline Sycophancy Rate
 
@@ -356,6 +373,8 @@ This convergent null result across two independent intervention methods — head
 
 ## 6. Discussion
 
+**Interpretation status:** This discussion reflects the current best reading of preliminary artifacts and should be treated as hypothesis-level until corrected reruns finalize the quantitative values.
+
 ### Belief Corruption vs. Social Compliance: A Layer-Dependent Picture
 
 The original probe analysis (Section 5.3) suggested near-unanimous belief corruption (>99%). The probe control experiment (Section 5.5) substantially qualifies this conclusion. The picture that emerges is **layer-dependent**:
@@ -403,9 +422,9 @@ This suggests RLHF teaches the model *when* to be sycophantic (social/opinion co
 | `results/baseline_llama3_detailed.csv` | Per-sample results (Instruct) |
 | `results/baseline_llama3_base_summary.json` | Sycophancy rates (Base model) |
 | `results/baseline_llama3_base_detailed.csv` | Per-sample results (Base model) |
-| `results/probe_results_llama3_logistic.json` | Per-layer logistic probe accuracy + interpretation (Instruct) |
-| `results/probe_results_llama3_ridge.json` | Per-layer ridge probe accuracy + interpretation (Instruct) |
-| `results/probe_results_llama3_base_logistic.json` | Per-layer logistic probe accuracy (Base model) |
+| `results/probe_results_neutral_transfer.json` | Claim-bearing probe run (train neutral, transfer to biased) |
+| `results/probe_results_mixed_diagnostic.json` | Diagnostic mixed-mode probe run (GroupKFold by `sample_id`) |
+| `results/probe_results_llama3_base_neutral_transfer.json` | Base-model neutral-transfer probe run |
 | `results/patching_heatmap.json` | Layer × position patching scores (Instruct) |
 | `results/head_importance.json` | Per-head recovery scores across critical layers (Instruct) |
 | `results/base_model/patching_heatmap.json` | Layer × position patching scores (Base model) |
@@ -415,6 +434,9 @@ This suggests RLHF teaches the model *when* to be sycophantic (social/opinion co
 | `results/head_ablation_results.json` | Top-3 head ablation: single/pair/all, zero + mean |
 | `results/top10_ablation_results.json` | Top-10 head ablation (GSM8k N=200) |
 | `results/top10_ablation_full_gsm8k.json` | Top-10 head ablation (GSM8k N=1319) |
+| `results/steering_results.json` | Steering condition table + capability metrics + CIs |
+| `results/steering_results.json.checkpoint.json` | Steering checkpoint for resume |
+| `results/full_rerun_manifest.json` | Consolidated rerun artifact/metric manifest |
 | `data/processed/master_sycophancy.jsonl` | Full 1,500-sample dataset |
 | `data/processed/master_sycophancy_balanced.jsonl` | Balanced dataset with randomized answer positions |
 | `data/processed/control_groups/` | Filtered control subsets |
@@ -427,13 +449,17 @@ This suggests RLHF teaches the model *when* to be sycophantic (social/opinion co
 
 | Issue | Root Cause | Fix |
 |-------|-----------|-----|
-| SLURM jobs failed immediately | `SCRIPT_DIR` resolved to SLURM temp dir; `config.sh` not found | Replaced relative path with absolute hardcoded path in all job scripts |
-| 401 Unauthorized on Llama-3 models | `HF_TOKEN` not inherited by compute nodes | Added `export HF_TOKEN=...` to `slurm/config.sh` |
+| Probe conclusions depended on mixed-format training | Probe labels confounded with prompt condition in mixed data | Added explicit `--analysis-mode` with claim-bearing `neutral_transfer` default and diagnostic `mixed_diagnostic` |
+| Probe fold leakage risk in mixed mode | Paired neutral/biased samples could cross folds without grouping | Added deterministic `sample_id` and GroupKFold grouping by `sample_id` |
+| Dataset class-balance artifact in synthetic domains | TruthfulQA/GSM8k answer positions were fixed | Added `--randomize-positions` and recorded per-sample randomization metadata |
+| Confidence metric length bias | Raw sequence log-probability penalized longer targets | Switched to length-normalized confidence metrics (per-token avg log-prob), with confidence-filtered stats reported as secondary |
+| Binomial test API drift across SciPy versions | `binomtest` vs `binom_test` incompatibility | Added compatibility wrapper with modern-first fallback |
+| Long steering sweeps lost progress on interruption | No checkpoint persistence | Added per-condition checkpoint JSON + `--resume-from-checkpoint` support |
+| SLURM resource directives were inconsistent | Dynamic/embedded directives were brittle across scripts | Removed dynamic `#SBATCH` patterns; centralized resources in `slurm/submit_all.sh` |
+| Jobs could succeed with missing outputs | No artifact contract checks | Added non-zero artifact checks across SLURM jobs, including steering final+checkpoint JSON checks |
 | `KeyError: 'blocks.11.attn.hook_result'` | `use_attn_result=False` by default in TransformerLens for Llama-3 | Set `model.cfg.use_attn_result = True; model.setup()` after loading in `sycophancy_model.py` |
 | `TypeError: LlamaForCausalLM.__init__() got an unexpected keyword argument 'use_attn_result'` | Kwarg passed directly to `from_pretrained`, leaked to HuggingFace constructor | Moved to post-load config mutation |
 | `RuntimeError: expanded size (118) must match existing size (116)` | Head patch hook copied full sequence dimension; neutral/biased sequences differ in length | Changed to `n = min(act.shape[1], clean_act.shape[1]); activation[0, :n, h, :] = clean_act[0, :n, h, :]` |
-| Jobs 6–8 OOM killed on CPU | `#SBATCH --gres=gpu:${GPUS_PER_NODE}` not expanded — SLURM parses directives before shell execution | Hardcoded `#SBATCH --partition=gpu`, `--gres=gpu:a100:1`, `--account=pi_larsonj_wit_edu` in all job scripts |
-| Probe control class imbalance | TruthfulQA/GSM8k hardcoded answer positions → 100% one class | Added `--randomize-positions` flag to data generators; reran with balanced labels |
 
 ### Cluster Configuration
 
@@ -452,11 +478,11 @@ This suggests RLHF teaches the model *when* to be sycophantic (social/opinion co
 
 ## 9. Conclusion
 
-This work establishes that sycophancy in Llama-3-8B-Instruct is:
+Current evidence suggests the following, pending full corrected rerun confirmation:
 
-1. **Strongly domain-dependent** — 82.4% in opinion tasks, ~0% in mathematical reasoning
-2. **Characterized by social compliance, not belief corruption** — a balanced probe control experiment shows the model retains correct internal representations (27.1% social compliance vs. 0.9% belief corruption), with format-mixed probes producing misleading 99%+ belief corruption rates due to prompt-format confounds
-3. **Localized by activation patching but redundantly distributed** — layers 1–5 (heads L1H20, L5H5, L4H28) show the highest patching recovery, but ablation of up to 10 heads produces no sycophancy reduction, demonstrating that the behavior is redundantly implemented across the network
-4. **Present in the base model** — not introduced by RLHF; instruction tuning redistributes rather than creates sycophancy
+1. **Domain dependence is likely real**, with opinion-style prompts showing substantially higher sycophancy than factual/reasoning prompts in preliminary runs.
+2. **Probe interpretation depends on training regime**: mixed-mode probes appear format-sensitive, while neutral-transfer probes are the claim-bearing test for social-compliance vs belief-corruption interpretation.
+3. **Patching-vs-ablation dissociation is a key mechanism hypothesis**: components with strong patching recovery may still be non-necessary under ablation, consistent with redundancy.
+4. **Base-model comparison remains important** for testing whether instruction tuning introduces sycophancy or mainly redistributes it across domains.
 
-The probe control experiment demonstrates the importance of validating linear probes against format confounds — a methodological contribution relevant to the broader mechanistic interpretability community. The circuit redundancy finding challenges the assumption that activation patching can identify sufficient intervention targets for behavioral steering, and suggests that effective sycophancy mitigation may require broader approaches than targeted head-level manipulation.
+Final numerical claims in this paper should be interpreted as provisional until the rerun matrix artifacts are complete and validated by `results/full_rerun_manifest.json`.
