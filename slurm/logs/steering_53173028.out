@@ -1,0 +1,164 @@
+============================================
+SLURM Job: Representation Steering
+Model: meta-llama/Meta-Llama-3-8B-Instruct
+Layers: 1,2,3,4,5,10,15,20
+Alphas: 0.5,1.0,2.0,5.0,10.0,20.0,50.0
+Steering samples: 200
+Node: uri-gpu017
+GPU: NVIDIA A100-PCIE-40GB, 40960 MiB
+Time: Thu Mar  5 01:05:42 UTC 2026
+============================================
+================================================================================
+REPRESENTATION STEERING
+================================================================================
+Model:                 meta-llama/Meta-Llama-3-8B-Instruct
+Data:                  data/processed/master_sycophancy.jsonl
+Layers:                [1, 2, 3, 4, 5, 10, 15, 20]
+Alphas:                [0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0]
+Steering samples:      200
+Max eval samples:      all
+Eval capabilities:     True
+Resume checkpoint:     False
+Checkpoint path:       results/steering_results.json.checkpoint.json
+Save every condition:  True
+Seed:                  42
+Git hash:              326a8b5a
+
+Loaded 1500 samples
+Loading meta-llama/Meta-Llama-3-8B-Instruct on cuda with dtype=torch.float16...
+Loaded pretrained model meta-llama/Meta-Llama-3-8B-Instruct into HookedTransformer
+Loaded! Layers: 32, Heads: 32, d_model: 4096
+
+Evaluating condition: No steering
+
+Evaluating condition: Steer layer 1, alpha=0.5
+
+Evaluating condition: Steer layer 1, alpha=1.0
+
+Evaluating condition: Steer layer 1, alpha=2.0
+
+Evaluating condition: Steer layer 1, alpha=5.0
+
+Evaluating condition: Steer layer 1, alpha=10.0
+
+Evaluating condition: Steer layer 1, alpha=20.0
+
+Evaluating condition: Steer layer 1, alpha=50.0
+
+Evaluating condition: Steer layer 2, alpha=0.5
+
+Evaluating condition: Steer layer 2, alpha=1.0
+
+Evaluating condition: Steer layer 2, alpha=2.0
+
+Evaluating condition: Steer layer 2, alpha=5.0
+
+Evaluating condition: Steer layer 2, alpha=10.0
+
+Evaluating condition: Steer layer 2, alpha=20.0
+
+Evaluating condition: Steer layer 2, alpha=50.0
+
+Evaluating condition: Steer layer 3, alpha=0.5
+
+Evaluating condition: Steer layer 3, alpha=1.0
+
+Evaluating condition: Steer layer 3, alpha=2.0
+
+Evaluating condition: Steer layer 3, alpha=5.0
+
+Evaluating condition: Steer layer 3, alpha=10.0
+
+Evaluating condition: Steer layer 3, alpha=20.0
+
+Evaluating condition: Steer layer 3, alpha=50.0
+
+Evaluating condition: Steer layer 4, alpha=0.5
+
+Evaluating condition: Steer layer 4, alpha=1.0
+
+Evaluating condition: Steer layer 4, alpha=2.0
+
+Evaluating condition: Steer layer 4, alpha=5.0
+
+Evaluating condition: Steer layer 4, alpha=10.0
+
+Evaluating condition: Steer layer 4, alpha=20.0
+
+Evaluating condition: Steer layer 4, alpha=50.0
+
+Evaluating condition: Steer layer 5, alpha=0.5
+
+Evaluating condition: Steer layer 5, alpha=1.0
+
+Evaluating condition: Steer layer 5, alpha=2.0
+
+Evaluating condition: Steer layer 5, alpha=5.0
+
+Evaluating condition: Steer layer 5, alpha=10.0
+
+Evaluating condition: Steer layer 5, alpha=20.0
+
+Evaluating condition: Steer layer 5, alpha=50.0
+
+Evaluating condition: Steer layer 10, alpha=0.5
+
+Evaluating condition: Steer layer 10, alpha=1.0
+
+Evaluating condition: Steer layer 10, alpha=2.0
+
+Evaluating condition: Steer layer 10, alpha=5.0
+
+Evaluating condition: Steer layer 10, alpha=10.0
+
+Evaluating condition: Steer layer 10, alpha=20.0
+
+Evaluating condition: Steer layer 10, alpha=50.0
+
+Evaluating condition: Steer layer 15, alpha=0.5
+
+Evaluating condition: Steer layer 15, alpha=1.0
+
+Evaluating condition: Steer layer 15, alpha=2.0
+
+Evaluating condition: Steer layer 15, alpha=5.0
+
+Evaluating condition: Steer layer 15, alpha=10.0
+
+Evaluating condition: Steer layer 15, alpha=20.0
+
+Evaluating condition: Steer layer 15, alpha=50.0
+
+Evaluating condition: Steer layer 20, alpha=0.5
+
+Evaluating condition: Steer layer 20, alpha=1.0
+
+Evaluating condition: Steer layer 20, alpha=2.0
+
+Evaluating condition: Steer layer 20, alpha=5.0
+
+Evaluating condition: Steer layer 20, alpha=10.0
+
+Evaluating condition: Steer layer 20, alpha=20.0
+
+Evaluating condition: Steer layer 20, alpha=50.0
+
+Evaluating condition: Steer layers [1, 2, 3, 4, 5], alpha=0.5
+
+Evaluating condition: Steer layers [1, 2, 3, 4, 5], alpha=1.0
+
+Evaluating condition: Steer layers [1, 2, 3, 4, 5], alpha=2.0
+
+Evaluating condition: Steer layers [1, 2, 3, 4, 5], alpha=5.0
+
+Evaluating condition: Steer layers [1, 2, 3, 4, 5], alpha=10.0
+
+Evaluating condition: Steer layers [1, 2, 3, 4, 5], alpha=20.0
+
+Evaluating condition: Steer layers [1, 2, 3, 4, 5], alpha=50.0
+
+Capability evaluation: No steering
+
+Capability evaluation: Steer layer 10, alpha=50.0
+
+Capability evaluation: Steer layers [1, 2, 3, 4, 5], alpha=0.5

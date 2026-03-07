@@ -2,7 +2,7 @@
 #SBATCH --job-name=syc-ablation
 #SBATCH --output=slurm/logs/ablation_%j.out
 #SBATCH --error=slurm/logs/ablation_%j.err
-#SBATCH --time=16:00:00
+#SBATCH --time=2-00:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 
@@ -16,7 +16,7 @@
 #
 # 9 conditions × (1500 syc + 500 MMLU + 200 GSM8k) evaluations
 #
-# Expected runtime: ~12-16 hours on A100
+# Expected runtime: ~18-30 hours on A100 (can exceed 16h with GSM8k eval)
 # Output: results/head_ablation_results.json
 # =============================================================================
 

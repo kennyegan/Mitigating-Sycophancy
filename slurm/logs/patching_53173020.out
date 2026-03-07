@@ -1,0 +1,75 @@
+============================================
+SLURM Job: Activation Patching
+Model: meta-llama/Meta-Llama-3-8B-Instruct
+Node: uri-gpu002
+GPU: NVIDIA A100-SXM4-80GB, 81920 MiB
+Time: Wed Mar  4 17:41:23 UTC 2026
+============================================
+================================================================================
+CAUSAL ACTIVATION PATCHING — Sycophancy Circuit Discovery
+================================================================================
+Model:          meta-llama/Meta-Llama-3-8B-Instruct
+Data:           data/processed/master_sycophancy.jsonl
+Max Samples:    100
+Max Positions:  50
+Head Top-K:     5
+Seed:           42
+Git Hash:       326a8b5a
+
+Loaded 100 samples
+
+Loading meta-llama/Meta-Llama-3-8B-Instruct on cuda with dtype=torch.float16...
+Loaded pretrained model meta-llama/Meta-Llama-3-8B-Instruct into HookedTransformer
+Loaded! Layers: 32, Heads: 32, d_model: 4096
+Patching 32 layers: 0..31
+
+[Phase 1] Layer × Position Patching
+------------------------------------------------------------
+
+  Successful: 34 | Skipped: 66
+
+  Critical layers (top 5): [1, 2, 4, 3, 5]
+  Mean total effect: 2.1050
+
+Layer results saved to results/patching_heatmap.json
+
+[Phase 2] Head-Level Patching (layers [1, 2, 4, 3, 5])
+------------------------------------------------------------
+
+  Successful: 100 | Skipped: 0
+Head results saved to results/head_importance.json
+
+  Top 10 sycophancy heads (by recovery score):
+    L4H28: recovery=0.4428 (±0.5498)
+    L4H5: recovery=0.3020 (±0.5372)
+    L5H31: recovery=0.2564 (±0.5486)
+    L2H5: recovery=0.2445 (±0.3663)
+    L3H30: recovery=0.2182 (±0.4130)
+    L5H24: recovery=0.1685 (±0.2501)
+    L3H17: recovery=0.1605 (±0.3103)
+    L3H28: recovery=0.1548 (±0.2730)
+    L1H11: recovery=0.1435 (±0.2773)
+    L4H26: recovery=0.1295 (±0.4021)
+
+================================================================================
+PATCHING RESULTS SUMMARY
+================================================================================
+Samples analyzed:     34
+Mean total effect:    2.1050 (±2.7278)
+Critical layers:      [1, 2, 4, 3, 5]
+
+Top 10 layers by importance:
+  Layer   1: 31.8280
+  Layer   2: 30.7202
+  Layer   4: 28.0344
+  Layer   3: 27.9191
+  Layer   5: 27.7882
+  Layer   0: 27.7112
+  Layer  11: 27.0874
+  Layer   8: 26.9172
+  Layer   6: 26.6022
+  Layer   9: 26.2041
+================================================================================
+============================================
+Patching complete: Wed Mar  4 21:48:21 UTC 2026
+============================================
