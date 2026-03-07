@@ -17,7 +17,7 @@
 # Conditions: 8 layers x 7 alphas (single-layer) + 7 alphas (multi-layer L1-5)
 #             + baseline = ~64 sycophancy evals + selective capability evals
 #
-# Expected runtime: ~4-8 hours on A100
+# Expected runtime: up to ~1-2 days on A100 (depends on capability sample sizes)
 # Output: results/steering_results.json
 # =============================================================================
 
@@ -34,6 +34,11 @@ export TORCH_HOME="${TORCH_HOME}"
 export TOKENIZERS_PARALLELISM=false
 
 mkdir -p results slurm/logs
+
+# Steering capability eval settings can be overridden at submit time:
+#   sbatch --export=ALL,STEERING_MMLU_SAMPLES=500,STEERING_GSM8K_SAMPLES=200 ...
+STEERING_MMLU_SAMPLES="${STEERING_MMLU_SAMPLES:-500}"
+STEERING_GSM8K_SAMPLES="${STEERING_GSM8K_SAMPLES:-200}"
 
 check_artifact() {
     local path="$1"
@@ -57,6 +62,8 @@ echo "Model: ${PRIMARY_MODEL}"
 echo "Layers: 1,2,3,4,5,10,15,20"
 echo "Alphas: 0.5,1.0,2.0,5.0,10.0,20.0,50.0"
 echo "Steering samples: 200"
+echo "MMLU samples: ${STEERING_MMLU_SAMPLES}"
+echo "GSM8k samples: ${STEERING_GSM8K_SAMPLES}"
 echo "Node: $(hostname)"
 echo "GPU: $(nvidia-smi --query-gpu=name,memory.total --format=csv,noheader 2>/dev/null || echo 'N/A')"
 echo "Time: $(date)"
@@ -69,8 +76,8 @@ python scripts/05_representation_steering.py \
     --alphas "0.5,1.0,2.0,5.0,10.0,20.0,50.0" \
     --n-steering-samples 200 \
     --eval-capabilities \
-    --mmlu-samples 500 \
-    --gsm8k-samples 1319 \
+    --mmlu-samples "${STEERING_MMLU_SAMPLES}" \
+    --gsm8k-samples "${STEERING_GSM8K_SAMPLES}" \
     --seed 42 \
     --checkpoint-path "${STEERING_CKPT}" \
     "${RESUME_FLAG[@]}" \
