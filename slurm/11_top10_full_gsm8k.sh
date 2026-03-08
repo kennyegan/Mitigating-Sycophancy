@@ -2,7 +2,7 @@
 #SBATCH --job-name=syc-top10-gsm
 #SBATCH --output=slurm/logs/top10_gsm_%j.out
 #SBATCH --error=slurm/logs/top10_gsm_%j.err
-#SBATCH --time=06:00:00
+#SBATCH --time=2-00:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 
@@ -13,7 +13,7 @@
 # instead of the 200-sample subset. This resolves the noisy 12.5% → 8.0%
 # drop observed in Job 9 by providing sufficient statistical power.
 #
-# Expected runtime: ~2-3 hours on A100
+# Expected runtime: up to ~1-2 days on A100 for full 1319-sample GSM8k eval
 # Output: results/top10_ablation_full_gsm8k.json
 # =============================================================================
 
