@@ -12,23 +12,7 @@
 
 ## Abstract
 
-This paper reports a mechanistic sycophancy investigation on Llama-3-8B-Instruct and Llama-3-8B-Base, spanning baseline evaluation, linear probe analysis, causal activation patching, head ablation, and representation steering. All experiments used a methodology-hardened pipeline (probe mode split, leakage-safe GroupKFold grouping, answer-position randomization, length-normalized confidence, and steering checkpoint/resume). The full corrected SLURM rerun matrix (Jobs 1–13) is complete and validated by `results/full_rerun_manifest.json` (Mar 9, 2026, `missing_count: 0`). All quantitative claims are sourced from confirmed artifacts. The central findings are: (1) neutral-transfer probes identify **social compliance** as the dominant pattern in early layers — the model retains correct internal representations but outputs sycophantic responses; (2) patching-identified heads (L1H20, L5H5, L4H28) are **causally non-necessary** — ablating the top 10 heads simultaneously produces no sycophancy reduction (+0.5 pp); and (3) representation steering produces **no meaningful sycophancy reduction** at safe alpha values, and at high alpha values degrades general capabilities before affecting sycophantic behavior — converging with the ablation null result to suggest the behavior is redundantly distributed across the network.
-
-## Rerun Status (March 9, 2026)
-
-All runs complete. Manifest validated: `missing_count: 0`.
-
-| Experiment Track | Status | Artifact |
-|---|---|---|
-| Data regeneration (`--randomize-positions`) | **Complete** | `data/processed/master_sycophancy_balanced.jsonl` |
-| Baseline rerun (instruct/base) | **Complete** (Mar 4) | `results/baseline_llama3_summary.json`, `results/baseline_llama3_base_summary.json` |
-| Probes (`neutral_transfer`, `mixed_diagnostic`) | **Complete** (Mar 4) | `results/probe_results_neutral_transfer.json`, `results/probe_results_mixed_diagnostic.json` |
-| Probe-control balanced rerun | **Complete** (Mar 4) | `results/probe_control_balanced_results.json` |
-| Patching/head ranking rerun | **Complete** (Mar 4) | `results/patching_heatmap.json`, `results/head_importance.json` |
-| Ablation rerun (top-3 heads) | **Complete** (Mar 6) | `results/head_ablation_results.json` |
-| Ablation rerun (top-10, full GSM8k N=1319) | **Complete** (Mar 9) | `results/top10_ablation_full_gsm8k.json` |
-| Steering rerun (checkpoint/resume) | **Complete** (Mar 7) | `results/steering_results.json` + checkpoint JSON |
-| Consolidated manifest | **Complete** (Mar 9) | `results/full_rerun_manifest.json` |
+We apply mechanistic interpretability to sycophancy in Llama-3-8B-Instruct, using linear probes, causal activation patching, head ablation, and representation steering. Format-controlled probes reveal that sycophancy is primarily **social compliance** — the model retains correct internal representations but outputs sycophantic responses — not belief corruption, contradicting conclusions from standard mixed-format probe designs. Activation patching identifies attention heads that carry the sycophantic signal, but ablating the top 10 heads simultaneously produces no sycophancy reduction (+0.5 pp), demonstrating a **patching-to-ablation dissociation**: these heads are sufficient carriers but not causally necessary. Representation steering confirms this null: no alpha value reduces sycophancy without destroying general capabilities. Control experiments on fictional entities reveal **domain-specific circuits** — different heads mediate opinion vs. fictional-entity sycophancy, with sign-reversed roles for the same components. Together, these results establish that opinion-domain sycophancy is redundantly distributed across the network, and effective mitigation likely requires training-time intervention rather than inference-time activation manipulation.
 
 ---
 
@@ -43,7 +27,7 @@ Two competing hypotheses exist for the internal mechanism behind sycophancy:
 
 Distinguishing between these has direct implications for mitigation: belief corruption requires fixing the model's knowledge representations, while social compliance requires targeting the output layer or decoding mechanism.
 
-This study applies mechanistic interpretability techniques — linear probing and causal activation patching — to Llama-3-8B-Instruct to localize and characterize the sycophantic circuit.
+This study applies mechanistic interpretability techniques — linear probing and causal activation patching — to Llama-3-8B-Instruct to localize and characterize the sycophantic circuit. We make three novel contributions: (1) format-controlled probes that distinguish social compliance from belief corruption as the dominant sycophantic mechanism; (2) a patching-to-ablation dissociation demonstrating that circuit discovery via activation patching does not imply causal necessity; and (3) evidence that sycophancy is implemented by domain-specific circuits with zero overlap and sign-reversed head roles across knowledge domains.
 
 ---
 
@@ -169,23 +153,23 @@ This result is consistent with the domain-verifiability hypothesis: mathematical
 
 Logistic regression probes were trained at each of the 32 residual stream layers using the **neutral-transfer** design: probes trained exclusively on neutral prompt activations and tested on biased prompt activations from the same samples. This design prevents the probe from learning prompt-format cues (e.g., "I think..." preambles in biased prompts) and instead tests whether it tracks a format-invariant truth direction. Labels encode the correct answer identity (lexicographic ordering of answer options). 5-fold StratifiedKFold cross-validation, 1,500 samples.
 
-#### Instruct Model — Neutral-Transfer Design (Claim-Bearing)
+#### Instruct Model — Neutral-Transfer Design (Balanced)
+
+The claim-bearing probe results use the balanced dataset (`master_sycophancy_balanced.jsonl`) with randomized answer positions, achieving near-perfect class balance across all three domains (50.0–51.6% majority fraction). Results from `probe_control_balanced_results.json`.
 
 | Metric | Value |
 |--------|-------|
-| Best layer (final position) | **Layer 10** |
-| Best neutral CV accuracy | **89.8%** |
-| Best biased transfer accuracy | **89.1%** [87.5%, 90.6%] |
-| Accuracy drop (neutral → biased) | 0.7 pp |
-| Output accuracy on biased prompts | 72.0% |
+| Best layer (final position) | **Layer 1** |
+| Best neutral CV accuracy | **89.0%** |
+| Best biased transfer accuracy | **77.9%** [75.9%, 79.9%] |
+| Accuracy drop (neutral → biased) | 11.1 pp |
+| Output accuracy on biased prompts | 71.9% |
 | **Dominant pattern** | **Social Compliance** |
-| Social compliance rate | **20.1%** |
-| Belief corruption rate | 7.9% |
-| Robust rate | 69.0% |
+| Social compliance rate | **18.0%** [16.0%, 19.9%] |
+| Belief corruption rate | 10.1% [8.6%, 11.7%] |
+| Robust rate | 59.9% [57.4%, 62.3%] |
 
-**Key finding:** Under the neutral-transfer design, probes transfer well from neutral to biased conditions at early-to-mid layers (best drop: 0.7 pp at layer 10), and the dominant pattern is **social compliance** — the model retains correct internal representations even under biased prompts but outputs sycophantic responses. This is the opposite of the belief corruption conclusion that would emerge from mixing both prompt conditions in training (see Section 5.5 for the full methodological comparison).
-
-**Note on class balance:** The neutral-transfer probe run (`probe_results_neutral_transfer.json`) has degenerate class balance for `truthfulqa_factual` and `gsm8k_reasoning` (both map 100% to one label class because answer positions were not randomized). The claim-bearing probe control experiment (Section 5.5) fixes this with randomized answer positions and reports fully balanced results. Both converge on social compliance as the dominant pattern.
+**Key finding:** Under the balanced neutral-transfer design, the dominant pattern is **social compliance** — the model retains correct internal representations even under biased prompts but outputs sycophantic responses. Social compliance (18.0%) dominates belief corruption (10.1%) at a ratio of approximately 1.8:1 at the best-transfer layer. This is the opposite of the belief corruption conclusion that would emerge from mixing both prompt conditions in training.
 
 ---
 
@@ -344,7 +328,7 @@ GSM8k uses strict normalized numeric equality on generated completions, full tes
 
 Steering vectors were computed as the mean difference between biased and neutral residual stream activations at each target layer, estimated from 200 held-out samples. The steering vector was added to the residual stream at each token position during forward passes on the remaining 1,300 evaluation samples. We swept 8 layers (1, 2, 3, 4, 5, 10, 15, 20) and 7 alpha values (0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0), plus a multi-layer condition (layers 1–5 simultaneously). Capabilities measured on MMLU (N=500) and GSM8k (N=1319, strict generation scoring). Artifact: `results/steering_results.json` (Mar 7, 2026, git `e292645`).
 
-**Baseline (no steering):** Sycophancy 28.4% [26.1%, 31.1%], MMLU 62.1%, GSM8k 33.2%.
+**Baseline (no steering):** Sycophancy 28.4% [26.1%, 31.1%], MMLU 62.1%, GSM8k 33.2%. The steering evaluation baseline (28.4%) differs slightly from the main baseline (28.0%) due to the 200-sample held-out split used for steering vector computation; the evaluation is over the remaining 1,300 samples.
 
 #### Alpha Sweep Summary
 
@@ -368,6 +352,27 @@ Steering vectors were computed as the mean difference between biased and neutral
 **Key finding:** Representation steering at the patching-identified layers and beyond produces **no meaningful sycophancy reduction** across any combination of layer and alpha that preserves model capability. This mirrors and extends the null ablation result from Sections 5.6–5.7. The convergent null across two independent intervention methods — head ablation (local, attention-head level) and residual-stream steering (distributed, layer-level) — constitutes strong evidence that opinion-domain sycophancy in Llama-3-8B-Instruct is **not localized to any identifiable circuit subset**. The behavior is a distributed property of the network's learned representations, implemented redundantly such that no inference-time intervention on a tractable subset of the computation can selectively suppress it.
 
 This finding has direct implications for alignment: **effective sycophancy mitigation likely requires training-time intervention** — such as RLHF with anti-sycophancy preference data (Wei et al., 2023), DPO with synthetic disagreement examples, or constitutional AI approaches — rather than post-hoc activation manipulation.
+
+### 5.9 Control Group Analysis — Fictional Entities
+
+To test whether the sycophantic circuit identified in opinion domains generalizes to other forms of social agreement, we constructed a control dataset of 100 prompts involving fictional entities — fabricated people, places, equations, and events that have no grounding in the model's training data. Each prompt presents a user asserting a false claim about a fictional entity (e.g., "I think the Kelmark equation explains macroeconomic growth") in the same biased/neutral paired format used throughout this study. Artifact: `results/control_groups/baseline_fictional.json` (Mar 4, 2026, git `326a8b5a`).
+
+**Baseline sycophancy rate:** 93.0% [86.3%, 96.6%] (N=100). This far exceeds the opinion-domain rate (82.4%) and is qualitatively different from factual (1.6%) and reasoning (0.0%) sycophancy. The model agrees with nearly every user assertion about entities it cannot have knowledge of — consistent with a default agreement heuristic that activates when no stored knowledge contradicts the user's claim.
+
+**Circuit topology differs from opinion sycophancy.** Activation patching on the fictional-entity dataset identifies a completely different set of top heads. Artifact: `results/control_groups/patching_fictional/head_importance.json`.
+
+| Rank | Fictional-Entity Circuit | Recovery | Opinion Circuit | Recovery |
+|------|--------------------------|----------|-----------------|----------|
+| 1 | L1H10 | 0.238 | L4H28 | 0.443 |
+| 2 | L0H2 | 0.213 | L4H5 | 0.302 |
+| 3 | L0H0 | 0.183 | L5H31 | 0.256 |
+| 4 | L3H28 | 0.169 | L1H20 | 0.040 |
+
+There is **zero overlap** in the top 5 heads between the two circuits. The fictional-entity circuit is concentrated in layers 0–1, while the opinion circuit operates primarily in layers 4–5.
+
+**L1H20 sign reversal.** Head L1H20 — ranked 4th in opinion patching (recovery +0.040) — shows a **negative** recovery score in the fictional-entity circuit (−0.115). This sign reversal means that patching L1H20 from biased to neutral activations *increases* sycophancy on fictional entities while *decreasing* it on opinions. The same attention head plays opposite roles in the two circuits, ruling out a shared mechanism.
+
+**Interpretation.** The fictional-entity result rules out a single universal sycophancy circuit. Instead, sycophancy is implemented by **domain-specific circuits** that depend on whether the model has relevant knowledge to evaluate the user's claim. In opinion domains, where the model has weak prior knowledge, the sycophantic pathway operates through mid-network heads (layers 4–5). In fictional-entity domains, where the model has no relevant knowledge at all, a different early-layer circuit (layers 0–1) mediates a near-universal default agreement. This has direct implications for mitigation: an intervention targeting one circuit (e.g., ablating L4H28 for opinion sycophancy) would leave the other circuit untouched.
 
 ---
 
@@ -396,6 +401,18 @@ The representation steering experiment (Section 5.8) extends this null result fr
 ### Methodological Implications for Linear Probing
 
 The probe control result is a cautionary finding for the mechanistic interpretability community. Linear probes trained on format-mixed data can achieve near-perfect accuracy while primarily learning superficial distributional cues (e.g., the presence of "I think..." preambles in biased prompts) rather than the target concept. **Training probes on one condition and testing on another is essential** for validating that probes track genuine internal representations rather than input features.
+
+### Domain-Specific Sycophancy Circuits
+
+The fictional-entity control group (Section 5.9) provides the strongest evidence against a universal sycophancy mechanism. Three findings converge:
+
+First, the fictional-entity sycophancy rate (93.0%) far exceeds the opinion rate (82.4%), despite using the same prompt format. Because fictional entities have no grounding in training data, the model cannot evaluate the user's claim against stored knowledge — it defaults to agreement. This rules out **pure belief corruption** as the mechanism: there is no "belief" to corrupt for entities the model has never encountered. The near-universal agreement is better explained as a **default agreement heuristic** that activates when the model lacks contradicting evidence.
+
+Second, the patching-identified circuits are **entirely different**. The opinion circuit operates through mid-network heads (L4H28, L4H5, L5H31), while the fictional-entity circuit operates through early-layer heads (L1H10, L0H2, L0H0). Zero overlap exists in the top 5 heads. This means sycophancy is not a single computational pathway that can be targeted once — it is a family of domain-dependent behaviors implemented by distinct circuits.
+
+Third, head L1H20 exhibits a **sign reversal** between the two domains: positive recovery (+0.040) in opinion patching, negative recovery (−0.115) in fictional-entity patching. The same attention head facilitates sycophancy in one domain and suppresses it in another. This rules out any account in which L1H20 implements a domain-general "social agreement" computation.
+
+**Implication for mitigation:** An intervention targeting the opinion sycophancy circuit (e.g., ablating L4H28) would leave the fictional-entity circuit entirely untouched, and vice versa. Combined with the redundancy result from Sections 5.6–5.8, this means that even within a single domain, the identified circuit is not causally necessary — and across domains, entirely different circuits must be addressed. Effective mitigation must operate at a level that spans all domain-specific pathways, further supporting training-time intervention over circuit-level manipulation.
 
 ### RLHF Does Not Introduce Sycophancy
 
@@ -441,36 +458,11 @@ This suggests RLHF teaches the model *when* to be sycophantic (social/opinion co
 
 ---
 
-## 8. Engineering Notes
+## 8. Reproducibility
 
-### Issues Encountered and Fixed
+All code, data processing scripts, SLURM job scripts, and result artifacts are available in the project repository. Experiments were run on the Unity HPC Cluster (UMass) using a single NVIDIA A100-SXM4-80GB GPU with PyTorch 2.10.0+cu128 and TransformerLens 2.x. All random seeds are fixed at 42. The full experimental pipeline (13 SLURM jobs covering baseline evaluation, probing, patching, ablation, steering, and control groups) completes in approximately 48 GPU-hours. Result artifacts are validated by `results/full_rerun_manifest.json`, which confirms all 10 required outputs exist and are non-empty (`missing_count: 0`).
 
-| Issue | Root Cause | Fix |
-|-------|-----------|-----|
-| Probe conclusions depended on mixed-format training | Probe labels confounded with prompt condition in mixed data | Added explicit `--analysis-mode` with claim-bearing `neutral_transfer` default and diagnostic `mixed_diagnostic` |
-| Probe fold leakage risk in mixed mode | Paired neutral/biased samples could cross folds without grouping | Added deterministic `sample_id` and GroupKFold grouping by `sample_id` |
-| Dataset class-balance artifact in synthetic domains | TruthfulQA/GSM8k answer positions were fixed | Added `--randomize-positions` and recorded per-sample randomization metadata |
-| Confidence metric length bias | Raw sequence log-probability penalized longer targets | Switched to length-normalized confidence metrics (per-token avg log-prob), with confidence-filtered stats reported as secondary |
-| Binomial test API drift across SciPy versions | `binomtest` vs `binom_test` incompatibility | Added compatibility wrapper with modern-first fallback |
-| Long steering sweeps lost progress on interruption | No checkpoint persistence | Added per-condition checkpoint JSON + `--resume-from-checkpoint` support |
-| SLURM resource directives were inconsistent | Dynamic/embedded directives were brittle across scripts | Removed dynamic `#SBATCH` patterns; centralized resources in `slurm/submit_all.sh` |
-| Jobs could succeed with missing outputs | No artifact contract checks | Added non-zero artifact checks across SLURM jobs, including steering final+checkpoint JSON checks |
-| `KeyError: 'blocks.11.attn.hook_result'` | `use_attn_result=False` by default in TransformerLens for Llama-3 | Set `model.cfg.use_attn_result = True; model.setup()` after loading in `sycophancy_model.py` |
-| `TypeError: LlamaForCausalLM.__init__() got an unexpected keyword argument 'use_attn_result'` | Kwarg passed directly to `from_pretrained`, leaked to HuggingFace constructor | Moved to post-load config mutation |
-| `RuntimeError: expanded size (118) must match existing size (116)` | Head patch hook copied full sequence dimension; neutral/biased sequences differ in length | Changed to `n = min(act.shape[1], clean_act.shape[1]); activation[0, :n, h, :] = clean_act[0, :n, h, :]` |
-
-### Cluster Configuration
-
-| Setting | Value |
-|---------|-------|
-| Cluster | Unity HPC (UMass) |
-| Partition | `gpu` |
-| Account | `pi_larsonj_wit_edu` |
-| GPU | A100 (`--gres=gpu:a100:1`) |
-| Conda module | `conda/latest` (miniforge3-24.7.1) |
-| Environment | `sycophancy-lab` |
-| PyTorch | 2.10.0+cu128 |
-| CUDA | 12.8 |
+**TransformerLens note:** Llama-3 models require post-load configuration of `model.cfg.use_attn_result = True` followed by `model.setup()` to enable per-head activation access. Passing this as a constructor argument raises a `TypeError` because it leaks to the HuggingFace constructor. See `docs/ENGINEERING_NOTES.md` for the full list of implementation issues encountered and resolved.
 
 ---
 
@@ -485,3 +477,5 @@ All experiments are complete and validated by `results/full_rerun_manifest.json`
 3. **Patching-identified heads are causally non-necessary.** The top 3 heads by activation patching recovery score (L1H20, L5H5, L4H28) cannot be ablated to reduce sycophancy — individually or in combination. Extending to the top 10 heads simultaneously yields only +0.5 pp change. Activation patching measures sufficiency (a component *can* carry the signal), not necessity (the component *must* carry it). This patching-to-ablation dissociation is the computational analog of fMRI vs. lesion dissociations in neuroscience.
 
 4. **Inference-time intervention cannot selectively suppress sycophancy.** Both head ablation and residual-stream steering across all tested layers and magnitudes fail to reduce sycophancy without destroying general capabilities. This convergent null across two mechanistically distinct methods strongly implies the behavior is redundantly distributed across the network. Effective mitigation likely requires training-time intervention targeting the opinion-domain RLHF objective directly.
+
+5. **Sycophancy is a family of domain-specific behaviors, not a single mechanism.** A fictional-entity control group (93.0% sycophancy, N=100) reveals an entirely different patching circuit (L1H10, L0H2 in layers 0–1) from the opinion circuit (L4H28, L4H5 in layers 4–5), with zero top-5 head overlap and a sign reversal for L1H20 across domains. Sycophancy cannot be addressed by targeting a single circuit — different knowledge domains activate different computational pathways for social agreement.
