@@ -28,7 +28,7 @@ export MEM="64G"                               # RAM (64G safe for Llama-3-8B)
 # --- Models ---
 export PRIMARY_MODEL="meta-llama/Meta-Llama-3-8B-Instruct"
 export BASE_MODEL="meta-llama/Meta-Llama-3-8B"
-export REPLICATION_MODEL="mistralai/Mistral-7B-Instruct-v0.3"
+export REPLICATION_MODEL="mistralai/Mistral-7B-Instruct-v0.1"
 
 # --- HuggingFace token (needed for Llama-3 gated models) ---
 export HF_TOKEN="${HF_TOKEN:-}"
