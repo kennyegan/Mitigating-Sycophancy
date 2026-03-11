@@ -1,124 +1,75 @@
-# Quick Start Guide
+# Quick Start
 
-## Complete Research Pipeline
+## 1) Environment
 
-### 1. Setup (One-time)
 ```bash
-make setup
+pip install -r requirements.txt
+pip install -e .
 ```
 
-### 2. Download Data
+## 2) Data
+
 ```bash
-# Full dataset (1500 samples: 500 per type)
-make data
-
-# OR small dataset for testing (150 samples: 50 per type)
-make data-small
-```
-
-### 3. Run Baseline Evaluation
-```bash
-make baseline
-```
-
----
-
-## Direct Script Usage
-
-### Generate Master Dataset
-```bash
-# 500 samples per dataset type
+# Full benchmark
 python scripts/00_data_setup.py --samples 500
 
-# Custom configuration
-python scripts/00_data_setup.py --samples 100 --output data/custom.jsonl
+# Balanced A/B randomized benchmark (recommended for probe reruns)
+python scripts/00_data_setup.py --samples 500 --randomize-positions \
+  --output data/processed/master_sycophancy_balanced.jsonl
 ```
 
-### Run Baseline Evaluation
-```bash
-python scripts/01_run_baseline.py
-```
-
-To customize, edit `scripts/01_run_baseline.py`:
-- `MODEL_NAME` - Change to `"gpt2"` for CPU testing
-- `MAX_SAMPLES` - Number of samples to evaluate
-
----
-
-## Expected Workflow
+## 3) Baseline
 
 ```bash
-# First time setup
-make setup
-
-# Download data (only need to do once)
-make data
-
-# Run experiments
-make baseline
-
-# View results
-cat results/baseline_results.csv
+python scripts/01_run_baseline.py \
+  --data data/processed/master_sycophancy.jsonl \
+  --output-json results/baseline_llama3_summary.json \
+  --output-csv results/baseline_llama3_detailed.csv
 ```
 
----
-
-## Dataset Types
-
-The master dataset contains three types of sycophancy:
-
-| Type | Source | Description |
-|------|--------|-------------|
-| **Opinion** | Anthropic/model-written-evals | Tests if model agrees with user beliefs |
-| **Factual** | TruthfulQA | Tests if model agrees with misconceptions |
-| **Reasoning** | GSM8k | Tests if model follows flawed logic |
-
----
-
-## Output Files
-
-After running the pipeline:
-
-```
-data/processed/
-├── master_sycophancy.jsonl         # Unified dataset
-└── master_sycophancy_metadata.json # Statistics
-
-results/
-└── baseline_results.csv            # Per-sample evaluation results
-```
-
----
-
-## Quick Testing (No GPU Required)
+## 4) Probes
 
 ```bash
-# Generate small dataset
-make data-small
+# Claim-bearing
+python scripts/02_train_probes.py \
+  --analysis-mode neutral_transfer \
+  --probe-position both \
+  --output results/probe_results_neutral_transfer.json
 
-# Edit scripts/01_run_baseline.py:
-#   MODEL_NAME = "gpt2"
-#   MAX_SAMPLES = 30
-
-# Run
-make baseline
+# Diagnostic
+python scripts/02_train_probes.py \
+  --analysis-mode mixed_diagnostic \
+  --probe-position both \
+  --output results/probe_results_mixed_diagnostic.json
 ```
 
----
+## 5) Steering With Resume
 
-## Troubleshooting
-
-**Dataset not found?**
 ```bash
-make data  # Downloads the dataset
+python scripts/05_representation_steering.py \
+  --eval-capabilities \
+  --checkpoint-path results/steering_results.json.checkpoint.json \
+  --save-every-condition \
+  --output results/steering_results.json
 ```
 
-**Out of memory?**
-- Use `MODEL_NAME = "gpt2"` for testing
-- Reduce `MAX_SAMPLES` in baseline script
+If interrupted:
 
-**Want to re-download data?**
 ```bash
-rm data/processed/master_sycophancy.jsonl
-make data
+python scripts/05_representation_steering.py \
+  --resume-from-checkpoint \
+  --checkpoint-path results/steering_results.json.checkpoint.json \
+  --output results/steering_results.json
+```
+
+## 6) SLURM Full Matrix
+
+```bash
+bash slurm/submit_all.sh
+```
+
+## 7) Consolidated Artifact Manifest
+
+```bash
+python scripts/99_collect_result_manifest.py --output results/full_rerun_manifest.json
 ```
