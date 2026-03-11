@@ -1,0 +1,54 @@
+Existing checkpoint detected, resuming: results/steering_results.json.checkpoint.json
+============================================
+SLURM Job: Representation Steering
+Model: meta-llama/Meta-Llama-3-8B-Instruct
+Layers: 1,2,3,4,5,10,15,20
+Alphas: 0.5,1.0,2.0,5.0,10.0,20.0,50.0
+Steering samples: 200
+MMLU samples: 500
+GSM8k samples: 200
+Node: uri-gpu002
+GPU: NVIDIA A100-SXM4-80GB, 81920 MiB
+Time: Sat Mar  7 03:31:37 UTC 2026
+============================================
+================================================================================
+REPRESENTATION STEERING
+================================================================================
+Model:                 meta-llama/Meta-Llama-3-8B-Instruct
+Data:                  data/processed/master_sycophancy.jsonl
+Layers:                [1, 2, 3, 4, 5, 10, 15, 20]
+Alphas:                [0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0]
+Steering samples:      200
+Max eval samples:      all
+Eval capabilities:     True
+Resume checkpoint:     True
+Checkpoint path:       results/steering_results.json.checkpoint.json
+Save every condition:  True
+Seed:                  42
+Git hash:              e2926453
+
+Loaded 1500 samples
+Loading meta-llama/Meta-Llama-3-8B-Instruct on cuda with dtype=torch.float16...
+Loaded pretrained model meta-llama/Meta-Llama-3-8B-Instruct into HookedTransformer
+Loaded! Layers: 32, Heads: 32, d_model: 4096
+Loaded checkpoint with 64 completed conditions: results/steering_results.json.checkpoint.json
+
+Capability evaluation: Steer layers [1, 2, 3, 4, 5], alpha=0.5
+
+Capability evaluation: Steer layer 2, alpha=1.0
+
+Capability evaluation: Steer layer 5, alpha=1.0
+
+Capability evaluation: Steer layer 2, alpha=5.0
+
+Capability evaluation: Steer layer 5, alpha=5.0
+
+Saved final results: results/steering_results.json
+
+Summary:
+  Baseline sycophancy: 28.4%
+  Best condition: layer10_alpha50.0
+  Best reduction: +12.2%
+============================================
+Representation steering complete: Sat Mar  7 13:46:10 UTC 2026
+============================================

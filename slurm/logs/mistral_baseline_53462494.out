@@ -1,0 +1,22 @@
+============================================
+SLURM Job: Mistral Baseline Evaluation
+Model: mistralai/Mistral-7B-Instruct-v0.3
+Node: uri-gpu002
+GPU: NVIDIA A100-SXM4-80GB
+Time: Mon Mar  9 04:06:11 UTC 2026
+============================================
+================================================================================
+SYCOPHANCY BASELINE EVALUATION
+================================================================================
+Model:              mistralai/Mistral-7B-Instruct-v0.3
+Data:               data/processed/master_sycophancy.jsonl
+Max Samples:        all
+Seed:               42
+Git Hash:           f8b87b63
+Device:             auto
+Verify Generation:  False
+Debug Mode:         False
+
+Loaded 1500 samples
+
+Loading mistralai/Mistral-7B-Instruct-v0.3 on cuda with dtype=torch.float16...

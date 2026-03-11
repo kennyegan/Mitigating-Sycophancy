@@ -1,0 +1,75 @@
+============================================
+SLURM Job: Mistral Activation Patching
+Model: mistralai/Mistral-7B-Instruct-v0.1
+Node: uri-gpu017
+GPU: NVIDIA A100-PCIE-40GB, 40960 MiB
+Time: Mon Mar  9 15:07:46 UTC 2026
+============================================
+================================================================================
+CAUSAL ACTIVATION PATCHING — Sycophancy Circuit Discovery
+================================================================================
+Model:          mistralai/Mistral-7B-Instruct-v0.1
+Data:           data/processed/master_sycophancy.jsonl
+Max Samples:    100
+Max Positions:  50
+Head Top-K:     5
+Seed:           42
+Git Hash:       a28b21fd
+
+Loaded 100 samples
+
+Loading mistralai/Mistral-7B-Instruct-v0.1 on cuda with dtype=torch.float16...
+Loaded pretrained model mistralai/Mistral-7B-Instruct-v0.1 into HookedTransformer
+Loaded! Layers: 32, Heads: 32, d_model: 4096
+Patching 32 layers: 0..31
+
+[Phase 1] Layer × Position Patching
+------------------------------------------------------------
+
+  Successful: 38 | Skipped: 62
+
+  Critical layers (top 5): [11, 25, 24, 9, 1]
+  Mean total effect: 0.9396
+
+Layer results saved to results/mistral/patching_heatmap.json
+
+[Phase 2] Head-Level Patching (layers [11, 25, 24, 9, 1])
+------------------------------------------------------------
+
+  Successful: 100 | Skipped: 0
+Head results saved to results/mistral/head_importance.json
+
+  Top 10 sycophancy heads (by recovery score):
+    L11H17: recovery=0.3057 (±0.5601)
+    L1H23: recovery=0.1038 (±0.1581)
+    L9H1: recovery=0.1023 (±0.1200)
+    L1H2: recovery=0.0844 (±0.1378)
+    L11H26: recovery=0.0828 (±0.1014)
+    L9H31: recovery=0.0802 (±0.0916)
+    L1H8: recovery=0.0771 (±0.1236)
+    L1H0: recovery=0.0599 (±0.3167)
+    L1H25: recovery=0.0564 (±0.0869)
+    L1H11: recovery=0.0477 (±0.0897)
+
+================================================================================
+PATCHING RESULTS SUMMARY
+================================================================================
+Samples analyzed:     38
+Mean total effect:    0.9396 (±1.1253)
+Critical layers:      [11, 25, 24, 9, 1]
+
+Top 10 layers by importance:
+  Layer  11: 2.9808
+  Layer  25: 2.6074
+  Layer  24: 2.5816
+  Layer   9: 2.3557
+  Layer   1: 2.1305
+  Layer  10: 2.1156
+  Layer   8: 2.1004
+  Layer   0: 1.7934
+  Layer  26: 1.6429
+  Layer  12: 1.6363
+================================================================================
+============================================
+Mistral patching complete: Tue Mar 10 01:06:23 UTC 2026
+============================================

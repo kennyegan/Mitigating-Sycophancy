@@ -1,0 +1,39 @@
+============================================
+SLURM Job: Mistral Probe Control (Balanced)
+Model: mistralai/Mistral-7B-Instruct-v0.1
+Node: uri-gpu015
+GPU: NVIDIA A100-PCIE-40GB, 40960 MiB
+Time: Mon Mar  9 15:07:46 UTC 2026
+============================================
+================================================================================
+PROBE CONTROL (UNIFIED PIPELINE)
+================================================================================
+Model:          mistralai/Mistral-7B-Instruct-v0.1
+Data:           data/processed/master_sycophancy_balanced.jsonl
+Max Samples:    all
+Probe Position: final
+Probe Type:     logistic
+Analysis Mode:  neutral_transfer
+CV Folds:       5
+Seed:           42
+Git Hash:       a28b21fd
+
+Loaded 1500 samples
+
+Loading mistralai/Mistral-7B-Instruct-v0.1 on cuda with dtype=torch.float16...
+Loaded pretrained model mistralai/Mistral-7B-Instruct-v0.1 into HookedTransformer
+Loaded! Layers: 32, Heads: 32, d_model: 4096
+Probing 32 layers: 0..31
+
+Results saved to results/mistral/probe_control_balanced_results.json
+
+--- Position: final ---
+Best layer: 9
+Best transfer accuracy: 68.9%
+Transfer 95% CI: [66.5%, 71.1%]
+Social compliance: 28.6%
+Belief corruption: 4.5%
+Dominant pattern: social_compliance
+============================================
+Mistral probes complete: Mon Mar  9 16:02:43 UTC 2026
+============================================
