@@ -139,6 +139,8 @@ Causal patching identifies top-10 heads with high recovery scores. But ablating 
 
 Heads are causally **sufficient** (patching restores honest output) but not causally **necessary** (ablation has no effect). The signal is redundantly distributed.
 
+**CAVEAT (discovered 2026-03-16 audit):** The original ablation targeted L1H20, L5H5, L4H28 based on a stale pre-rerun patching result. The validated rerun (Mar 4) shows the actual top-3 are L4H28 (0.443), L4H5 (0.302), L5H31 (0.256). L4H28 was tested (no effect: 28.1%), but L4H5 and L5H31 were not. Job 16 (`slurm/16_corrected_ablation.sh`) tests the correct top-3. The dissociation finding is **pending re-validation**.
+
 ### 3. Domain-Specific Circuits
 
 Different attention heads mediate opinion vs. fictional-entity sycophancy with sign-reversed roles. Zero overlap between domain circuits.
@@ -185,6 +187,9 @@ Inference-time steering/ablation is insufficient. Effective sycophancy mitigatio
 | 2026-03-16 | --- | Add `extract_per_source_steering.py` | No-GPU analysis script for opinion-domain steering |
 | 2026-03-16 | --- | Add `slurm/14_steering_resume.sh` | Resume job for capability evals (12h wall time, 200 GSM8k) |
 | 2026-03-16 | --- | NeurIPS assessment | Identified ~35-45% baseline, path to ~75-80% via DPO + probe re-analysis |
+| 2026-03-16 | --- | Three-way pre-submission audit | Found stale head table (CRITICAL), 10 bugs (none invalidate results), 10 paper fixes |
+| 2026-03-16 | --- | Add `slurm/16_corrected_ablation.sh` | Ablation of validated top-3 (L4H28, L4H5, L5H31) — blocks paper direction |
+| 2026-03-16 | --- | Add `scripts/eval_steering_capability.py` | Targeted MMLU/GSM8k eval for specific steering conditions |
 
 ---
 
@@ -226,6 +231,58 @@ Mitigating-Sycophancy/
   results_archive/               -- Pre-rerun snapshot (Mar 3)
   tests/                         -- Evaluation math, probe, schema tests
 ```
+
+---
+
+## Pre-Submission Audit (2026-03-16)
+
+Three-way audit: paper claims vs data, implementation bugs, statistical methodology.
+
+### Existing Results: ALL VALID — No Reruns Needed
+
+| Bug Found | Affects Existing Results? | Resolution |
+|-----------|--------------------------|------------|
+| Paper Section 5.4 head table uses stale (Mar 3) rankings | No — `head_importance.json` has correct data | Fix paper numbers; run Job 16 for corrected ablation |
+| Layer patching alignment bug (absolute vs shared-suffix) | No — layers 4,5 correctly selected as critical | Methodological note in paper |
+| Multiple testing corrections never applied (dead code) | No — results are valid, reporting needs corrections | Wire in Bonferroni/BH; report adjusted p-values |
+| BH monotonicity bug in evaluation.py | No — function is never called | Fix code for future use |
+| Position confound in probes | No — balanced dataset (50.3%/50.8%/50.0%) already used | Paper already cites balanced results |
+| fold_ln=False in TransformerLens | No — defensible choice | Add discussion in paper |
+| Checkpoint per_example drop on resume | No — steering completed in single run, all CIs valid | Fix code for future resilience |
+| Mean-ablation neutral activation preference | No — mean-ablation reported as collapsed (0%); not a primary finding | Acknowledged in paper |
+| GSM8k neutral prompt info asymmetry | No — reasoning sycophancy is 0.0%; no claims depend on this | Methodological caveat |
+| Bootstrap CI seed in evaluation.py | No — callers set global seed via set_seeds(42) | Fix code for standalone use |
+
+### New Experiments Required
+
+| Job | Script | Purpose | Blocks |
+|-----|--------|---------|--------|
+| **16 (CRITICAL)** | `slurm/16_corrected_ablation.sh` | Ablate actual top-3: L4H28, L4H5, L5H31 | Validates/invalidates dissociation finding |
+| 15 (optional) | `slurm/15_steering_cap_eval.sh` | MMLU/GSM8k for L15/L20 alpha=2 steering | Steering mitigation claim |
+
+### Paper Fixes Required (No GPU)
+
+| Section | Issue | Fix |
+|---------|-------|-----|
+| 5.4 | Head table uses stale rankings (L1H20=0.569) | Replace with validated: L4H28=0.443, L4H5=0.302, L5H31=0.256 |
+| 5.6 | L5H5 GSM8k says 31.0% | Change to 31.5% |
+| 5.7 | GSM8k retention says 90.1% | Change to 90.0% |
+| 5.7 | GSM8k retention CI excludes 1.0 [0.823, 0.990], paper says "non-significant" | Reword to "marginally significant" |
+| 5.1 | Samples evaluated says 1,500 | Change to 1,493 (7 skipped) |
+| 5.1 | Compliance gap -0.0434 | Change to -0.0435 |
+| 6 | Base model opinion says 50.4% | Change to 50.3% |
+| 5.8 | MMLU N=500 | Change to N=499 |
+| Methods | No discussion of fold_ln=False choice | Add paragraph |
+| Results | No multiple testing corrections reported | Apply Bonferroni/BH, report adjusted values |
+
+### Implementation Fixes (No Rerun Needed)
+
+| File | Issue | Priority |
+|------|-------|----------|
+| `evaluation.py:685-695` | BH monotonicity: enforce in sorted order, not original order | Medium (dead code) |
+| `evaluation.py:369-410` | `compute_bootstrap_ci` needs local RandomState seed | Low |
+| `05_representation_steering.py:743-748` | Save per_example before dropping for checkpoint resilience | Low |
+| `04_head_ablation.py:499-500` | Fix misleading indentation in MMLU else branch | Low |
 
 ---
 
