@@ -99,6 +99,23 @@ Job 13: Manifest collection & validation --> full_rerun_manifest.json
 
 The latest SLURM runs (53384704-53384706, Mar 6) were redundant re-reruns; the authoritative results were already generated Mar 4-9 and confirmed by the manifest.
 
+### Per-Source Steering Analysis (Extracted 2026-03-16)
+
+The steering checkpoint already contained per-source breakdowns for all 64 conditions. Offline extraction reveals steering **does reduce opinion-domain sycophancy** --- but with critical caveats:
+
+| Condition | Opinion Syc | Change | Factual | Reasoning | Interpretation |
+|-----------|-------------|--------|---------|-----------|----------------|
+| Baseline (no steering) | 83.0% | --- | 1.6% | 0.0% | Normal |
+| **Layer 15, alpha=2.0** | **76.1%** | **-6.9pp** | 9.2% | 9.8% | **Best safe candidate** |
+| **Layer 20, alpha=2.0** | **77.3%** | **-5.7pp** | 4.8% | 0.0% | **Second best** |
+| Layer 10, alpha=50.0 | 48.2% | -34.9pp | 0.0% | 0.0% | Model collapsed (outputs "no" to everything) |
+| Layer 3, alpha=50.0 | 51.8% | -31.2pp | 100% | 100% | Reversed polarity (agrees with everything) |
+| Most high-alpha conditions | ~51.8% | ~-31pp | 100% | 100% | Coin-flip incoherence, not real reduction |
+
+**Key insight:** 31/63 conditions reduce opinion sycophancy below baseline CI [79.2%], but most achieve this by breaking the model. The 51.8% cluster is suspiciously close to random (coin flip). Only late-layer, low-alpha conditions (L15/L20 at alpha=2) show genuine moderate reduction without catastrophic side-effects --- but MMLU/GSM8k capability verification is needed for these specific conditions.
+
+**Decision:** Layer 15 alpha=2.0 and Layer 20 alpha=2.0 are the candidates to investigate for capability retention. If they preserve >95% MMLU/GSM8k, this becomes a real (modest) mitigation result.
+
 ---
 
 ## Key Findings (Provisional --- Pending Paper Finalization)
@@ -163,6 +180,11 @@ Inference-time steering/ablation is insufficient. Effective sycophancy mitigatio
 | 2026-03-03 | `6826726` | Update Mistral job | Cross-architecture replication pipeline |
 | 2026-03-03 | `cdb589d` | Update paper | Incorporate Mistral findings, dissociation discussion |
 | 2026-03-03 | `2df0e82` | Update project overview | Milestone status, completion gates |
+| 2026-03-16 | `f241597` | Update context | context.md initial creation |
+| 2026-03-16 | --- | Per-source steering extraction | Offline analysis of checkpoint: L15/L20 alpha=2 candidates identified |
+| 2026-03-16 | --- | Add `extract_per_source_steering.py` | No-GPU analysis script for opinion-domain steering |
+| 2026-03-16 | --- | Add `slurm/14_steering_resume.sh` | Resume job for capability evals (12h wall time, 200 GSM8k) |
+| 2026-03-16 | --- | NeurIPS assessment | Identified ~35-45% baseline, path to ~75-80% via DPO + probe re-analysis |
 
 ---
 
@@ -207,28 +229,56 @@ Mitigating-Sycophancy/
 
 ---
 
-## Future Work and Open Questions
+## Research Direction & NeurIPS Path (Assessed 2026-03-16)
 
-### Immediate (Paper Completion)
-- Finalize paper.md numerical claims with validated rerun numbers
-- Add Mistral cross-architecture comparison tables
-- Complete discussion of patching-to-ablation dissociation implications
+### Current NeurIPS Readiness: ~35-45% (Borderline Reject / Weak Accept)
 
-### Near-Term Extensions
-- **Logit lens analysis** on identified sycophancy heads (what do they write to residual stream?)
-- **Attention pattern visualization** (do sycophancy heads attend to user-hint tokens?)
-- **Layer-by-layer probe accuracy curves** to map where social compliance emerges
-- **Ablation on opinion-only subset** (where sycophancy is 82.4%) rather than full dataset
+**Strengths:** Social compliance evidence (novel), patching-to-ablation dissociation (novel methodology contribution), cross-architecture replication, well-designed benchmark with controls.
 
-### Medium-Term Research Directions
-- **Training-time interventions:** DPO/RLHF objective modifications that penalize compliance on verifiable claims
-- **Activation addition** (Turner et al. 2023) as alternative to subtraction steering
-- **Larger models:** Scale analysis (does circuit redundancy increase with model size?)
-- **Multi-turn sycophancy:** Extend benchmark to conversational settings where sycophancy compounds
-- **Causal scrubbing** (Chan et al. 2022) for more rigorous circuit validation
+**Weaknesses:** No successful mitigation (title says "Mitigating"), primarily negative results, limited theoretical insight, domain-specificity undermines generality claims.
+
+### Phase 1: Per-Source Steering (COMPLETE --- data extracted 2026-03-16)
+
+The checkpoint already had all per-source data. Key finding: late-layer, low-alpha steering (L15 alpha=2, L20 alpha=2) produces modest opinion-domain reduction (-5.7 to -6.9pp) without catastrophic side-effects. High-alpha conditions produce coin-flip incoherence (51.8% = random), not genuine reduction.
+
+Next step: verify MMLU/GSM8k retention for L15 alpha=2 and L20 alpha=2 conditions from steering_results.json capability data.
+
+### Phase 2: Distributed Steering (CONDITIONAL on Phase 1)
+
+If L15/L20 alpha=2 preserves capability, test layer-normalized distributed steering across all identified layers simultaneously at very low alpha. The 60x norm difference between layer 1 (0.069) and layer 20 (4.285) means alpha is not comparable across layers without normalization.
+
+### Phase 3: Paper Tightening (IN PARALLEL)
+
+- Add 2x2 probe contingency table (probe correct/wrong x model sycophantic/honest)
+- Expand fictional-entity two-circuit finding (zero overlap, sign-reversed L1H20 --- adds novelty for free)
+- Bonferroni/BH corrections for 56 steering conditions
+- Create visualization: patching heatmap, steering sweep plots, probe accuracy curves
+
+### Phase 4: DPO Training-Time Intervention (2-4 weeks, highest impact)
+
+**The experiment that elevates this paper from descriptive to prescriptive:**
+
+1. Generate 250-500 NEW opinion pairs (different seeds, not the 500 test samples)
+2. DPO fine-tune Llama-3-8B-Instruct (TRL DPOTrainer, LoRA rank 16)
+3. Evaluate: target <60% opinion sycophancy, >95% MMLU retention
+4. **CRITICAL:** Re-run neutral-transfer probes on DPO model
+   - Pre-DPO: 18% social compliance, 10% belief corruption
+   - Post-DPO hypothesis: social compliance drops, robust tracking increases
+   - This shows mechanistically WHAT DPO does to sycophancy circuits
+   - First paper to demonstrate this
+
+**Impact estimates:**
+| Scenario | NeurIPS Likelihood |
+|----------|-------------------|
+| Current state | ~35-45% |
+| + Phase 1 opinion steering confirmed | ~50-60% |
+| + Phase 3 paper tightened | ~60-70% |
+| + Phase 4 DPO + probe re-analysis | ~75-80% |
 
 ### Methodological Cautions
 1. Patching sufficiency does not imply necessity --- always validate with ablation
 2. Domain-specificity means aggregate sycophancy rates mask important structure
 3. Cross-architecture replication is essential; behavioral similarity hides mechanistic divergence
 4. Probe accuracy on biased prompts should be interpreted carefully (format confounds if not controlled)
+5. Per-source CIs must use domain-specific N (e.g., N=436 for opinion), not full N=1500
+6. DPO evaluation MUST use data not seen during training (separate seed generation)
