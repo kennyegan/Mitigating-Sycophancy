@@ -38,6 +38,7 @@ cd ${PROJECT_DIR}
 export HF_HOME="${HF_HOME}"
 export TORCH_HOME="${TORCH_HOME}"
 export TOKENIZERS_PARALLELISM=false
+export HF_HUB_OFFLINE=1
 
 mkdir -p results slurm/logs
 

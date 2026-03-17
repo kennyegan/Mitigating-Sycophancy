@@ -1,0 +1,24 @@
+============================================
+SLURM Job: CORRECTED Head Ablation
+Model: meta-llama/Meta-Llama-3-8B-Instruct
+Heads: L4H28, L4H5, L5H31 (validated top-3)
+Node: gpu023
+GPU: NVIDIA A100-SXM4-80GB, 81920 MiB
+Time: Mon Mar 16 10:26:53 PM UTC 2026
+============================================
+================================================================================
+HEAD ABLATION EXPERIMENT — Causal Intervention on Sycophancy Heads
+================================================================================
+Model:               meta-llama/Meta-Llama-3-8B-Instruct
+Data:                data/processed/master_sycophancy.jsonl
+Heads to ablate:     ['L4H28', 'L4H5', 'L5H31']
+Max Samples:         all
+Eval capabilities:   True
+MMLU samples:        500
+GSM8k samples:       200
+Seed:                42
+Git Hash:            152e9fd3
+
+Loaded 1500 samples
+
+Loading meta-llama/Meta-Llama-3-8B-Instruct on cuda with dtype=torch.float16...

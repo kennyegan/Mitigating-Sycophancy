@@ -1,0 +1,48 @@
+No conda package cache directories found outside your home directory. To
+prevent conda from filling up your home directory, you can create a new
+directory at `/work/pi_<your_pi_name>/$USER/.conda/pkgs` and reload the module. 
+No conda environment directories found outside your home directory. To prevent
+conda from filling up your home directory, you can create a new directory at
+`/work/pi_<your_pi_name>/$USER/.conda/envs` and reload the module. 
+Loading conda version miniforge3-24.7.1
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:07<00:21,  7.20s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:14<00:14,  7.49s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:22<00:07,  7.47s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:23<00:00,  4.93s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:23<00:00,  5.85s/it]
+Traceback (most recent call last):
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/huggingface_hub/utils/_http.py", line 403, in hf_raise_for_status
+    response.raise_for_status()
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/requests/models.py", line 1026, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 429 Client Error: Too Many Requests for url: https://huggingface.co/api/models/meta-llama/Meta-Llama-3-8B-Instruct
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/egank2_wit_edu/Mitigating-Sycophancy/scripts/04_head_ablation.py", line 1000, in <module>
+    sys.exit(main())
+  File "/home/egank2_wit_edu/Mitigating-Sycophancy/scripts/04_head_ablation.py", line 916, in main
+    model = SycophancyModel(args.model, device=args.device)
+  File "/home/egank2_wit_edu/Mitigating-Sycophancy/src/models/sycophancy_model.py", line 64, in __init__
+    self.model = HookedTransformer.from_pretrained(
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/transformer_lens/HookedTransformer.py", line 1381, in from_pretrained
+    model = cls(
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/transformer_lens/HookedTransformer.py", line 165, in __init__
+    AutoTokenizer.from_pretrained(
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/transformers/models/auto/tokenization_auto.py", line 1156, in from_pretrained
+    return tokenizer_class.from_pretrained(pretrained_model_name_or_path, *inputs, **kwargs)
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/transformers/tokenization_utils_base.py", line 2113, in from_pretrained
+    return cls._from_pretrained(
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/transformers/tokenization_utils_base.py", line 2395, in _from_pretrained
+    tokenizer = cls._patch_mistral_regex(
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/transformers/tokenization_utils_base.py", line 2442, in _patch_mistral_regex
+    _is_local or (not _is_local and is_base_mistral(pretrained_model_name_or_path))
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/transformers/tokenization_utils_base.py", line 2432, in is_base_mistral
+    model = model_info(model_id)
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/huggingface_hub/utils/_validators.py", line 114, in _inner_fn
+    return fn(*args, **kwargs)
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/huggingface_hub/hf_api.py", line 2661, in model_info
+    hf_raise_for_status(r)
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/huggingface_hub/utils/_http.py", line 476, in hf_raise_for_status
+    raise _format(HfHubHTTPError, str(e), response) from e
+huggingface_hub.errors.HfHubHTTPError: 429 Client Error: Too Many Requests for url: https://huggingface.co/api/models/meta-llama/Meta-Llama-3-8B-Instruct (Request ID: Root=1-69b883ef-598754cd21ae88a76672486e;c579ac94-36fd-44f5-9c95-8d8647941093)
+
+We had to rate limit your IP (205.172.168.145). To continue using our service, create a HF account or login to your existing account, and make sure you pass a HF_TOKEN if you're using the API.
