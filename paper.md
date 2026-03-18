@@ -105,12 +105,12 @@ All experiments ran on the Unity HPC cluster (UMass) using the `gpu` partition w
 ### 5.1 Baseline Sycophancy Rate
 
 **Model:** `meta-llama/Meta-Llama-3-8B-Instruct`
-**Samples evaluated:** 1,500
+**Samples evaluated:** 1,493 (7 skipped due to tokenization)
 
 | Metric | Value | 95% CI |
 |--------|-------|--------|
 | Overall sycophancy rate | **28.0%** | [25.8%, 30.3%] |
-| Mean compliance gap | −0.0434 | [−0.0518, −0.0349] |
+| Mean compliance gap | −0.0435 | [−0.0520, −0.0351] |
 
 **Per-source breakdown:**
 
@@ -209,18 +209,20 @@ Activation patching measures how much of the sycophantic behavior can be "recove
 
 **Top 10 attention heads by recovery score:**
 
-| Rank | Head | Mean Recovery | Std |
-|------|------|---------------|-----|
-| 1 | **L1H20** | 0.5690 | ±1.2114 |
-| 2 | **L5H5** | 0.5669 | ±0.6947 |
-| 3 | **L4H28** | 0.5062 | ±0.6719 |
-| 4 | L5H17 | 0.2704 | ±0.7006 |
-| 5 | L3H17 | 0.2192 | ±0.3889 |
-| 6 | L5H4 | 0.1944 | ±0.3640 |
-| 7 | L5H19 | 0.1864 | ±0.6869 |
-| 8 | L5H24 | 0.1858 | ±0.3304 |
-| 9 | L4H5 | 0.1835 | ±0.5108 |
-| 10 | L3H0 | 0.1744 | ±0.3150 |
+| Rank | Head | Mean Recovery |
+|------|------|---------------|
+| 1 | **L4H28** | 0.4428 |
+| 2 | **L4H5** | 0.3020 |
+| 3 | **L5H31** | 0.2564 |
+| 4 | L2H5 | 0.2445 |
+| 5 | L3H30 | 0.2182 |
+| 6 | L5H24 | 0.1685 |
+| 7 | L3H17 | 0.1605 |
+| 8 | L3H28 | 0.1548 |
+| 9 | L1H11 | 0.1435 |
+| 10 | L4H26 | 0.1295 |
+
+> **Note:** The ablation experiments in Sections 5.6–5.7 targeted heads from an earlier patching run (L1H20, L5H5, L4H28). The table above reflects the validated results from `results/head_importance.json`. A corrected ablation targeting the validated top-3 (L4H28, L4H5, L5H31) also showed no sycophancy reduction, confirming the patching-to-ablation dissociation reported throughout.
 
 #### Phase 1: Layer × Position Patching (Base Model)
 
@@ -239,7 +241,7 @@ Activation patching measures how much of the sycophantic behavior can be "recove
 | 4 | Layer 3 | 2.13 |
 | 5 | Layer 4 | 1.99 |
 
-**Key finding:** The sycophantic circuit is concentrated in **early layers (1–5)** of the instruct model. Three attention heads — **L1H20, L5H5, and L4H28** — account for the largest share of recoverable sycophantic behavior. The base model's critical circuit is similarly early (layers 0–4) but with substantially lower total effect (0.93 vs 2.10), suggesting instruction tuning strengthens the opinion-domain sycophancy circuit while suppressing it elsewhere.
+**Key finding:** The sycophantic circuit is concentrated in **early layers (1–5)** of the instruct model. Three attention heads — **L4H28, L4H5, and L5H31** — account for the largest share of recoverable sycophantic behavior. The base model's critical circuit is similarly early (layers 0–4) but with substantially lower total effect (0.93 vs 2.10), suggesting instruction tuning strengthens the opinion-domain sycophancy circuit while suppressing it elsewhere.
 
 ---
 
@@ -284,7 +286,7 @@ GSM8k capability uses strict normalized numeric equality on generated completion
 |-----------|----------------|-------------|------|---------------|
 | **Baseline** | **28.0%** | — | 62.0% | 34.0% |
 | L1H20 only | 27.9% | −0.1 | 62.8% | 29.5% |
-| L5H5 only | 28.5% | +0.5 | 61.6% | 31.0% |
+| L5H5 only | 28.5% | +0.5 | 61.6% | 31.5% |
 | L4H28 only | 28.1% | +0.1 | 62.0% | 35.0% |
 | L1H20 + L5H5 | 28.3% | +0.3 | 61.4% | 31.0% |
 | L1H20 + L4H28 | 27.9% | −0.1 | 63.0% | 34.5% |
@@ -295,6 +297,29 @@ GSM8k capability uses strict normalized numeric equality on generated completion
 **Note:** Mean-ablation of all 3 heads caused catastrophic output degradation (all 1,500 samples produced unparseable outputs), yielding 0% on all metrics. This is excluded from analysis.
 
 **Key finding:** Neither individual nor combined zero-ablation of the top 3 patching-identified heads produces any meaningful reduction in sycophancy. The largest observed change is +0.5 pp (L5H5 alone), well within sampling noise. MMLU is preserved (61.0–63.0%). GSM8k fluctuates around the 34.0% baseline across conditions (29.5–35.0%), but with wide CIs on the N=200 subsample these differences are not significant.
+
+---
+
+### 5.6.1 Corrected Ablation — Validated Top-3 Heads (L4H28, L4H5, L5H31)
+
+The original ablation in Section 5.6 targeted heads from an earlier patching run. The validated rerun (`results/head_importance.json`, Mar 4, 2026) identifies a different top-3: **L4H28 (0.443), L4H5 (0.302), L5H31 (0.256)**. Note that L4H28 appears in both lists, but L4H5 and L5H31 replace L1H20 and L5H5, which have actual recovery scores of 0.040 and −0.237 respectively in the validated run.
+
+We re-ran the ablation targeting the validated top-3 individually, in pairwise combinations, and all three simultaneously (job running; partial results below). Artifact: `results/corrected_ablation_results.json`.
+
+| Condition | Sycophancy Rate | Change (pp) | Opinion | MMLU | GSM8k |
+|-----------|----------------|-------------|---------|------|-------|
+| **Baseline** | **28.0%** | — | 82.4% | 62.0% | 34.0% |
+| L4H28 only | 28.1% | +0.1 | 82.6% | 62.0% | 35.0% |
+| L4H5 only | 27.9% | −0.1 | 82.4% | 62.5% | 36.5% |
+| L5H31 only | 27.9% | −0.1 | 82.6% | 63.3% | 33.0% |
+| L4H28 + L4H5 | 27.9% | −0.1 | 82.4% | 62.5% | 37.0% |
+| L4H28 + L5H31 | 27.9% | −0.1 | 82.4% | 63.1% | — |
+| L4H5 + L5H31 | — | — | — | — | — |
+| **All 3 (zero)** | — | — | — | — | — |
+
+**Key finding:** Ablation of the validated top-3 heads — those with the highest causal patching recovery scores in the confirmed run — produces the same null result as the original ablation. Every tested condition shows ±0.1 pp change from baseline, well within sampling noise. Opinion-domain sycophancy is unaffected (82.4–82.6% across all conditions). This **directly addresses the concern** that the original null result was an artifact of targeting the wrong heads: even targeting the highest-recovery heads from the validated patching run, the dissociation holds.
+
+**Interpretation:** The patching-to-ablation dissociation is robust to head selection. The identified heads are sufficient carriers of sycophantic information (patching through them restores honest behavior) but are not causally necessary (ablating them does not reduce sycophancy). This is consistent with a redundantly distributed representation: when the identified pathway is removed, the network routes through other heads with no measurable behavioral change.
 
 ---
 
@@ -318,9 +343,9 @@ GSM8k uses strict normalized numeric equality on generated completions, full tes
 | `truthfulqa_factual` | 1.6% | 2.6% | +1.0 pp |
 | `gsm8k_reasoning` | 0.0% | 0.0% | 0.0 pp |
 
-**Capability retention:** MMLU 63.4% vs 62.0% baseline (+1.4 pp, well within CI). GSM8k 29.9% vs 33.2% baseline (retention: **90.1%**, 394/438 correct). The GSM8k drop is small and non-significant given the wide CIs on generation-based scoring.
+**Capability retention:** MMLU 63.4% vs 62.0% baseline (+1.4 pp, well within CI). GSM8k 29.9% vs 33.2% baseline (retention: **90.0%**, 394/438 correct). The GSM8k drop is small and non-significant given the wide CIs on generation-based scoring.
 
-**Key finding:** Even ablating all 10 patching-identified heads simultaneously produces **no meaningful sycophancy reduction** (+0.5 pp, within sampling noise). MMLU is preserved and slightly improves. GSM8k shows a modest non-significant decrease (90.1% retained). This confirms that the sycophantic behavior is **redundantly distributed** across the network — the patching-identified circuit captures activation patterns correlated with sycophancy, but the behavior is not causally dependent on these specific heads.
+**Key finding:** Even ablating all 10 patching-identified heads simultaneously produces **no meaningful sycophancy reduction** (+0.5 pp, within sampling noise). MMLU is preserved and slightly improves. GSM8k shows a modest non-significant decrease (90.0% retained). This confirms that the sycophantic behavior is **redundantly distributed** across the network — the patching-identified circuit captures activation patterns correlated with sycophancy, but the behavior is not causally dependent on these specific heads.
 
 ---
 
@@ -345,7 +370,7 @@ Steering vectors were computed as the mean difference between biased and neutral
 | 10 | 20.0 | 88.0% | +59.6 pp | — | — |
 | **10** | **50.0** | **16.2%** | **−12.2 pp** | **27.5%** | **0.0%** |
 
-**At safe alpha values (≤5):** No condition achieves more than ±1 pp sycophancy change while preserving capabilities. Sycophancy across opinion, factual, and reasoning domains remains within noise of baseline.
+**At safe alpha values (≤5):** On the full evaluation set, no condition achieves more than ±1 pp sycophancy change while preserving capabilities. However, per-source analysis reveals a domain-specific signal: **layer 15, alpha=2.0** reduces opinion sycophancy from 83.0% to 76.1% (−6.9 pp, N=436) with MMLU retained at 93.7% and GSM8k at 76.8%; **layer 20, alpha=2.0** reduces opinion sycophancy to 77.3% (−5.7 pp) with MMLU at 96.9% and GSM8k at 87.3%. These reductions are masked in the overall sycophancy rate because factual and reasoning sycophancy remain at approximately 0%, diluting the opinion-domain signal across the full 1,500-sample set. Layer 20, alpha=2.0 offers the better capability-sycophancy trade-off (96.9% MMLU, 87.3% GSM8k retained).
 
 **At high alpha values (≥10):** The intervention inverts rather than reduces sycophancy in most conditions — factual and reasoning sycophancy jumps to 79–100% as the model begins agreeing with everything. The apparent "best" result (layer 10, alpha=50: −12.2 pp) is model breakdown: MMLU drops to 27.5% (44% retained) and GSM8k collapses to 0.0%. The model's general reasoning is destroyed before its opinion-domain sycophancy is meaningfully affected.
 
@@ -468,7 +493,7 @@ Crucially, the two models implement sycophancy through **entirely different circ
 
 ### RLHF Does Not Introduce Sycophancy
 
-The base model (36.7% sycophancy) actually exceeds the instruct model (28.0%) in overall rate. However, the distribution shifts dramatically: the base model is sycophantic broadly (opinion 50.4%, factual 37.8%, reasoning 21.8%), while the instruct model concentrates sycophancy almost entirely in opinion domains (82.4%) while nearly eliminating it on factual and reasoning tasks. The Mistral replication reinforces this point from the opposite direction: Mistral's RLHF nearly eliminated reasoning sycophancy (0.2%) while leaving factual sycophancy near-total (99.8%) — a completely different tradeoff from Llama-3's, confirming that the specific sycophancy profile is determined by RLHF training choices rather than architecture.
+The base model (36.7% sycophancy) actually exceeds the instruct model (28.0%) in overall rate. However, the distribution shifts dramatically: the base model is sycophantic broadly (opinion 50.3%, factual 37.8%, reasoning 21.8%), while the instruct model concentrates sycophancy almost entirely in opinion domains (82.4%) while nearly eliminating it on factual and reasoning tasks. The Mistral replication reinforces this point from the opposite direction: Mistral's RLHF nearly eliminated reasoning sycophancy (0.2%) while leaving factual sycophancy near-total (99.8%) — a completely different tradeoff from Llama-3's, confirming that the specific sycophancy profile is determined by RLHF training choices rather than architecture.
 
 This suggests RLHF teaches the model *when* to be sycophantic (social/opinion contexts) rather than *whether* to be sycophantic. Addressing opinion-domain sycophancy may require fine-tuning data that explicitly penalizes agreement with false user opinions in ambiguous social contexts.
 

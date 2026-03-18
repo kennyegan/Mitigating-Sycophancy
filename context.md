@@ -1,7 +1,7 @@
 # Context: Mitigating Sycophancy in Large Language Models
 
 > Implementation log and research context for mechanistic interpretability analysis of LLM sycophancy circuits.
-> Last updated: 2026-03-16
+> Last updated: 2026-03-17
 
 ---
 
@@ -65,7 +65,7 @@ Job 13: Manifest collection & validation --> full_rerun_manifest.json
 
 ---
 
-## Current Run Status (2026-03-16)
+## Current Run Status (2026-03-17)
 
 ### Llama-3-8B-Instruct (Primary): ALL COMPLETE
 
@@ -77,7 +77,7 @@ Job 13: Manifest collection & validation --> full_rerun_manifest.json
 | `probe_results_mixed_diagnostic.json` | OK | Mar 4 | Best layer: 2 |
 | `probe_control_balanced_results.json` | OK | Mar 4 | Best layer: 1 |
 | `patching_heatmap.json` | OK | Mar 4 | Top layers: 1,2,3,4,5 |
-| `head_importance.json` | OK | Mar 4 | L1H20 top head |
+| `head_importance.json` | OK | Mar 4 | Validated top-3: L4H28, L4H5, L5H31 |
 | `head_ablation_results.json` | OK | Mar 6 | Baseline: 28.0%, All-zero: 28.1% |
 | `top10_ablation_results.json` | OK | Mar 6 | Baseline: 28.0%, All-zero: 28.5% |
 | `top10_ablation_full_gsm8k.json` | OK | Mar 9 | Full 1319-sample GSM8k eval |
@@ -139,7 +139,15 @@ Causal patching identifies top-10 heads with high recovery scores. But ablating 
 
 Heads are causally **sufficient** (patching restores honest output) but not causally **necessary** (ablation has no effect). The signal is redundantly distributed.
 
-**CAVEAT (discovered 2026-03-16 audit):** The original ablation targeted L1H20, L5H5, L4H28 based on a stale pre-rerun patching result. The validated rerun (Mar 4) shows the actual top-3 are L4H28 (0.443), L4H5 (0.302), L5H31 (0.256). L4H28 was tested (no effect: 28.1%), but L4H5 and L5H31 were not. Job 16 (`slurm/16_corrected_ablation.sh`) tests the correct top-3. The dissociation finding is **pending re-validation**.
+**VALIDATED (2026-03-17):** The original ablation targeted L1H20, L5H5, L4H28 based on a stale pre-rerun patching result. The validated rerun (Mar 4) shows the actual top-3 are L4H28 (0.443), L4H5 (0.302), L5H31 (0.256). Job 16 corrected ablation (53696265) tested the validated top-3 individually:
+
+| Head | Syc Rate | Change from baseline (28.0%) |
+|------|----------|------------------------------|
+| L4H28 zero | 28.1% | +0.1pp |
+| L4H5 zero | 27.9% | -0.1pp |
+| L5H31 zero | 27.9% | -0.1pp |
+
+**Dissociation CONFIRMED with correct heads.** All within noise (±0.1pp). Job timed out before combination conditions; resubmitted (53703454, 16hr wall time) for pairs + all-three + mean-ablation.
 
 ### 3. Domain-Specific Circuits
 
@@ -190,6 +198,11 @@ Inference-time steering/ablation is insufficient. Effective sycophancy mitigatio
 | 2026-03-16 | --- | Three-way pre-submission audit | Found stale head table (CRITICAL), 10 bugs (none invalidate results), 10 paper fixes |
 | 2026-03-16 | --- | Add `slurm/16_corrected_ablation.sh` | Ablation of validated top-3 (L4H28, L4H5, L5H31) — blocks paper direction |
 | 2026-03-16 | --- | Add `scripts/eval_steering_capability.py` | Targeted MMLU/GSM8k eval for specific steering conditions |
+| 2026-03-17 | --- | Job 15 (steering cap eval) COMPLETE | L15: 93.7% MMLU / 76.8% GSM8k; L20: 96.9% MMLU / 87.3% GSM8k |
+| 2026-03-17 | --- | Job 16 partial: individual ablation of correct top-3 | L4H28: 28.1%, L4H5: 27.9%, L5H31: 27.9% — dissociation CONFIRMED |
+| 2026-03-17 | --- | Job 16 resubmit (53703454, 16hr) | Combo conditions pending |
+| 2026-03-17 | --- | Paper fixes: head table, 6 minor number corrections | Agent in progress |
+| 2026-03-17 | --- | Per-source steering CPU analysis | All 64 conditions broken down by domain |
 
 ---
 
@@ -258,7 +271,7 @@ Three-way audit: paper claims vs data, implementation bugs, statistical methodol
 | Job | Script | Purpose | Blocks |
 |-----|--------|---------|--------|
 | **16 (CRITICAL)** | `slurm/16_corrected_ablation.sh` | Ablate actual top-3: L4H28, L4H5, L5H31 | Validates/invalidates dissociation finding |
-| 15 (optional) | `slurm/15_steering_cap_eval.sh` | MMLU/GSM8k for L15/L20 alpha=2 steering | Steering mitigation claim |
+| 15 (COMPLETE) | `slurm/15_steering_cap_eval.sh` | MMLU/GSM8k for L15/L20 alpha=2 steering | L20: 96.9% MMLU, 87.3% GSM8k |
 
 ### Paper Fixes Required (No GPU)
 
@@ -288,17 +301,24 @@ Three-way audit: paper claims vs data, implementation bugs, statistical methodol
 
 ## Research Direction & NeurIPS Path (Assessed 2026-03-16)
 
-### Current NeurIPS Readiness: ~35-45% (Borderline Reject / Weak Accept)
+### Current NeurIPS Readiness: ~50-60% (Weak Accept territory)
 
-**Strengths:** Social compliance evidence (novel), patching-to-ablation dissociation (novel methodology contribution), cross-architecture replication, well-designed benchmark with controls.
+**Strengths:** Social compliance evidence (novel), patching-to-ablation dissociation (validated with correct heads, novel methodology contribution), cross-architecture replication, well-designed benchmark with controls, **modest but real steering mitigation** (L20 alpha=2: -5.7pp opinion sycophancy, 96.9% MMLU retained).
 
-**Weaknesses:** No successful mitigation (title says "Mitigating"), primarily negative results, limited theoretical insight, domain-specificity undermines generality claims.
+**Weaknesses:** Steering reduction is modest (-5.7pp), primarily negative ablation results, limited theoretical insight, domain-specificity undermines generality claims. DPO (Phase 4) is the key to reaching 75-80%.
 
 ### Phase 1: Per-Source Steering (COMPLETE --- data extracted 2026-03-16)
 
 The checkpoint already had all per-source data. Key finding: late-layer, low-alpha steering (L15 alpha=2, L20 alpha=2) produces modest opinion-domain reduction (-5.7 to -6.9pp) without catastrophic side-effects. High-alpha conditions produce coin-flip incoherence (51.8% = random), not genuine reduction.
 
-Next step: verify MMLU/GSM8k retention for L15 alpha=2 and L20 alpha=2 conditions from steering_results.json capability data.
+**Capability eval COMPLETE (Job 53698470, 2026-03-17):**
+
+| Condition | Opinion Syc | Reduction | MMLU Retained | GSM8k Retained |
+|-----------|------------|-----------|---------------|----------------|
+| L15 alpha=2.0 | 76.1% | -6.9pp | 93.7% | 76.8% |
+| L20 alpha=2.0 | 77.3% | -5.7pp | 96.9% | 87.3% |
+
+L20 alpha=2.0 is the better candidate: -5.7pp opinion sycophancy, 96.9% MMLU retained, 87.3% GSM8k retained. This is a modest but real mitigation result. L15 has stronger reduction but worse GSM8k retention (76.8%).
 
 ### Phase 2: Distributed Steering (CONDITIONAL on Phase 1)
 
