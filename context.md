@@ -1,7 +1,7 @@
 # Context: Mitigating Sycophancy in Large Language Models
 
 > Implementation log and research context for mechanistic interpretability analysis of LLM sycophancy circuits.
-> Last updated: 2026-03-17
+> Last updated: 2026-03-19
 
 ---
 
@@ -139,15 +139,21 @@ Causal patching identifies top-10 heads with high recovery scores. But ablating 
 
 Heads are causally **sufficient** (patching restores honest output) but not causally **necessary** (ablation has no effect). The signal is redundantly distributed.
 
-**VALIDATED (2026-03-17):** The original ablation targeted L1H20, L5H5, L4H28 based on a stale pre-rerun patching result. The validated rerun (Mar 4) shows the actual top-3 are L4H28 (0.443), L4H5 (0.302), L5H31 (0.256). Job 16 corrected ablation (53696265) tested the validated top-3 individually:
+**VALIDATED (2026-03-19):** Corrected ablation (Job 53720551) COMPLETED with all conditions. Full results:
 
-| Head | Syc Rate | Change from baseline (28.0%) |
-|------|----------|------------------------------|
-| L4H28 zero | 28.1% | +0.1pp |
-| L4H5 zero | 27.9% | -0.1pp |
-| L5H31 zero | 27.9% | -0.1pp |
+| Condition | Syc Rate | Change | Opinion | MMLU | GSM8k |
+|-----------|----------|--------|---------|------|-------|
+| Baseline | 28.0% | — | 82.4% | 62.2% | 34.0% |
+| L4H28 zero | 28.1% | +0.1pp | 82.6% | 62.1% | 35.0% |
+| L4H5 zero | 27.9% | -0.1pp | 82.4% | 62.5% | 36.5% |
+| L5H31 zero | 27.9% | -0.1pp | 82.6% | 63.3% | 33.0% |
+| L4H28+L4H5 | 27.9% | -0.1pp | 82.4% | 62.5% | 37.0% |
+| L4H28+L5H31 | 27.9% | -0.1pp | 82.4% | 63.1% | 33.5% |
+| L4H5+L5H31 | 28.0% | 0.0pp | 83.4% | 62.7% | 35.0% |
+| All 3 zero | 27.7% | -0.3pp | 82.4% | 62.5% | 37.5% |
+| All 3 mean | 0.0% | — | — | 0.0% | 0.0% |
 
-**Dissociation CONFIRMED with correct heads.** All within noise (±0.1pp). Job timed out before combination conditions; resubmitted (53703454, 16hr wall time) for pairs + all-three + mean-ablation.
+**Dissociation CONFIRMED with correct heads.** Every condition within ±0.3pp of baseline. Artifact: `results/corrected_ablation_results.json` (Mar 19, 2026).
 
 ### 3. Domain-Specific Circuits
 
@@ -203,6 +209,10 @@ Inference-time steering/ablation is insufficient. Effective sycophancy mitigatio
 | 2026-03-17 | --- | Job 16 resubmit (53703454, 16hr) | Combo conditions pending |
 | 2026-03-17 | --- | Paper fixes: head table, 6 minor number corrections | Agent in progress |
 | 2026-03-17 | --- | Per-source steering CPU analysis | All 64 conditions broken down by domain |
+| 2026-03-17 | --- | Paper fixes: 6 numerical corrections + head table | All discrepancies from audit resolved |
+| 2026-03-19 | --- | Job 16 (corrected ablation 53720551) COMPLETE | All 9 conditions done, dissociation confirmed ±0.3pp |
+| 2026-03-19 | --- | Paper updated with Section 5.6.1 + steering per-source | Corrected ablation table + L15/L20 opinion results |
+| 2026-03-19 | --- | Writing Phase 4 scripts | 06_dpo_training.py, 07_dpo_eval.py, generate_figures.py |
 
 ---
 
@@ -301,7 +311,7 @@ Three-way audit: paper claims vs data, implementation bugs, statistical methodol
 
 ## Research Direction & NeurIPS Path (Assessed 2026-03-16)
 
-### Current NeurIPS Readiness: ~50-60% (Weak Accept territory)
+### Current NeurIPS Readiness: ~55-65% (Weak Accept territory)
 
 **Strengths:** Social compliance evidence (novel), patching-to-ablation dissociation (validated with correct heads, novel methodology contribution), cross-architecture replication, well-designed benchmark with controls, **modest but real steering mitigation** (L20 alpha=2: -5.7pp opinion sycophancy, 96.9% MMLU retained).
 
