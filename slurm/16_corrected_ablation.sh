@@ -2,7 +2,7 @@
 #SBATCH --job-name=syc-abl-corrected
 #SBATCH --output=slurm/logs/abl_corrected_%j.out
 #SBATCH --error=slurm/logs/abl_corrected_%j.err
-#SBATCH --time=08:00:00
+#SBATCH --time=1-12:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 

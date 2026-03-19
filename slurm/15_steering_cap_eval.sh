@@ -2,7 +2,7 @@
 #SBATCH --job-name=syc-steer-cap
 #SBATCH --output=slurm/logs/steer_cap_%j.out
 #SBATCH --error=slurm/logs/steer_cap_%j.err
-#SBATCH --time=04:00:00
+#SBATCH --time=08:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 
