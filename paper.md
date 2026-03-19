@@ -304,20 +304,22 @@ GSM8k capability uses strict normalized numeric equality on generated completion
 
 The original ablation in Section 5.6 targeted heads from an earlier patching run. The validated rerun (`results/head_importance.json`, Mar 4, 2026) identifies a different top-3: **L4H28 (0.443), L4H5 (0.302), L5H31 (0.256)**. Note that L4H28 appears in both lists, but L4H5 and L5H31 replace L1H20 and L5H5, which have actual recovery scores of 0.040 and −0.237 respectively in the validated run.
 
-We re-ran the ablation targeting the validated top-3 individually, in pairwise combinations, and all three simultaneously (job running; partial results below). Artifact: `results/corrected_ablation_results.json`.
+We re-ran the ablation targeting the validated top-3 individually, in pairwise combinations, and all three simultaneously. Artifact: `results/corrected_ablation_results.json` (Mar 19, 2026).
 
 | Condition | Sycophancy Rate | Change (pp) | Opinion | MMLU | GSM8k |
 |-----------|----------------|-------------|---------|------|-------|
-| **Baseline** | **28.0%** | — | 82.4% | 62.0% | 34.0% |
-| L4H28 only | 28.1% | +0.1 | 82.6% | 62.0% | 35.0% |
+| **Baseline** | **28.0%** | — | 82.4% | 62.2% | 34.0% |
+| L4H28 only | 28.1% | +0.1 | 82.6% | 62.1% | 35.0% |
 | L4H5 only | 27.9% | −0.1 | 82.4% | 62.5% | 36.5% |
 | L5H31 only | 27.9% | −0.1 | 82.6% | 63.3% | 33.0% |
 | L4H28 + L4H5 | 27.9% | −0.1 | 82.4% | 62.5% | 37.0% |
-| L4H28 + L5H31 | 27.9% | −0.1 | 82.4% | 63.1% | — |
-| L4H5 + L5H31 | — | — | — | — | — |
-| **All 3 (zero)** | — | — | — | — | — |
+| L4H28 + L5H31 | 27.9% | −0.1 | 82.4% | 63.1% | 33.5% |
+| L4H5 + L5H31 | 28.0% | 0.0 | 83.4% | 62.7% | 35.0% |
+| **All 3 (zero)** | **27.7%** | **−0.3** | **82.4%** | **62.5%** | **37.5%** |
 
-**Key finding:** Ablation of the validated top-3 heads — those with the highest causal patching recovery scores in the confirmed run — produces the same null result as the original ablation. Every tested condition shows ±0.1 pp change from baseline, well within sampling noise. Opinion-domain sycophancy is unaffected (82.4–82.6% across all conditions). This **directly addresses the concern** that the original null result was an artifact of targeting the wrong heads: even targeting the highest-recovery heads from the validated patching run, the dissociation holds.
+**Note:** Mean-ablation of all 3 validated heads caused catastrophic output degradation (all outputs unparseable), yielding 0% on all metrics, consistent with the same finding in Section 5.6. Excluded from analysis.
+
+**Key finding:** Ablation of the validated top-3 heads — those with the highest causal patching recovery scores in the confirmed run — produces the same null result as the original ablation. Every tested condition shows ±0.3 pp change from baseline, well within sampling noise. Opinion-domain sycophancy is unaffected (82.4–83.4% across all conditions). This **directly addresses the concern** that the original null result was an artifact of targeting the wrong heads: even targeting the highest-recovery heads from the validated patching run, the dissociation holds.
 
 **Interpretation:** The patching-to-ablation dissociation is robust to head selection. The identified heads are sufficient carriers of sycophantic information (patching through them restores honest behavior) but are not causally necessary (ablating them does not reduce sycophancy). This is consistent with a redundantly distributed representation: when the identified pathway is removed, the network routes through other heads with no measurable behavioral change.
 
