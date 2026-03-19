@@ -2,68 +2,58 @@
 
 ## Objective
 
-Upgrade the repository from working research code to senior-research standard:
+Mechanistic interpretability analysis of sycophancy in RLHF-trained LLMs, with the goal of understanding and mitigating the behavior. Target venue: NeurIPS 2026.
 
-- stronger methodology
-- leakage-safe evaluation
-- checkpointable long runs
-- explicit artifact contracts
-- conservative claim posture until corrected reruns are complete
+## Current State (March 19, 2026)
 
-## Current Upgrade State (March 3, 2026)
+### Milestones 1-5: COMPLETE
 
-### Milestone 1: Methodology Hardening
+All methodology hardening, probe redesign, reproducibility, capability evaluation, and test expansion milestones are complete. See `context.md` for detailed changelog.
 
-- Completed: shared evaluation math (`src/analysis/evaluation.py`) wired into baseline script
-- Completed: length-normalized confidence metrics and SciPy binomial fallback
-- Completed: deterministic `sample_id` and `--randomize-positions` path
+### Milestone 6: Full Corrected Rerun Matrix — COMPLETE
 
-### Milestone 2: Probe Pipeline Redesign
+- All 13 SLURM jobs complete, manifest `missing_count: 0`
+- Mistral cross-architecture replication complete
+- Corrected ablation (Job 16) complete — dissociation confirmed with validated top-3 heads
+- Steering capability eval (Job 15) complete — L20 alpha=2: 96.9% MMLU, 87.3% GSM8k
 
-- Completed: `02_train_probes.py` with:
-  - `neutral_transfer` (default, claim-bearing)
-  - `mixed_diagnostic` (diagnostic)
-- Completed: GroupKFold leakage-safe grouping by `sample_id`
-- Completed: transfer/pattern CIs
-- Completed: `02b_probe_control.py` aligned to unified schema
+### Milestone 7: Paper Synchronization — IN PROGRESS
 
-### Milestone 3: Reproducibility + SLURM Reliability
+- Paper numbers audited and corrected (6 discrepancies fixed Mar 17)
+- Section 5.4 head table replaced with validated rankings
+- Section 5.6.1 added with corrected ablation results
+- Section 5.8 updated with per-source opinion steering signal
+- Still needed: figures, 2x2 probe table, multiple testing corrections, fictional-entity section expansion
 
-- Completed: steering checkpoint/resume and per-condition persistence
-- Completed: explicit run manifests in baseline/probe/patching/ablation/steering scripts
-- Completed: SLURM normalization to submit-time resource configuration (`slurm/submit_all.sh`)
-- Completed: artifact existence checks in SLURM jobs
-- Completed: steering checkpoint-aware job script behavior
+### Milestone 8: DPO Training-Time Intervention — NOT STARTED
 
-### Milestone 4: Capability Evaluation Upgrades
-
-- Completed: MMLU robust choice scoring (tokenization variants)
-- Completed: GSM8k strict normalized numeric extraction from generation
-- Completed: capability CIs and retention CIs in ablation/steering
-
-### Milestone 5: Test Expansion
-
-- Added: evaluation math + statistical fallback tests
-- Added: probe label/leakage tests
-- Added: CLI contract checks for new flags
-- Added: schema-contract regression checks
-- Added: steering checkpoint/resume smoke test
-- Added: deterministic ID and manifest smoke tests
-
-### Milestone 6: Full Corrected Rerun Matrix
-
-- Configured: SLURM Jobs 1–13 include reruns + consolidated manifest
-- Pending execution: full cluster reruns and artifact completion
-
-### Milestone 7: Paper + Docs Synchronization
-
-- Updated: `paper.md` now marks numerical claims as provisional until reruns complete
-- Updated: `README.md`, `QUICKSTART.md`, `scripts/README.md` to new semantics
-- Updated: this overview to milestone/gate framing
+Scripts being written (06_dpo_training.py, 07_dpo_eval.py). This is the highest-impact remaining work.
 
 ## Completion Gates
 
-- Gate A: core refactors + tests in place (code complete; test execution pending environment)
-- Gate B: small dry reruns + schema-valid outputs (pending execution)
-- Gate C: full SLURM reruns + manifests (pending execution)
-- Gate D: finalize paper numbers after manifest-backed confirmation (pending)
+- Gate A: Core refactors + tests — **COMPLETE**
+- Gate B: Schema-valid outputs — **COMPLETE**
+- Gate C: Full SLURM reruns + manifests — **COMPLETE**
+- Gate D: Paper numbers confirmed — **COMPLETE** (audit Mar 16, fixes Mar 17-19)
+- Gate E: Publication figures — **IN PROGRESS** (generate_figures.py being written)
+- Gate F: DPO intervention + probe re-analysis — **NOT STARTED** (scripts being written)
+- Gate G: Final paper draft with all results — **BLOCKED on Gate F**
+
+## Key Results
+
+| Finding | Status | Impact |
+|---------|--------|--------|
+| Social compliance > belief corruption (1.8:1) | Confirmed | Core contribution |
+| Patching-to-ablation dissociation | Confirmed with correct heads (Mar 19) | Novel methodology finding |
+| Domain-specific circuits (zero overlap) | Confirmed | Adds novelty |
+| Cross-architecture replication (Mistral) | Confirmed | Strengthens claims |
+| Opinion steering L20 alpha=2: -5.7pp, 96.9% MMLU | Confirmed | Modest positive result |
+| DPO reduces sycophancy + changes probe decomposition | **Pending** | **Paper-making experiment** |
+
+## NeurIPS Readiness
+
+| Milestone | Likelihood |
+|-----------|-----------|
+| Current (all inference-time experiments done) | ~55-65% |
+| + Figures + statistical corrections | ~60-70% |
+| + DPO mitigation + mechanistic probe analysis | ~75-80% |
