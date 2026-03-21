@@ -1,0 +1,14 @@
+Removing conda version miniforge3-24.7.1
+No conda package cache directories found outside your home directory. To
+prevent conda from filling up your home directory, you can create a new
+directory at `/work/pi_<your_pi_name>/$USER/.conda/pkgs` and reload the module. 
+No conda environment directories found outside your home directory. To prevent
+conda from filling up your home directory, you can create a new directory at
+`/work/pi_<your_pi_name>/$USER/.conda/envs` and reload the module. 
+Loading conda version miniforge3-24.7.1
+Traceback (most recent call last):
+  File "/home/egank2_wit_edu/Mitigating-Sycophancy/scripts/06_dpo_training.py", line 436, in main
+    return train_dpo(args)
+  File "/home/egank2_wit_edu/Mitigating-Sycophancy/scripts/06_dpo_training.py", line 201, in train_dpo
+    from peft import LoraConfig, get_peft_model, TaskType
+ModuleNotFoundError: No module named 'peft'

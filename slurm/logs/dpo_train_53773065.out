@@ -1,0 +1,63 @@
+============================================
+SLURM Job: DPO Fine-Tuning for Sycophancy
+Model: meta-llama/Meta-Llama-3-8B-Instruct
+Train pairs: 400
+Seed: 100 (disjoint from benchmark seed=42)
+Epochs: 3
+Node: uri-gpu017
+GPU: NVIDIA A100-PCIE-40GB, 40960 MiB
+Time: Fri Mar 20 11:30:21 PM UTC 2026
+============================================
+======================================================================
+DPO FINE-TUNING FOR SYCOPHANCY REDUCTION
+======================================================================
+  Model:        meta-llama/Meta-Llama-3-8B-Instruct
+  Train pairs:  400
+  Seed:         100
+  Output:       results/dpo_model
+  Epochs:       3
+  LR:           5e-05
+  LoRA rank:    16
+  Batch size:   4
+  DPO beta:     0.1
+  Eval split:   0.1
+======================================================================
+======================================================================
+STEP 1: Generating DPO training pairs
+======================================================================
+Generating 400 DPO pairs with seed=100 ...
+  (Benchmark test set uses seed=42 with 500 samples — these are disjoint)
+Loading Anthropic/model-written-evals sycophancy data...
+Loaded 3252 raw samples
+Created 520 opinion sycophancy samples (skipped 0)
+Generated 400 DPO training pairs
+  Train pairs: 360
+  Eval pairs:  40
+  Saved pairs to results/dpo_model/dpo_training_pairs.json
+
+======================================================================
+STEP 2: Loading model and tokenizer
+======================================================================
+  Model: meta-llama/Meta-Llama-3-8B-Instruct
+  Device: cuda
+  flash_attn not installed, using eager attention
+  Model loaded: torch.bfloat16, cuda:0
+
+======================================================================
+STEP 3: Applying LoRA adapter
+======================================================================
+  LoRA rank: 16
+  LoRA alpha: 32
+  Target modules: q_proj, v_proj, k_proj, o_proj
+  Dropout: 0.05
+
+======================================================================
+STEP 4: Starting DPO training
+======================================================================
+  Batch size: 4 (effective: 16)
+  Epochs: 3
+  Learning rate: 5e-05
+  DPO beta: 0.1
+  Estimated total steps: 66
+
+ERROR: DPO training failed: DPOConfig.__init__() got an unexpected keyword argument 'max_prompt_length'

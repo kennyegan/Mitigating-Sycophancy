@@ -1,0 +1,36 @@
+No conda package cache directories found outside your home directory. To
+prevent conda from filling up your home directory, you can create a new
+directory at `/work/pi_<your_pi_name>/$USER/.conda/pkgs` and reload the module. 
+No conda environment directories found outside your home directory. To prevent
+conda from filling up your home directory, you can create a new directory at
+`/work/pi_<your_pi_name>/$USER/.conda/envs` and reload the module. 
+Loading conda version miniforge3-24.7.1
+`trust_remote_code` is not supported anymore.
+Please check that the Hugging Face dataset 'Anthropic/model-written-evals' isn't based on a loading script and remove `trust_remote_code`.
+If the dataset is based on a loading script, please ask the dataset author to remove it and convert it to a standard format like Parquet.
+Using the latest cached version of the dataset since Anthropic/model-written-evals couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'default' at /home/egank2_wit_edu/Mitigating-Sycophancy/.cache/huggingface/datasets/Anthropic___model-written-evals/default/0.0.0/d533f626cc321c92175a58ee570aa3cdb87238d1 (last modified on Fri Feb 27 02:20:16 2026).
+Processing Anthropic opinion samples:   0%|          | 0/520 [00:00<?, ?it/s]Processing Anthropic opinion samples: 100%|██████████| 520/520 [00:00<00:00, 153001.62it/s]
+`torch_dtype` is deprecated! Use `dtype` instead!
+Traceback (most recent call last):
+  File "/home/egank2_wit_edu/Mitigating-Sycophancy/scripts/06_dpo_training.py", line 436, in main
+    return train_dpo(args)
+  File "/home/egank2_wit_edu/Mitigating-Sycophancy/scripts/06_dpo_training.py", line 262, in train_dpo
+    model = AutoModelForCausalLM.from_pretrained(
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/transformers/models/auto/auto_factory.py", line 604, in from_pretrained
+    return model_class.from_pretrained(
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/transformers/modeling_utils.py", line 277, in _wrapper
+    return func(*args, **kwargs)
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/transformers/modeling_utils.py", line 4971, in from_pretrained
+    model = cls(config, *model_args, **model_kwargs)
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/transformers/models/llama/modeling_llama.py", line 419, in __init__
+    super().__init__(config)
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/transformers/modeling_utils.py", line 2076, in __init__
+    self.config._attn_implementation_internal = self._check_and_adjust_attn_implementation(
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/transformers/modeling_utils.py", line 2686, in _check_and_adjust_attn_implementation
+    applicable_attn_implementation = self.get_correct_attn_implementation(
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/transformers/modeling_utils.py", line 2714, in get_correct_attn_implementation
+    self._flash_attn_2_can_dispatch(is_init_check)
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/transformers/modeling_utils.py", line 2422, in _flash_attn_2_can_dispatch
+    raise ImportError(f"{preface} the package flash_attn seems to be not installed. {install_message}")
+ImportError: FlashAttention2 has been toggled on, but it cannot be used due to the following error: the package flash_attn seems to be not installed. Please refer to the documentation of https://huggingface.co/docs/transformers/perf_infer_gpu_one#flashattention-2 to install Flash Attention 2.

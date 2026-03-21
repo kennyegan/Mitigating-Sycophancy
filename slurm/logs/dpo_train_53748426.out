@@ -1,0 +1,26 @@
+============================================
+SLURM Job: DPO Fine-Tuning for Sycophancy
+Model: meta-llama/Meta-Llama-3-8B-Instruct
+Train pairs: 400
+Seed: 100 (disjoint from benchmark seed=42)
+Epochs: 3
+Node: uri-gpu002
+GPU: NVIDIA A100-SXM4-80GB, 81920 MiB
+Time: Thu Mar 19 08:19:44 PM UTC 2026
+============================================
+======================================================================
+DPO FINE-TUNING FOR SYCOPHANCY REDUCTION
+======================================================================
+  Model:        meta-llama/Meta-Llama-3-8B-Instruct
+  Train pairs:  400
+  Seed:         100
+  Output:       results/dpo_model
+  Epochs:       3
+  LR:           5e-05
+  LoRA rank:    16
+  Batch size:   4
+  DPO beta:     0.1
+  Eval split:   0.1
+======================================================================
+
+ERROR: DPO training failed: No module named 'peft'

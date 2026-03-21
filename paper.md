@@ -151,7 +151,7 @@ This result is consistent with the domain-verifiability hypothesis: mathematical
 
 ### 5.3 Linear Probes — Social Compliance vs. Belief Corruption
 
-Logistic regression probes were trained at each of the 32 residual stream layers using the **neutral-transfer** design: probes trained exclusively on neutral prompt activations and tested on biased prompt activations from the same samples. This design prevents the probe from learning prompt-format cues (e.g., "I think..." preambles in biased prompts) and instead tests whether it tracks a format-invariant truth direction. Labels encode the correct answer identity (lexicographic ordering of answer options). 5-fold StratifiedKFold cross-validation, 1,500 samples.
+Logistic regression probes were trained at each of the 32 residual stream layers using the **neutral-transfer** design: probes trained exclusively on neutral prompt activations and tested on biased prompt activations from the same samples (see **Figure 4** for accuracy curves across layers). This design prevents the probe from learning prompt-format cues (e.g., "I think..." preambles in biased prompts) and instead tests whether it tracks a format-invariant truth direction. Labels encode the correct answer identity (lexicographic ordering of answer options). 5-fold StratifiedKFold cross-validation, 1,500 samples.
 
 #### Instruct Model — Neutral-Transfer Design (Balanced)
 
@@ -175,7 +175,7 @@ The claim-bearing probe results use the balanced dataset (`master_sycophancy_bal
 
 ### 5.4 Causal Activation Patching
 
-Activation patching measures how much of the sycophantic behavior can be "recovered" by replacing activations from the biased run with activations from the neutral (clean) run.
+Activation patching measures how much of the sycophantic behavior can be "recovered" by replacing activations from the biased run with activations from the neutral (clean) run. See **Figure 1** for the full layer × position recovery heatmap.
 
 #### Phase 1: Layer × Position Patching (Instruct)
 
@@ -304,7 +304,7 @@ GSM8k capability uses strict normalized numeric equality on generated completion
 
 The original ablation in Section 5.6 targeted heads from an earlier patching run. The validated rerun (`results/head_importance.json`, Mar 4, 2026) identifies a different top-3: **L4H28 (0.443), L4H5 (0.302), L5H31 (0.256)**. Note that L4H28 appears in both lists, but L4H5 and L5H31 replace L1H20 and L5H5, which have actual recovery scores of 0.040 and −0.237 respectively in the validated run.
 
-We re-ran the ablation targeting the validated top-3 individually, in pairwise combinations, and all three simultaneously. Artifact: `results/corrected_ablation_results.json` (Mar 19, 2026).
+We re-ran the ablation targeting the validated top-3 individually, in pairwise combinations, and all three simultaneously (see **Figure 5** for comparison of all ablation conditions). Artifact: `results/corrected_ablation_results.json` (Mar 19, 2026).
 
 | Condition | Sycophancy Rate | Change (pp) | Opinion | MMLU | GSM8k |
 |-----------|----------------|-------------|---------|------|-------|
@@ -353,7 +353,7 @@ GSM8k uses strict normalized numeric equality on generated completions, full tes
 
 ### 5.8 Representation Steering
 
-Steering vectors were computed as the mean difference between biased and neutral residual stream activations at each target layer, estimated from 200 held-out samples. The steering vector was added to the residual stream at each token position during forward passes on the remaining 1,300 evaluation samples. We swept 8 layers (1, 2, 3, 4, 5, 10, 15, 20) and 7 alpha values (0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0), plus a multi-layer condition (layers 1–5 simultaneously). Capabilities measured on MMLU (N=500) and GSM8k (N=1319, strict generation scoring). Artifact: `results/steering_results.json` (Mar 7, 2026, git `e292645`).
+Steering vectors were computed as the mean difference between biased and neutral residual stream activations at each target layer, estimated from 200 held-out samples (see **Figure 2** for the full alpha sweep, **Figure 3** for per-source opinion-domain analysis). The steering vector was added to the residual stream at each token position during forward passes on the remaining 1,300 evaluation samples. We swept 8 layers (1, 2, 3, 4, 5, 10, 15, 20) and 7 alpha values (0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0), plus a multi-layer condition (layers 1–5 simultaneously). Capabilities measured on MMLU (N=500) and GSM8k (N=1319, strict generation scoring). Artifact: `results/steering_results.json` (Mar 7, 2026, git `e292645`).
 
 **Baseline (no steering):** Sycophancy 28.4% [26.1%, 31.1%], MMLU 62.1%, GSM8k 33.2%. The steering evaluation baseline (28.4%) differs slightly from the main baseline (28.0%) due to the 200-sample held-out split used for steering vector computation; the evaluation is over the remaining 1,300 samples.
 
@@ -370,15 +370,17 @@ Steering vectors were computed as the mean difference between biased and neutral
 | 3 | 10.0 | 79.3% | +50.9 pp | — | — |
 | 4 | 10.0 | 85.2% | +56.8 pp | — | — |
 | 10 | 20.0 | 88.0% | +59.6 pp | — | — |
+| **15** | **2.0** | **27.5%** | **−0.9 pp** | **58.2%** | **25.5%** |
+| **20** | **2.0** | **27.8%** | **−0.6 pp** | **60.2%** | **29.0%** |
 | **10** | **50.0** | **16.2%** | **−12.2 pp** | **27.5%** | **0.0%** |
 
 **At safe alpha values (≤5):** On the full evaluation set, no condition achieves more than ±1 pp sycophancy change while preserving capabilities. However, per-source analysis reveals a domain-specific signal: **layer 15, alpha=2.0** reduces opinion sycophancy from 83.0% to 76.1% (−6.9 pp, N=436) with MMLU retained at 93.7% and GSM8k at 76.8%; **layer 20, alpha=2.0** reduces opinion sycophancy to 77.3% (−5.7 pp) with MMLU at 96.9% and GSM8k at 87.3%. These reductions are masked in the overall sycophancy rate because factual and reasoning sycophancy remain at approximately 0%, diluting the opinion-domain signal across the full 1,500-sample set. Layer 20, alpha=2.0 offers the better capability-sycophancy trade-off (96.9% MMLU, 87.3% GSM8k retained).
 
 **At high alpha values (≥10):** The intervention inverts rather than reduces sycophancy in most conditions — factual and reasoning sycophancy jumps to 79–100% as the model begins agreeing with everything. The apparent "best" result (layer 10, alpha=50: −12.2 pp) is model breakdown: MMLU drops to 27.5% (44% retained) and GSM8k collapses to 0.0%. The model's general reasoning is destroyed before its opinion-domain sycophancy is meaningfully affected.
 
-**Key finding:** Representation steering at the patching-identified layers and beyond produces **no meaningful sycophancy reduction** across any combination of layer and alpha that preserves model capability. This mirrors and extends the null ablation result from Sections 5.6–5.7. The convergent null across two independent intervention methods — head ablation (local, attention-head level) and residual-stream steering (distributed, layer-level) — constitutes strong evidence that opinion-domain sycophancy in Llama-3-8B-Instruct is **not localized to any identifiable circuit subset**. The behavior is a distributed property of the network's learned representations, implemented redundantly such that no inference-time intervention on a tractable subset of the computation can selectively suppress it.
+**Key finding:** On the aggregate evaluation set, representation steering produces no meaningful overall sycophancy reduction at safe alpha values. However, per-source analysis reveals that **later-layer steering (L15, L20) at moderate alpha (2.0) achieves a modest but real opinion-domain reduction** (−5.7 to −6.9 pp) while preserving most capabilities (87–97% MMLU, 77–87% GSM8k). This signal is invisible in the overall rate because the 72% of samples from factual and reasoning domains show 0% sycophancy at baseline, diluting any opinion-domain effect to noise (see Figure 3).
 
-This finding has direct implications for alignment: **effective sycophancy mitigation likely requires training-time intervention** — such as RLHF with anti-sycophancy preference data (Wei et al., 2023), DPO with synthetic disagreement examples, or constitutional AI approaches — rather than post-hoc activation manipulation.
+This partial success of later-layer steering — combined with the complete failure of head ablation (Sections 5.6–5.7) — suggests that opinion sycophancy is encoded in a distributed, redundant fashion: local head-level interventions cannot disrupt it, but broader residual-stream perturbations at later layers can partially suppress the opinion-compliance pathway. The reduction is modest, with a meaningful capability cost (GSM8k drops to 77–87%), indicating that **effective full mitigation likely requires training-time intervention** — such as DPO with anti-sycophancy preference data — rather than post-hoc activation manipulation alone.
 
 ### 5.9 Control Group Analysis — Fictional Entities
 

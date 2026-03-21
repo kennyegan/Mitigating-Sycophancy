@@ -259,11 +259,19 @@ def train_dpo(args):
         tokenizer.pad_token = tokenizer.eos_token
         tokenizer.pad_token_id = tokenizer.eos_token_id
 
+    # Use flash_attention_2 if available, fall back to eager
+    try:
+        import flash_attn  # noqa: F401
+        attn_impl = "flash_attention_2"
+    except ImportError:
+        attn_impl = "eager"
+        print("  flash_attn not installed, using eager attention")
+
     model = AutoModelForCausalLM.from_pretrained(
         args.model,
         torch_dtype=torch.bfloat16,
         device_map="auto",
-        attn_implementation="flash_attention_2",
+        attn_implementation=attn_impl,
     )
     model.config.use_cache = False  # Required for gradient checkpointing
 
