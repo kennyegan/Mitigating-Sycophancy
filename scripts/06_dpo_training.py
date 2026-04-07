@@ -334,7 +334,6 @@ def train_dpo(args):
         remove_unused_columns=False,
         seed=args.seed,
         max_length=512,
-        max_prompt_length=384,
         beta=args.beta,
         gradient_checkpointing=True,
     )
