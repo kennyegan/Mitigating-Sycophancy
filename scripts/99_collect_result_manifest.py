@@ -21,7 +21,14 @@ DEFAULT_EXPECTED: List[Tuple[str, str]] = [
     ("patching_heatmap", "results/patching_heatmap.json"),
     ("head_importance", "results/head_importance.json"),
     ("head_ablation", "results/head_ablation_results.json"),
+    ("corrected_ablation", "results/corrected_ablation_results.json"),
+    ("top10_ablation", "results/top10_ablation_results.json"),
+    ("top10_ablation_full_gsm8k", "results/top10_ablation_full_gsm8k.json"),
     ("steering", "results/steering_results.json"),
+    ("steering_per_source", "results/steering_per_source_analysis.json"),
+    ("dpo_model", "results/dpo_model/adapter_config.json"),
+    ("dpo_training_metrics", "results/dpo_training_metrics.json"),
+    ("dpo_eval", "results/dpo_eval_results.json"),
 ]
 
 

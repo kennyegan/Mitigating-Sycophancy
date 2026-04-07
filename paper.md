@@ -479,7 +479,7 @@ DPO reduces opinion sycophancy by 23.8 pp while fully preserving general capabil
 
 We re-ran the neutral-transfer probe analysis (identical methodology to Section 5.5: logistic regression probes trained on neutral activations, tested on biased activations, 5-fold StratifiedKFold) on the DPO-adapted model to measure whether the behavioral change reflects an internal representational shift.
 
-**Table: Pre-DPO vs Post-DPO Probe Decomposition (Layer 1)**
+**Table: Pre-DPO vs Post-DPO Probe Decomposition (Layer 1)** (see **Figure 6**)
 
 | Category | Pre-DPO | Post-DPO | Δ |
 |----------|---------|----------|---|

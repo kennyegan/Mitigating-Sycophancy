@@ -449,6 +449,94 @@ def figure_ablation_comparison(data_dir, output_dir):
 
 
 # ---------------------------------------------------------------------------
+# Figure 6: DPO probe decomposition (pre vs post)
+# ---------------------------------------------------------------------------
+
+def figure_dpo_probe(data_dir, output_dir):
+    """Pre-DPO vs Post-DPO probe decomposition grouped bar chart."""
+    data = _load_json(os.path.join(data_dir, "dpo_eval_results.json"))
+    if data is None:
+        return
+
+    # Extract pre-DPO and post-DPO probe numbers at best layer (layer 1)
+    probes = data.get("probes", {})
+    comparison = data.get("comparison", {})
+
+    # Try to get layer 1 data from probes section
+    per_layer = probes.get("per_layer", {})
+    layer_key = "1"
+    if layer_key not in per_layer:
+        # Fall back to first available layer
+        if per_layer:
+            layer_key = sorted(per_layer.keys(), key=lambda x: int(x))[0]
+        else:
+            print("  [SKIP] No per-layer probe data found")
+            return
+
+    post = per_layer[layer_key]
+
+    # Get pre-DPO numbers from comparison section (keyed as "layer_N")
+    layer_comp = comparison.get("probes", {}).get(f"layer_{layer_key}", {})
+
+    categories = ["Robust\ntracking", "Social\ncompliance", "Belief\ncorruption", "Other"]
+
+    # Pre-DPO values from comparison (stored as fractions)
+    pre_robust = layer_comp.get("robust_tracking", {}).get("pre_dpo", 0.599) * 100
+    pre_social = layer_comp.get("social_compliance", {}).get("pre_dpo", 0.180) * 100
+    pre_belief = layer_comp.get("belief_corruption", {}).get("pre_dpo", 0.101) * 100
+    pre_other = 100.0 - pre_robust - pre_social - pre_belief
+
+    # Post-DPO values from per-layer probes (stored as fractions)
+    post_robust = post.get("robust_rate", 0) * 100
+    post_social = post.get("social_compliance_rate", 0) * 100
+    post_belief = post.get("belief_corruption_rate", 0) * 100
+    post_other = 100.0 - post_robust - post_social - post_belief
+
+    pre_vals = [pre_robust, pre_social, pre_belief, pre_other]
+    post_vals = [post_robust, post_social, post_belief, post_other]
+
+    x = np.arange(len(categories))
+    width = 0.35
+
+    if HAS_SEABORN:
+        c_pre, c_post = sns.color_palette("Set2", 2)
+    else:
+        c_pre = plt.cm.Set2(0.0)
+        c_post = plt.cm.Set2(0.15)
+
+    fig, ax = plt.subplots(figsize=(7, 4.5))
+    bars_pre = ax.bar(x - width / 2, pre_vals, width, label="Pre-DPO", color=c_pre, edgecolor="white")
+    bars_post = ax.bar(x + width / 2, post_vals, width, label="Post-DPO", color=c_post, edgecolor="white")
+
+    # Add value labels on bars
+    for bar_group in [bars_pre, bars_post]:
+        for bar in bar_group:
+            h = bar.get_height()
+            ax.annotate(f"{h:.1f}%", xy=(bar.get_x() + bar.get_width() / 2, h),
+                        xytext=(0, 3), textcoords="offset points",
+                        ha="center", va="bottom", fontsize=FONT_SIZE_TICK)
+
+    # Delta annotations
+    for i, (pre, post_v) in enumerate(zip(pre_vals, post_vals)):
+        delta = post_v - pre
+        sign = "+" if delta >= 0 else ""
+        color = "#2ca02c" if (i == 0 and delta > 0) or (i > 0 and delta < 0) else "#d62728"
+        ax.annotate(f"{sign}{delta:.1f}pp", xy=(x[i], max(pre, post_v) + 4),
+                    ha="center", va="bottom", fontsize=FONT_SIZE_TICK, fontweight="bold",
+                    color=color)
+
+    ax.set_ylabel("Percentage of samples")
+    ax.set_title("Probe decomposition: Pre-DPO vs Post-DPO (Layer 1)")
+    ax.set_xticks(x)
+    ax.set_xticklabels(categories)
+    ax.set_ylim(0, max(max(pre_vals), max(post_vals)) + 12)
+    ax.legend(frameon=False, loc="upper right")
+
+    fig.tight_layout()
+    _save(fig, output_dir, "fig6_dpo_probe_decomposition")
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -458,6 +546,7 @@ FIGURE_MAP = {
     "3": ("Steering per-source (opinion)", figure_steering_per_source),
     "4": ("Probe accuracy by layer", figure_probe_accuracy),
     "5": ("Ablation comparison", figure_ablation_comparison),
+    "6": ("DPO probe decomposition", figure_dpo_probe),
 }
 
 
