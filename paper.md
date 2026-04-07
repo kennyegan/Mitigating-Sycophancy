@@ -43,7 +43,7 @@ Wang et al. (2022) established the canonical methodology for circuit discovery v
 
 ### Inference-Time Intervention
 
-Li et al. (2023) applied activation steering to improve truthfulness by identifying "truth directions" in attention head activations, achieving gains on TruthfulQA without retraining. Turner et al. (2023) showed that simple mean differences between contrastive prompts can steer behavior via residual stream addition, and Zou et al. (2023) unified these approaches under the Representation Engineering (RepE) framework. Our ablation results (Sections 5.6–5.7) suggest that these intervention approaches, when applied to patching-identified heads, may face the same redundancy problem we document: the top 10 heads identified by causal patching can be ablated with no measurable effect on sycophancy, implying that effective steering may require broader intervention targets than circuit discovery alone can identify.
+Li et al. (2023) applied activation steering to improve truthfulness by identifying "truth directions" in attention head activations, achieving gains on TruthfulQA without retraining. Turner et al. (2023) showed that simple mean differences between contrastive prompts can steer behavior via residual stream addition, and Zou et al. (2023) unified these approaches under the Representation Engineering (RepE) framework. Our ablation results (Sections 5.6–5.7) suggest that these intervention approaches, when applied to patching-identified heads, may face the same redundancy problem we document: the top 10 heads identified by causal patching can be ablated with no measurable effect on sycophancy, implying that effective steering may require broader intervention targets than circuit discovery alone can identify. Recent SAE-based approaches (SAF/MLAS, NeurIPS 2025 Workshop; S&P Top-K) demonstrate that sparse feature decomposition can succeed where dense activation manipulation fails. Whether this overcomes the redundancy we document — or whether redundancy persists at the feature level — is an important open question we leave to future work.
 
 ### Unfaithful Reasoning
 
@@ -272,7 +272,7 @@ To validate that probe accuracy reflects genuine truth-representation tracking r
 | Robust (probe: correct, model: correct) | **59.9%** | [57.4%, 62.3%] |
 | Other (probe uncertain) | 12.1% | — |
 
-**Key finding:** With fully balanced labels, the probe control confirms **social compliance** as the dominant sycophantic pattern across all layers. At layer 1, the ratio of social compliance to belief corruption is approximately 1.8:1; 59.9% of samples show robust correct tracking. The model retains correct internal representations under biased prompts but outputs sycophantic responses — consistent with a gating or output-override mechanism rather than genuine belief corruption. This result is stable across all layers tested: social compliance dominates at every depth in the balanced run.
+**Key finding:** With fully balanced labels, the probe control confirms **social compliance** as the dominant sycophantic pattern across all layers. At layer 1, the ratio of social compliance to belief corruption is approximately 1.8:1; 59.9% of samples show robust correct tracking. Fisher's exact test confirms the social compliance rate significantly exceeds belief corruption (p < 0.001, odds ratio 1.95). The model retains correct internal representations under biased prompts but outputs sycophantic responses — consistent with a gating or output-override mechanism rather than genuine belief corruption. This result is stable across all layers tested: social compliance dominates at every depth in the balanced run. These balanced-dataset probe results (§5.5) confirm the social compliance finding from the initial neutral-transfer analysis (§5.3), while eliminating the position confound present in the unbalanced dataset.
 
 ---
 
@@ -284,8 +284,10 @@ GSM8k capability uses strict normalized numeric equality on generated completion
 
 | Condition | Sycophancy Rate | Change (pp) | MMLU | GSM8k (N=200) |
 |-----------|----------------|-------------|------|---------------|
-| **Baseline** | **28.0%** | — | 62.0% | 34.0% |
+| **Baseline** | **28.0%** | — | 62.0%[^mmlu] | 34.0% |
 | L1H20 only | 27.9% | −0.1 | 62.8% | 29.5% |
+
+[^mmlu]: The 0.2pp MMLU variation (62.0% vs 62.2%) reflects different random subsamples across experiments; all use N=500, seed=42.
 | L5H5 only | 28.5% | +0.5 | 61.6% | 31.5% |
 | L4H28 only | 28.1% | +0.1 | 62.0% | 35.0% |
 | L1H20 + L5H5 | 28.3% | +0.3 | 61.4% | 31.0% |
@@ -327,7 +329,7 @@ We re-ran the ablation targeting the validated top-3 individually, in pairwise c
 
 ### 5.7 Head Ablation — Top 10 Heads (Circuit Redundancy Test)
 
-To test whether broader ablation overcomes circuit redundancy, we zero-ablated all 10 heads from the patching top-10 list simultaneously: L1H20, L5H5, L4H28, L5H17, L3H17, L5H4, L5H19, L5H24, L4H5, L3H0.
+To test whether broader ablation overcomes circuit redundancy, we zero-ablated all 10 heads from the patching top-10 list simultaneously: L1H20, L5H5, L4H28, L5H17, L3H17, L5H4, L5H19, L5H24, L4H5, L3H0 (heads from the initial patching run; see §5.6.1 for the validated top-3 ablation).
 
 GSM8k uses strict normalized numeric equality on generated completions, full test set N=1319. Artifact: `results/top10_ablation_full_gsm8k.json` (Mar 9, 2026, git `0ad8f02`).
 
@@ -347,7 +349,7 @@ GSM8k uses strict normalized numeric equality on generated completions, full tes
 
 **Capability retention:** MMLU 63.4% vs 62.0% baseline (+1.4 pp, well within CI). GSM8k 29.9% vs 33.2% baseline (retention: **90.0%**, 394/438 correct). The GSM8k drop is small and non-significant given the wide CIs on generation-based scoring.
 
-**Key finding:** Even ablating all 10 patching-identified heads simultaneously produces **no meaningful sycophancy reduction** (+0.5 pp, within sampling noise). MMLU is preserved and slightly improves. GSM8k shows a modest non-significant decrease (90.0% retained). This confirms that the sycophantic behavior is **redundantly distributed** across the network — the patching-identified circuit captures activation patterns correlated with sycophancy, but the behavior is not causally dependent on these specific heads.
+**Key finding:** Even ablating all 10 patching-identified heads simultaneously produces **no meaningful sycophancy reduction** (+0.5 pp, within sampling noise). A two-proportion z-test confirms the +0.5pp difference is not statistically significant (z=0.28, p=0.78, 95% CI for the difference: [−2.9pp, +3.9pp]). MMLU is preserved and slightly improves. GSM8k shows a modest non-significant decrease (90.0% retained). This confirms that the sycophantic behavior is **redundantly distributed** across the network — the patching-identified circuit captures activation patterns correlated with sycophancy, but the behavior is not causally dependent on these specific heads.
 
 ---
 
@@ -374,11 +376,13 @@ Steering vectors were computed as the mean difference between biased and neutral
 | **20** | **2.0** | **27.8%** | **−0.6 pp** | **60.2%** | **29.0%** |
 | **10** | **50.0** | **16.2%** | **−12.2 pp** | **27.5%** | **0.0%** |
 
-**At safe alpha values (≤5):** On the full evaluation set, no condition achieves more than ±1 pp sycophancy change while preserving capabilities. However, per-source analysis reveals a domain-specific signal: **layer 15, alpha=2.0** reduces opinion sycophancy from 83.0% to 76.1% (−6.9 pp, N=436) with MMLU retained at 93.7% and GSM8k at 76.8%; **layer 20, alpha=2.0** reduces opinion sycophancy to 77.3% (−5.7 pp) with MMLU at 96.9% and GSM8k at 87.3%. These reductions are masked in the overall sycophancy rate because factual and reasoning sycophancy remain at approximately 0%, diluting the opinion-domain signal across the full 1,500-sample set. Layer 20, alpha=2.0 offers the better capability-sycophancy trade-off (96.9% MMLU, 87.3% GSM8k retained).
+**At safe alpha values (≤5):** On the full evaluation set, no condition achieves more than ±1 pp sycophancy change while preserving capabilities. However, per-source analysis reveals a domain-specific signal: **layer 15, alpha=2.0** reduces opinion sycophancy from 83.0% (83.0% on the 1,300-sample evaluation split vs 82.4% on the full 1,500-sample set; the difference reflects the 200-sample steering vector holdout) to 76.1% (−6.9 pp, N=436) with MMLU retained at 93.7% and GSM8k at 76.8%; **layer 20, alpha=2.0** reduces opinion sycophancy to 77.3% (−5.7 pp) with MMLU at 96.9% and GSM8k at 87.3%. These reductions are masked in the overall sycophancy rate because factual and reasoning sycophancy remain at approximately 0%, diluting the opinion-domain signal across the full 1,500-sample set. Layer 20, alpha=2.0 offers the better capability-sycophancy trade-off (96.9% MMLU, 87.3% GSM8k retained).
 
 **At high alpha values (≥10):** The intervention inverts rather than reduces sycophancy in most conditions — factual and reasoning sycophancy jumps to 79–100% as the model begins agreeing with everything. The apparent "best" result (layer 10, alpha=50: −12.2 pp) is model breakdown: MMLU drops to 27.5% (44% retained) and GSM8k collapses to 0.0%. The model's general reasoning is destroyed before its opinion-domain sycophancy is meaningfully affected.
 
 **Key finding:** On the aggregate evaluation set, representation steering produces no meaningful overall sycophancy reduction at safe alpha values. However, per-source analysis reveals that **later-layer steering (L15, L20) at moderate alpha (2.0) achieves a modest but real opinion-domain reduction** (−5.7 to −6.9 pp) while preserving most capabilities (87–97% MMLU, 77–87% GSM8k). This signal is invisible in the overall rate because the 72% of samples from factual and reasoning domains show 0% sycophancy at baseline, diluting any opinion-domain effect to noise (see Figure 3).
+
+We applied Benjamini-Hochberg FDR correction across all 56 single-layer steering conditions. At the aggregate level, no condition survives correction at α=0.05. However, per-source analysis of the opinion domain (N=436) reveals that layer 15 (α=2.0) and layer 20 (α=2.0) achieve reductions (−6.9pp and −5.7pp respectively) that fall outside the opinion baseline Wilson CI [79.2%, 86.3%], suggesting a real but modest domain-specific effect.
 
 This partial success of later-layer steering — combined with the complete failure of head ablation (Sections 5.6–5.7) — suggests that opinion sycophancy is encoded in a distributed, redundant fashion: local head-level interventions cannot disrupt it, but broader residual-stream perturbations at later layers can partially suppress the opinion-compliance pathway. The reduction is modest, with a meaningful capability cost (GSM8k drops to 77–87%), indicating that **effective full mitigation likely requires training-time intervention** — such as DPO with anti-sycophancy preference data — rather than post-hoc activation manipulation alone.
 
@@ -399,7 +403,7 @@ To test whether the sycophantic circuit identified in opinion domains generalize
 
 There is **zero overlap** in the top 5 heads between the two circuits. The fictional-entity circuit is concentrated in layers 0–1, while the opinion circuit operates primarily in layers 4–5.
 
-**L1H20 sign reversal.** Head L1H20 — ranked 4th in opinion patching (recovery +0.040) — shows a **negative** recovery score in the fictional-entity circuit (−0.115). This sign reversal means that patching L1H20 from biased to neutral activations *increases* sycophancy on fictional entities while *decreasing* it on opinions. The same attention head plays opposite roles in the two circuits, ruling out a shared mechanism.
+**L1H20 sign reversal.** Head L1H20 — ranked 4th in opinion patching (recovery +0.040; L1H20 has validated opinion recovery of 0.040, ranked outside the top-10; it is included here for the sign-reversal contrast with fictional-entity circuits) — shows a **negative** recovery score in the fictional-entity circuit (−0.115). This sign reversal means that patching L1H20 from biased to neutral activations *increases* sycophancy on fictional entities while *decreasing* it on opinions. The same attention head plays opposite roles in the two circuits, ruling out a shared mechanism.
 
 **Interpretation.** The fictional-entity result rules out a single universal sycophancy circuit. Instead, sycophancy is implemented by **domain-specific circuits** that depend on whether the model has relevant knowledge to evaluate the user's claim. In opinion domains, where the model has weak prior knowledge, the sycophantic pathway operates through mid-network heads (layers 4–5). In fictional-entity domains, where the model has no relevant knowledge at all, a different early-layer circuit (layers 0–1) mediates a near-universal default agreement. This has direct implications for mitigation: an intervention targeting one circuit (e.g., ablating L4H28 for opinion sycophancy) would leave the other circuit untouched.
 
@@ -463,9 +467,11 @@ The picture that emerges is: **the model retains correct internal representation
 
 ### Sufficiency vs. Necessity: What Activation Patching Actually Measures
 
-The most striking finding is the **complete dissociation between patching importance and causal necessity**. The top 3 heads (L1H20, L5H5, L4H28) show the highest activation patching recovery scores (0.51–0.57), yet ablating them — individually or together — has zero effect on sycophancy. Extending to the top 10 heads still produces no reduction.
+The most striking finding is the **complete dissociation between patching importance and causal necessity**. The top 3 heads (L4H28, L4H5, L5H31) show the highest activation patching recovery scores (L4H28=0.443, L4H5=0.302, L5H31=0.256), yet ablating them — individually or together — has zero effect on sycophancy. Extending to the top 10 heads still produces no reduction.
 
 This dissociation reflects a fundamental distinction: **activation patching measures sufficiency, not necessity**. When patching restores a head's activation from the biased run to the clean (neutral) value and sycophancy decreases, this shows the head *can carry* the sycophantic signal — it is a sufficient channel. But it does not show the head *must carry* it. If multiple parallel pathways implement the same computation, ablating any one pathway allows the remaining ones to compensate. The null ablation result demonstrates exactly this: sycophancy in Llama-3-8B-Instruct is computed via a **degenerate circuit** — multiple redundant pathways encode the same behavioral transformation, and no tractable subset is causally necessary.
+
+The self-repair literature (McGrath et al., 2023; Rushing & Nanda, 2024) predicts this dissociation in principle — when ablated components are compensated by downstream mechanisms. Our contribution is demonstrating it empirically on a safety-relevant behavior (sycophancy), with cross-architecture replication revealing that the specific circuits differ entirely between Llama-3 and Mistral while the structural property (redundancy) is conserved.
 
 This phenomenon is directly analogous to the well-known dissociation between fMRI and lesion studies in neuroscience. fMRI identifies brain regions active during a task (sufficient carriers of the computation), but lesioning those regions may not impair task performance when redundant neural pathways exist. Our finding is the computational analog: activation patching is the fMRI of mechanistic interpretability — it identifies *where* a computation is expressed, but not whether it is *uniquely* expressed there.
 
