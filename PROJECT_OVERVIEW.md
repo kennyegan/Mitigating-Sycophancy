@@ -4,7 +4,7 @@
 
 Mechanistic interpretability analysis of sycophancy in RLHF-trained LLMs, with the goal of understanding and mitigating the behavior. Target venue: NeurIPS 2026.
 
-## Current State (April 7, 2026)
+## Current State (April 7, 2026) — ALL EXPERIMENTS COMPLETE
 
 ### Milestones 1-5: COMPLETE
 
@@ -33,9 +33,11 @@ All methodology hardening, probe redesign, reproducibility, capability evaluatio
   - Train loss: 0.69 → 0.16, rewards accuracy: 0.44 → 0.95
   - Eval loss: 0.42 (stable, no overfitting)
   - Adapter saved: `results/dpo_model/` (LoRA rank 16, 400 training pairs, seed=100)
-- DPO eval partial (Job 53811183): **behavioral eval PASSED** — opinion syc 82.4%→58.6%, MMLU 62.8% (preserved)
-- Probe re-analysis step failed (HookedTransformer loading bug) — fixed, resubmitted as Job 55240703
-- Awaiting probe re-analysis to complete Phase 4
+- DPO eval COMPLETE (Job 55240703, Apr 7, 2026)
+  - Behavioral: opinion syc 82.4%→58.6% (-23.8pp), MMLU 62.8% (+0.8pp), GSM8k 38.5% (+5.3pp)
+  - Probe re-analysis: social compliance 18.0%→11.4% (-6.6pp), robust tracking 59.9%→75.5% (+15.6pp)
+  - First mechanistic evidence of what DPO does to sycophancy circuits
+  - Artifact: `results/dpo_eval_results.json`
 
 ## Completion Gates
 
@@ -44,8 +46,8 @@ All methodology hardening, probe redesign, reproducibility, capability evaluatio
 - Gate C: Full SLURM reruns + manifests — **COMPLETE**
 - Gate D: Paper numbers confirmed — **COMPLETE** (audit Mar 16, fixes Mar 17-19)
 - Gate E: Publication figures — **COMPLETE** (5 figures generated Mar 20)
-- Gate F: DPO intervention + probe re-analysis — **IN PROGRESS** (training done, eval submitted Mar 22)
-- Gate G: Final paper draft with all results — **BLOCKED on Gate F**
+- Gate F: DPO intervention + probe re-analysis — **COMPLETE** (Apr 7: SC 18%→11.4%, robust 60%→75.5%)
+- Gate G: Final paper draft with all results — **COMPLETE** (DPO section, abstract, discussion, conclusion updated Apr 7)
 
 ## Key Results
 
@@ -58,12 +60,12 @@ All methodology hardening, probe redesign, reproducibility, capability evaluatio
 | Opinion steering L20 alpha=2: -5.7pp, 96.9% MMLU | Confirmed | Modest positive result |
 | DPO training converged (loss 0.69→0.16, accuracy 95%) | Complete | Training works |
 | DPO behavioral: opinion syc 82.4%→58.6%, MMLU preserved | Complete | -23.8pp reduction |
-| DPO probe re-analysis | **Running (Job 55240703)** | **Paper-making experiment** |
+| DPO probe: SC 18%→11.4%, robust 60%→75.5% | **Complete** | **First mechanistic DPO evidence** |
+| Paper updated: Sec 5.11, Abstract, Discussion, Conclusion | **Complete** | Full story in paper |
 
 ## NeurIPS Readiness
 
 | Milestone | Likelihood |
 |-----------|-----------|
-| Current (all inference-time experiments done) | ~55-65% |
-| + Figures + statistical corrections | ~60-70% |
-| + DPO mitigation + mechanistic probe analysis | ~75-80% |
+| Full pipeline + paper updated (all sections written) | ~80-85% |
+| + Final polish pass (formatting, notation table) | ~82-85% |
