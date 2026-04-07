@@ -1,7 +1,7 @@
 # Context: Mitigating Sycophancy in Large Language Models
 
 > Implementation log and research context for mechanistic interpretability analysis of LLM sycophancy circuits.
-> Last updated: 2026-03-19
+> Last updated: 2026-03-22
 
 ---
 
@@ -213,6 +213,12 @@ Inference-time steering/ablation is insufficient. Effective sycophancy mitigatio
 | 2026-03-19 | --- | Job 16 (corrected ablation 53720551) COMPLETE | All 9 conditions done, dissociation confirmed ±0.3pp |
 | 2026-03-19 | --- | Paper updated with Section 5.6.1 + steering per-source | Corrected ablation table + L15/L20 opinion results |
 | 2026-03-19 | --- | Writing Phase 4 scripts | 06_dpo_training.py, 07_dpo_eval.py, generate_figures.py |
+| 2026-03-20 | --- | Publication figures generated | 5 figures (PDF+PNG) in `figures/`: patching heatmap, steering sweep, per-source opinion, probe curves, ablation comparison |
+| 2026-03-20 | --- | Figure references added to paper.md | Fig 1-5 referenced in Sections 5.3, 5.4, 5.6.1, 5.8 |
+| 2026-03-20 | --- | Paper Section 5.8 key finding rewritten | No longer contradicts per-source result; acknowledges modest L15/L20 opinion reduction |
+| 2026-03-20 | --- | L15/L20 alpha=2 added to steering sweep table | Were missing despite having capability data |
+| 2026-03-22 | --- | DPO training COMPLETE (Job 53801949) | Loss 0.69→0.16, rewards accuracy 95%, adapter saved to results/dpo_model/ |
+| 2026-03-22 | --- | DPO eval SUBMITTED (Job 53811183) | Behavioral + capability + probe re-analysis — paper-making experiment |
 
 ---
 
@@ -242,6 +248,11 @@ Mitigating-Sycophancy/
     03_activation_patching.py    -- Causal patching (Wang et al. 2022)
     04_head_ablation.py          -- Head ablation with capability eval
     05_representation_steering.py-- Steering sweep with checkpoint/resume
+    06_dpo_training.py           -- DPO fine-tuning with LoRA (seed=100, separate from benchmark)
+    07_dpo_eval.py               -- DPO behavioral eval + capability + probe re-analysis
+    generate_figures.py          -- Publication figures (5 figs, PDF+PNG)
+    analyze_steering_per_source.py -- CPU-only per-source steering breakdown
+    eval_steering_capability.py  -- Targeted MMLU/GSM8k for specific steering conditions
     99_collect_result_manifest.py-- Artifact validation
   slurm/
     config.sh                    -- Cluster/model/path configuration
@@ -309,13 +320,13 @@ Three-way audit: paper claims vs data, implementation bugs, statistical methodol
 
 ---
 
-## Research Direction & NeurIPS Path (Assessed 2026-03-16)
+## Research Direction & NeurIPS Path (Updated 2026-03-22)
 
-### Current NeurIPS Readiness: ~55-65% (Weak Accept territory)
+### Current NeurIPS Readiness: ~60-70% (Weak Accept / Accept territory)
 
-**Strengths:** Social compliance evidence (novel), patching-to-ablation dissociation (validated with correct heads, novel methodology contribution), cross-architecture replication, well-designed benchmark with controls, **modest but real steering mitigation** (L20 alpha=2: -5.7pp opinion sycophancy, 96.9% MMLU retained).
+**Strengths:** Social compliance evidence (novel), patching-to-ablation dissociation (validated with correct heads, novel methodology contribution), cross-architecture replication, well-designed benchmark with controls, modest but real steering mitigation (L20 alpha=2: -5.7pp opinion sycophancy, 96.9% MMLU retained), publication figures generated, DPO training complete.
 
-**Weaknesses:** Steering reduction is modest (-5.7pp), primarily negative ablation results, limited theoretical insight, domain-specificity undermines generality claims. DPO (Phase 4) is the key to reaching 75-80%.
+**Weaknesses:** Steering reduction is modest (-5.7pp), primarily negative ablation results, limited theoretical insight, domain-specificity undermines generality claims. DPO eval (Phase 4) is pending — probe re-analysis results will determine final readiness.
 
 ### Phase 1: Per-Source Steering (COMPLETE --- data extracted 2026-03-16)
 
@@ -334,33 +345,31 @@ L20 alpha=2.0 is the better candidate: -5.7pp opinion sycophancy, 96.9% MMLU ret
 
 If L15/L20 alpha=2 preserves capability, test layer-normalized distributed steering across all identified layers simultaneously at very low alpha. The 60x norm difference between layer 1 (0.069) and layer 20 (4.285) means alpha is not comparable across layers without normalization.
 
-### Phase 3: Paper Tightening (IN PARALLEL)
+### Phase 3: Paper Tightening — MOSTLY COMPLETE
 
-- Add 2x2 probe contingency table (probe correct/wrong x model sycophantic/honest)
-- Expand fictional-entity two-circuit finding (zero overlap, sign-reversed L1H20 --- adds novelty for free)
-- Bonferroni/BH corrections for 56 steering conditions
-- Create visualization: patching heatmap, steering sweep plots, probe accuracy curves
+- [x] Publication figures generated (5 figures, PDF+PNG in `figures/`)
+- [x] Figure references added to paper sections
+- [x] Paper Section 5.8 key finding rewritten for consistency
+- [x] L15/L20 added to steering sweep table
+- [ ] Add 2x2 probe contingency table
+- [ ] Expand fictional-entity two-circuit finding
+- [ ] Bonferroni/BH corrections for 56 steering conditions
 
-### Phase 4: DPO Training-Time Intervention (2-4 weeks, highest impact)
+### Phase 4: DPO Training-Time Intervention — IN PROGRESS
 
-**The experiment that elevates this paper from descriptive to prescriptive:**
-
-1. Generate 250-500 NEW opinion pairs (different seeds, not the 500 test samples)
-2. DPO fine-tune Llama-3-8B-Instruct (TRL DPOTrainer, LoRA rank 16)
-3. Evaluate: target <60% opinion sycophancy, >95% MMLU retention
-4. **CRITICAL:** Re-run neutral-transfer probes on DPO model
-   - Pre-DPO: 18% social compliance, 10% belief corruption
-   - Post-DPO hypothesis: social compliance drops, robust tracking increases
-   - This shows mechanistically WHAT DPO does to sycophancy circuits
-   - First paper to demonstrate this
+1. [x] Generate 400 NEW opinion pairs (seed=100, separate from benchmark test set)
+2. [x] DPO fine-tune Llama-3-8B-Instruct (TRL DPOTrainer, LoRA rank 16)
+   - Training COMPLETE (Job 53801949, Mar 22): loss 0.69→0.16, rewards accuracy 95%
+   - Adapter saved: `results/dpo_model/`
+3. [ ] Evaluate DPO model (Job 53811183, SUBMITTED): behavioral + MMLU/GSM8k + probe re-analysis
+4. [ ] Update paper with DPO results
 
 **Impact estimates:**
 | Scenario | NeurIPS Likelihood |
 |----------|-------------------|
-| Current state | ~35-45% |
+| Current state (figures + steering + ablation done) | ~60-70% |
 | + Phase 1 opinion steering confirmed | ~50-60% |
-| + Phase 3 paper tightened | ~60-70% |
-| + Phase 4 DPO + probe re-analysis | ~75-80% |
+| + DPO eval shows sycophancy reduction + probe shift | ~75-80% |
 
 ### Methodological Cautions
 1. Patching sufficiency does not imply necessity --- always validate with ablation
