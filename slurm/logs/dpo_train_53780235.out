@@ -1,0 +1,102 @@
+============================================
+SLURM Job: DPO Fine-Tuning for Sycophancy
+Model: meta-llama/Meta-Llama-3-8B-Instruct
+Train pairs: 400
+Seed: 100 (disjoint from benchmark seed=42)
+Epochs: 3
+Node: gpu024
+GPU: NVIDIA A100-SXM4-80GB, 81920 MiB
+Time: Sat Mar 21 04:15:51 UTC 2026
+============================================
+======================================================================
+DPO FINE-TUNING FOR SYCOPHANCY REDUCTION
+======================================================================
+  Model:        meta-llama/Meta-Llama-3-8B-Instruct
+  Train pairs:  400
+  Seed:         100
+  Output:       results/dpo_model
+  Epochs:       3
+  LR:           5e-05
+  LoRA rank:    16
+  Batch size:   4
+  DPO beta:     0.1
+  Eval split:   0.1
+======================================================================
+======================================================================
+STEP 1: Generating DPO training pairs
+======================================================================
+Generating 400 DPO pairs with seed=100 ...
+  (Benchmark test set uses seed=42 with 500 samples — these are disjoint)
+Loading Anthropic/model-written-evals sycophancy data...
+Loaded 3252 raw samples
+Created 520 opinion sycophancy samples (skipped 0)
+Generated 400 DPO training pairs
+  Train pairs: 360
+  Eval pairs:  40
+  Saved pairs to results/dpo_model/dpo_training_pairs.json
+
+======================================================================
+STEP 2: Loading model and tokenizer
+======================================================================
+  Model: meta-llama/Meta-Llama-3-8B-Instruct
+  Device: cuda
+  flash_attn not installed, using eager attention
+  Model loaded: torch.bfloat16, cuda:0
+
+======================================================================
+STEP 3: Applying LoRA adapter
+======================================================================
+  LoRA rank: 16
+  LoRA alpha: 32
+  Target modules: q_proj, v_proj, k_proj, o_proj
+  Dropout: 0.05
+
+======================================================================
+STEP 4: Starting DPO training
+======================================================================
+  Batch size: 4 (effective: 16)
+  Epochs: 3
+  Learning rate: 5e-05
+  DPO beta: 0.1
+  Estimated total steps: 66
+  Trainable parameters: 13,631,488 / 8,043,892,736 (0.17%)
+
+Training started at 2026-03-21 04:16:24
+{'loss': 0.6893, 'grad_norm': 1.7953698635101318, 'learning_rate': 2.857142857142857e-05, 'entropy': 0.3771532207727432, 'num_tokens': 8832.0, 'logits/chosen': 0.8007668882608414, 'logits/rejected': 0.8330202251672745, 'mean_token_accuracy': 0.31875, 'rewards/chosen': -0.004541900265030563, 'rewards/rejected': -0.012390094040893019, 'rewards/accuracies': 0.3625, 'rewards/margins': 0.007848193752579391, 'logps/chosen': -39.074540328979495, 'logps/rejected': -35.658627605438234, 'epoch': 0.22}
+{'loss': 0.5849, 'grad_norm': 1.5437220335006714, 'learning_rate': 4.987173308479738e-05, 'entropy': 0.3847833856940269, 'num_tokens': 17288.0, 'logits/chosen': 0.8471001833677292, 'logits/rejected': 0.8366214960813523, 'mean_token_accuracy': 0.3, 'rewards/chosen': -0.015696410834789277, 'rewards/rejected': -0.2719421308487654, 'rewards/accuracies': 0.8375, 'rewards/margins': 0.25624572006054225, 'logps/chosen': -38.36653308868408, 'logps/rejected': -37.608010864257814, 'epoch': 0.44}
+{'loss': 0.5231, 'grad_norm': 1.1335089206695557, 'learning_rate': 4.844380330367701e-05, 'entropy': 0.44369893819093703, 'num_tokens': 26934.0, 'logits/chosen': 0.743773378431797, 'logits/rejected': 0.7382995791733264, 'mean_token_accuracy': 0.334375, 'rewards/chosen': -0.1236614128574729, 'rewards/rejected': -0.6680185180157423, 'rewards/accuracies': 0.825, 'rewards/margins': 0.5443571090698243, 'logps/chosen': -39.89715929031372, 'logps/rejected': -42.80519123077393, 'epoch': 0.67}
+{'loss': 0.3714, 'grad_norm': 1.420386552810669, 'learning_rate': 4.551908603018191e-05, 'entropy': 0.5157548382878303, 'num_tokens': 36776.0, 'logits/chosen': 0.7030189886689187, 'logits/rejected': 0.6388987869024276, 'mean_token_accuracy': 0.35, 'rewards/chosen': 0.2202388897538185, 'rewards/rejected': -0.9217589661478996, 'rewards/accuracies': 0.85, 'rewards/margins': 1.1419978484511375, 'logps/chosen': -36.26052284240723, 'logps/rejected': -44.39681835174561, 'epoch': 0.89}
+{'eval_loss': 0.41599512100219727, 'eval_runtime': 1.4345, 'eval_samples_per_second': 27.883, 'eval_steps_per_second': 6.971, 'eval_entropy': 0.6279598385095596, 'eval_num_tokens': 40952.0, 'eval_logits/chosen': 0.5758654341101647, 'eval_logits/rejected': 0.6277241766452789, 'eval_mean_token_accuracy': 0.475, 'eval_rewards/chosen': 1.1399371087551118, 'eval_rewards/rejected': -0.05829346664249897, 'eval_rewards/accuracies': 0.8, 'eval_rewards/margins': 1.1982305884361266, 'eval_logps/chosen': -28.37072887420654, 'eval_logps/rejected': -36.988668823242186, 'epoch': 1.0}
+{'loss': 0.3908, 'grad_norm': 2.269045114517212, 'learning_rate': 4.128431206805557e-05, 'entropy': 0.5876496268643273, 'num_tokens': 44080.0, 'logits/chosen': 0.5713617139392428, 'logits/rejected': 0.6136933598253462, 'mean_token_accuracy': 0.4305555555555556, 'rewards/chosen': 0.9919508579704497, 'rewards/rejected': -0.3908810374430484, 'rewards/accuracies': 0.8333333333333334, 'rewards/margins': 1.3828318864107132, 'logps/chosen': -29.9280579884847, 'logps/rejected': -39.733325746324326, 'epoch': 1.09}
+{'loss': 0.4068, 'grad_norm': 4.092101573944092, 'learning_rate': 3.600985378894086e-05, 'entropy': 0.5984921157360077, 'num_tokens': 53070.0, 'logits/chosen': 0.48553352504968644, 'logits/rejected': 0.5400364674627781, 'mean_token_accuracy': 0.49375, 'rewards/chosen': 1.098005649447441, 'rewards/rejected': -0.16138345152139663, 'rewards/accuracies': 0.8125, 'rewards/margins': 1.259389092028141, 'logps/chosen': -27.5738618850708, 'logps/rejected': -36.616324234008786, 'epoch': 1.31}
+{'loss': 0.2472, 'grad_norm': 2.555696487426758, 'learning_rate': 3.0032463002216505e-05, 'entropy': 0.5708246067166328, 'num_tokens': 62766.0, 'logits/chosen': 0.7316871792078018, 'logits/rejected': 0.6441674873232841, 'mean_token_accuracy': 0.4625, 'rewards/chosen': 0.9395272761583329, 'rewards/rejected': -1.1578979656100272, 'rewards/accuracies': 0.9375, 'rewards/margins': 2.097425255179405, 'logps/chosen': -29.178562927246094, 'logps/rejected': -46.62047805786133, 'epoch': 1.53}
+{'loss': 0.3456, 'grad_norm': 4.735470294952393, 'learning_rate': 2.3733770779032184e-05, 'entropy': 0.511630256474018, 'num_tokens': 71960.0, 'logits/chosen': 0.9824228286743164, 'logits/rejected': 0.7542374461889267, 'mean_token_accuracy': 0.428125, 'rewards/chosen': 0.38735833764076233, 'rewards/rejected': -1.8100812762975693, 'rewards/accuracies': 0.85, 'rewards/margins': 2.197439593076706, 'logps/chosen': -35.05800075531006, 'logps/rejected': -54.095870399475096, 'epoch': 1.76}
+{'loss': 0.3941, 'grad_norm': 2.810023546218872, 'learning_rate': 1.7515921925666052e-05, 'entropy': 0.5181558847427368, 'num_tokens': 81174.0, 'logits/chosen': 1.0376076430082322, 'logits/rejected': 0.8689091622829437, 'mean_token_accuracy': 0.384375, 'rewards/chosen': 0.42152855470776557, 'rewards/rejected': -1.8004212528467178, 'rewards/accuracies': 0.8375, 'rewards/margins': 2.221949854493141, 'logps/chosen': -34.43167896270752, 'logps/rejected': -53.40316276550293, 'epoch': 1.98}
+{'eval_loss': 0.4287896156311035, 'eval_runtime': 1.4289, 'eval_samples_per_second': 27.993, 'eval_steps_per_second': 6.998, 'eval_entropy': 0.5306976586580276, 'eval_num_tokens': 81904.0, 'eval_logits/chosen': 0.9497735023498535, 'eval_logits/rejected': 0.8749698370695114, 'eval_mean_token_accuracy': 0.39375, 'eval_rewards/chosen': 0.4398387849330902, 'eval_rewards/rejected': -1.4417237758636474, 'eval_rewards/accuracies': 0.75, 'eval_rewards/margins': 1.8815625786781311, 'eval_logps/chosen': -35.37171268463135, 'eval_logps/rejected': -50.822971725463866, 'epoch': 2.0}
+{'loss': 0.2833, 'grad_norm': 5.421293258666992, 'learning_rate': 1.1775899741825947e-05, 'entropy': 0.5079958554771211, 'num_tokens': 88828.0, 'logits/chosen': 0.9942537314361997, 'logits/rejected': 0.8041842099693086, 'mean_token_accuracy': 0.3854166666666667, 'rewards/chosen': 0.583519728647338, 'rewards/rejected': -2.0202249354786344, 'rewards/accuracies': 0.875, 'rewards/margins': 2.603744672404395, 'logps/chosen': -33.17143906487359, 'logps/rejected': -55.131204181247284, 'epoch': 2.18}
+{'loss': 0.2876, 'grad_norm': 1.480447769165039, 'learning_rate': 6.880180319272006e-06, 'entropy': 0.5350991636514664, 'num_tokens': 97164.0, 'logits/chosen': 0.9238212153315544, 'logits/rejected': 0.6744893603026867, 'mean_token_accuracy': 0.41875, 'rewards/chosen': 0.551066086627543, 'rewards/rejected': -1.796404057741165, 'rewards/accuracies': 0.8375, 'rewards/margins': 2.3474701792001724, 'logps/chosen': -32.08388080596924, 'logps/rejected': -53.11758289337158, 'epoch': 2.4}
+{'loss': 0.3853, 'grad_norm': 2.919382333755493, 'learning_rate': 3.141334596385448e-06, 'entropy': 0.5300864323973655, 'num_tokens': 106270.0, 'logits/chosen': 0.907572953402996, 'logits/rejected': 0.7612803488969803, 'mean_token_accuracy': 0.390625, 'rewards/chosen': 0.700858362391591, 'rewards/rejected': -1.5799773514270783, 'rewards/accuracies': 0.9, 'rewards/margins': 2.280835647881031, 'logps/chosen': -32.90333204269409, 'logps/rejected': -52.031387901306154, 'epoch': 2.62}
+{'loss': 0.1881, 'grad_norm': 1.9258553981781006, 'learning_rate': 7.980720283448956e-07, 'entropy': 0.5450355216860772, 'num_tokens': 115972.0, 'logits/chosen': 0.9211174696683884, 'logits/rejected': 0.6739655792713165, 'mean_token_accuracy': 0.425, 'rewards/chosen': 0.8518608346581459, 'rewards/rejected': -1.7525826215744018, 'rewards/accuracies': 0.925, 'rewards/margins': 2.604443448781967, 'logps/chosen': -29.730949878692627, 'logps/rejected': -52.91434383392334, 'epoch': 2.84}
+{'eval_loss': 0.40247201919555664, 'eval_runtime': 1.4282, 'eval_samples_per_second': 28.007, 'eval_steps_per_second': 7.002, 'eval_entropy': 0.5512935280799866, 'eval_num_tokens': 122856.0, 'eval_logits/chosen': 0.8769165515899658, 'eval_logits/rejected': 0.7914047211408615, 'eval_mean_token_accuracy': 0.4, 'eval_rewards/chosen': 0.6941226795315742, 'eval_rewards/rejected': -1.2375750124454499, 'eval_rewards/accuracies': 0.825, 'eval_rewards/margins': 1.9316976726055146, 'eval_logps/chosen': -32.82887344360351, 'eval_logps/rejected': -48.781483840942386, 'epoch': 3.0}
+{'train_runtime': 97.6294, 'train_samples_per_second': 11.062, 'train_steps_per_second': 0.707, 'train_loss': 0.3832742805066316, 'epoch': 3.0}
+Training finished at 2026-03-21 04:18:01
+
+======================================================================
+STEP 5: Saving adapter and metrics
+======================================================================
+  Adapter saved to results/dpo_model
+  Eval loss: 0.4025
+  Metrics saved to results/dpo_training_metrics.json
+
+======================================================================
+DPO TRAINING COMPLETE
+======================================================================
+  Train loss:  0.3833
+  Eval loss:   0.4025
+  Adapter:     results/dpo_model
+  Metrics:     results/dpo_training_metrics.json
+  Total time:  1.8 minutes
+======================================================================
+============================================
+DPO training complete: Sat Mar 21 04:18:05 UTC 2026
+============================================

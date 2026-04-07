@@ -1,0 +1,64 @@
+No conda package cache directories found outside your home directory. To
+prevent conda from filling up your home directory, you can create a new
+directory at `/work/pi_<your_pi_name>/$USER/.conda/pkgs` and reload the module. 
+No conda environment directories found outside your home directory. To prevent
+conda from filling up your home directory, you can create a new directory at
+`/work/pi_<your_pi_name>/$USER/.conda/envs` and reload the module. 
+Loading conda version miniforge3-24.7.1
+`trust_remote_code` is not supported anymore.
+Please check that the Hugging Face dataset 'Anthropic/model-written-evals' isn't based on a loading script and remove `trust_remote_code`.
+If the dataset is based on a loading script, please ask the dataset author to remove it and convert it to a standard format like Parquet.
+Using the latest cached version of the dataset since Anthropic/model-written-evals couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'default' at /home/egank2_wit_edu/Mitigating-Sycophancy/.cache/huggingface/datasets/Anthropic___model-written-evals/default/0.0.0/d533f626cc321c92175a58ee570aa3cdb87238d1 (last modified on Fri Feb 27 02:20:16 2026).
+Processing Anthropic opinion samples:   0%|          | 0/520 [00:00<?, ?it/s]Processing Anthropic opinion samples: 100%|██████████| 520/520 [00:00<00:00, 150863.81it/s]
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:00<00:02,  1.25it/s]Loading checkpoint shards:  50%|█████     | 2/4 [00:01<00:01,  1.24it/s]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:02<00:00,  1.24it/s]Loading checkpoint shards: 100%|██████████| 4/4 [00:02<00:00,  1.78it/s]Loading checkpoint shards: 100%|██████████| 4/4 [00:02<00:00,  1.54it/s]
+Adding EOS to train dataset:   0%|          | 0/360 [00:00<?, ? examples/s]Adding EOS to train dataset: 100%|██████████| 360/360 [00:00<00:00, 16205.00 examples/s]
+Tokenizing train dataset:   0%|          | 0/360 [00:00<?, ? examples/s]Tokenizing train dataset:  65%|██████▌   | 234/360 [00:00<00:00, 2319.86 examples/s]Tokenizing train dataset: 100%|██████████| 360/360 [00:00<00:00, 2214.07 examples/s]
+Adding EOS to eval dataset:   0%|          | 0/40 [00:00<?, ? examples/s]Adding EOS to eval dataset: 100%|██████████| 40/40 [00:00<00:00, 13224.99 examples/s]
+Tokenizing eval dataset:   0%|          | 0/40 [00:00<?, ? examples/s]Tokenizing eval dataset: 100%|██████████| 40/40 [00:00<00:00, 1999.88 examples/s]
+The model is already on multiple devices. Skipping the move to device specified in `args`.
+The tokenizer has new PAD/BOS/EOS tokens that differ from the model config and generation config. The model config and generation config were aligned accordingly, being updated with the tokenizer's values. Updated tokens: {'pad_token_id': 128009}.
+  0%|          | 0/69 [00:00<?, ?it/s]  1%|▏         | 1/69 [00:02<03:11,  2.82s/it]  3%|▎         | 2/69 [00:04<02:09,  1.93s/it]  4%|▍         | 3/69 [00:05<01:43,  1.57s/it]  6%|▌         | 4/69 [00:06<01:33,  1.44s/it]  7%|▋         | 5/69 [00:07<01:26,  1.35s/it]                                                7%|▋         | 5/69 [00:07<01:26,  1.35s/it]  9%|▊         | 6/69 [00:09<01:24,  1.35s/it] 10%|█         | 7/69 [00:10<01:22,  1.34s/it] 12%|█▏        | 8/69 [00:11<01:18,  1.28s/it] 13%|█▎        | 9/69 [00:12<01:13,  1.22s/it] 14%|█▍        | 10/69 [00:13<01:14,  1.27s/it]                                                14%|█▍        | 10/69 [00:13<01:14,  1.27s/it] 16%|█▌        | 11/69 [00:15<01:18,  1.35s/it] 17%|█▋        | 12/69 [00:16<01:14,  1.31s/it] 19%|█▉        | 13/69 [00:18<01:19,  1.42s/it] 20%|██        | 14/69 [00:19<01:16,  1.39s/it] 22%|██▏       | 15/69 [00:21<01:14,  1.38s/it]                                                22%|██▏       | 15/69 [00:21<01:14,  1.38s/it] 23%|██▎       | 16/69 [00:22<01:16,  1.44s/it] 25%|██▍       | 17/69 [00:24<01:17,  1.48s/it] 26%|██▌       | 18/69 [00:25<01:14,  1.46s/it] 28%|██▊       | 19/69 [00:27<01:12,  1.45s/it] 29%|██▉       | 20/69 [00:28<01:06,  1.36s/it]                                                29%|██▉       | 20/69 [00:28<01:06,  1.36s/it] 30%|███       | 21/69 [00:29<01:04,  1.35s/it] 32%|███▏      | 22/69 [00:30<01:01,  1.31s/it] 33%|███▎      | 23/69 [00:31<00:49,  1.08s/it]
+  0%|          | 0/10 [00:00<?, ?it/s][A
+ 20%|██        | 2/10 [00:00<00:00, 16.10it/s][A
+ 40%|████      | 4/10 [00:00<00:00,  7.94it/s][A
+ 60%|██████    | 6/10 [00:00<00:00,  7.21it/s][A
+ 70%|███████   | 7/10 [00:00<00:00,  7.28it/s][A
+ 80%|████████  | 8/10 [00:01<00:00,  7.33it/s][A
+ 90%|█████████ | 9/10 [00:01<00:00,  7.41it/s][A
+100%|██████████| 10/10 [00:01<00:00,  7.64it/s][A                                               
+                                               [A 33%|███▎      | 23/69 [00:32<00:49,  1.08s/it]
+100%|██████████| 10/10 [00:01<00:00,  7.64it/s][A
+                                               [A/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/peft/utils/save_and_load.py:295: UserWarning: Could not find a config file in meta-llama/Meta-Llama-3-8B-Instruct - will assume that the vocabulary was not modified.
+  warnings.warn(
+ 35%|███▍      | 24/69 [00:34<01:18,  1.75s/it] 36%|███▌      | 25/69 [00:35<01:08,  1.56s/it]                                                36%|███▌      | 25/69 [00:35<01:08,  1.56s/it] 38%|███▊      | 26/69 [00:36<01:03,  1.47s/it] 39%|███▉      | 27/69 [00:38<01:01,  1.47s/it] 41%|████      | 28/69 [00:39<00:56,  1.38s/it] 42%|████▏     | 29/69 [00:40<00:54,  1.35s/it] 43%|████▎     | 30/69 [00:42<00:50,  1.30s/it]                                                43%|████▎     | 30/69 [00:42<00:50,  1.30s/it] 45%|████▍     | 31/69 [00:43<00:54,  1.44s/it] 46%|████▋     | 32/69 [00:45<00:52,  1.43s/it] 48%|████▊     | 33/69 [00:46<00:50,  1.41s/it] 49%|████▉     | 34/69 [00:48<00:50,  1.45s/it] 51%|█████     | 35/69 [00:49<00:46,  1.38s/it]                                                51%|█████     | 35/69 [00:49<00:46,  1.38s/it] 52%|█████▏    | 36/69 [00:50<00:44,  1.35s/it] 54%|█████▎    | 37/69 [00:52<00:43,  1.35s/it] 55%|█████▌    | 38/69 [00:53<00:42,  1.38s/it] 57%|█████▋    | 39/69 [00:54<00:41,  1.38s/it] 58%|█████▊    | 40/69 [00:56<00:39,  1.37s/it]                                                58%|█████▊    | 40/69 [00:56<00:39,  1.37s/it] 59%|█████▉    | 41/69 [00:57<00:37,  1.32s/it] 61%|██████    | 42/69 [00:58<00:37,  1.37s/it] 62%|██████▏   | 43/69 [01:00<00:35,  1.35s/it] 64%|██████▍   | 44/69 [01:01<00:34,  1.40s/it] 65%|██████▌   | 45/69 [01:02<00:31,  1.33s/it]                                                65%|██████▌   | 45/69 [01:02<00:31,  1.33s/it] 67%|██████▋   | 46/69 [01:03<00:25,  1.10s/it]
+  0%|          | 0/10 [00:00<?, ?it/s][A
+ 20%|██        | 2/10 [00:00<00:00, 16.33it/s][A
+ 40%|████      | 4/10 [00:00<00:00,  7.96it/s][A
+ 60%|██████    | 6/10 [00:00<00:00,  7.21it/s][A
+ 70%|███████   | 7/10 [00:00<00:00,  7.29it/s][A
+ 80%|████████  | 8/10 [00:01<00:00,  7.33it/s][A
+ 90%|█████████ | 9/10 [00:01<00:00,  7.41it/s][A
+100%|██████████| 10/10 [00:01<00:00,  7.61it/s][A                                               
+                                               [A 67%|██████▋   | 46/69 [01:04<00:25,  1.10s/it]
+100%|██████████| 10/10 [00:01<00:00,  7.61it/s][A
+                                               [A/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/peft/utils/save_and_load.py:295: UserWarning: Could not find a config file in meta-llama/Meta-Llama-3-8B-Instruct - will assume that the vocabulary was not modified.
+  warnings.warn(
+ 68%|██████▊   | 47/69 [01:06<00:37,  1.71s/it] 70%|██████▉   | 48/69 [01:08<00:33,  1.62s/it] 71%|███████   | 49/69 [01:09<00:30,  1.54s/it] 72%|███████▏  | 50/69 [01:10<00:28,  1.49s/it]                                                72%|███████▏  | 50/69 [01:10<00:28,  1.49s/it] 74%|███████▍  | 51/69 [01:11<00:25,  1.39s/it] 75%|███████▌  | 52/69 [01:13<00:22,  1.32s/it] 77%|███████▋  | 53/69 [01:14<00:20,  1.28s/it] 78%|███████▊  | 54/69 [01:15<00:18,  1.23s/it] 80%|███████▉  | 55/69 [01:16<00:17,  1.23s/it]                                                80%|███████▉  | 55/69 [01:16<00:17,  1.23s/it] 81%|████████  | 56/69 [01:17<00:16,  1.25s/it] 83%|████████▎ | 57/69 [01:19<00:14,  1.23s/it] 84%|████████▍ | 58/69 [01:20<00:13,  1.20s/it] 86%|████████▌ | 59/69 [01:21<00:12,  1.23s/it] 87%|████████▋ | 60/69 [01:22<00:11,  1.24s/it]                                                87%|████████▋ | 60/69 [01:22<00:11,  1.24s/it] 88%|████████▊ | 61/69 [01:24<00:11,  1.38s/it] 90%|████████▉ | 62/69 [01:26<00:10,  1.43s/it] 91%|█████████▏| 63/69 [01:27<00:08,  1.42s/it] 93%|█████████▎| 64/69 [01:28<00:06,  1.38s/it] 94%|█████████▍| 65/69 [01:30<00:05,  1.42s/it]                                                94%|█████████▍| 65/69 [01:30<00:05,  1.42s/it] 96%|█████████▌| 66/69 [01:31<00:04,  1.44s/it] 97%|█████████▋| 67/69 [01:33<00:02,  1.41s/it] 99%|█████████▊| 68/69 [01:34<00:01,  1.42s/it]100%|██████████| 69/69 [01:35<00:00,  1.20s/it]
+  0%|          | 0/10 [00:00<?, ?it/s][A
+ 20%|██        | 2/10 [00:00<00:00, 16.37it/s][A
+ 40%|████      | 4/10 [00:00<00:00,  7.95it/s][A
+ 60%|██████    | 6/10 [00:00<00:00,  7.21it/s][A
+ 70%|███████   | 7/10 [00:00<00:00,  7.29it/s][A
+ 80%|████████  | 8/10 [00:01<00:00,  7.34it/s][A
+ 90%|█████████ | 9/10 [00:01<00:00,  7.41it/s][A
+100%|██████████| 10/10 [00:01<00:00,  7.63it/s][A                                               
+                                               [A100%|██████████| 69/69 [01:36<00:00,  1.20s/it]
+100%|██████████| 10/10 [00:01<00:00,  7.63it/s][A
+                                               [A/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/peft/utils/save_and_load.py:295: UserWarning: Could not find a config file in meta-llama/Meta-Llama-3-8B-Instruct - will assume that the vocabulary was not modified.
+  warnings.warn(
+                                               100%|██████████| 69/69 [01:37<00:00,  1.20s/it]100%|██████████| 69/69 [01:37<00:00,  1.41s/it]
+/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/peft/utils/save_and_load.py:295: UserWarning: Could not find a config file in meta-llama/Meta-Llama-3-8B-Instruct - will assume that the vocabulary was not modified.
+  warnings.warn(
+  0%|          | 0/10 [00:00<?, ?it/s] 20%|██        | 2/10 [00:00<00:00, 16.27it/s] 40%|████      | 4/10 [00:00<00:00,  7.94it/s] 60%|██████    | 6/10 [00:00<00:00,  7.19it/s] 70%|███████   | 7/10 [00:00<00:00,  7.27it/s] 80%|████████  | 8/10 [00:01<00:00,  7.32it/s] 90%|█████████ | 9/10 [00:01<00:00,  7.39it/s]100%|██████████| 10/10 [00:01<00:00,  7.58it/s]100%|██████████| 10/10 [00:01<00:00,  7.71it/s]

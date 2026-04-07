@@ -181,7 +181,6 @@ def load_dpo_model_for_probes(model_name: str, adapter_path: str, device: str = 
     """
     from transformer_lens import HookedTransformer
     from transformers import AutoModelForCausalLM, AutoTokenizer
-    import tempfile
 
     print("Loading DPO model for probe analysis via HookedTransformer...")
 
@@ -203,25 +202,23 @@ def load_dpo_model_for_probes(model_name: str, adapter_path: str, device: str = 
         base_model = base_model.merge_and_unload()
         print("LoRA merged for HookedTransformer loading.")
 
-    # Save the merged model to a temp directory so HookedTransformer can load it
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        print(f"Saving merged model to temp dir for HookedTransformer...")
-        base_model.save_pretrained(tmp_dir)
-        tokenizer.save_pretrained(tmp_dir)
+    # Load into HookedTransformer using the original model name but with merged weights
+    # Pass the merged HF model directly via hf_model parameter
+    base_model = base_model.to(device)
 
-        # Free the HF model
-        del base_model
-        torch.cuda.empty_cache() if torch.cuda.is_available() else None
+    hooked_model = HookedTransformer.from_pretrained(
+        model_name,
+        hf_model=base_model,
+        device=device,
+        dtype=torch.float16,
+        fold_ln=False,
+        center_writing_weights=False,
+        center_unembed=False,
+        tokenizer=tokenizer,
+    )
 
-        # Load into HookedTransformer
-        hooked_model = HookedTransformer.from_pretrained(
-            tmp_dir,
-            device=device,
-            dtype=torch.float16,
-            fold_ln=False,
-            center_writing_weights=False,
-            center_unembed=False,
-        )
+    del base_model
+    torch.cuda.empty_cache() if torch.cuda.is_available() else None
 
     hooked_model.eval()
     print(f"HookedTransformer loaded: {hooked_model.cfg.n_layers} layers, d_model={hooked_model.cfg.d_model}")
@@ -457,7 +454,7 @@ def evaluate_gsm8k(model, tokenizer, n_samples: int = 200, seed: int = 42, devic
     print(f"\n  Evaluating GSM8k ({n_samples} samples)...")
     try:
         from datasets import load_dataset
-        ds = load_dataset("gsm8k", "main", split="test")
+        ds = load_dataset("openai/gsm8k", "main", split="test")
     except Exception as e:
         print(f"  [WARN] Could not load GSM8k dataset: {e}")
         return {'accuracy': None, 'n_samples': 0, 'error': str(e)}

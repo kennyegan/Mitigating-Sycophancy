@@ -4,7 +4,7 @@
 
 Mechanistic interpretability analysis of sycophancy in RLHF-trained LLMs, with the goal of understanding and mitigating the behavior. Target venue: NeurIPS 2026.
 
-## Current State (March 22, 2026)
+## Current State (April 7, 2026)
 
 ### Milestones 1-5: COMPLETE
 
@@ -33,8 +33,9 @@ All methodology hardening, probe redesign, reproducibility, capability evaluatio
   - Train loss: 0.69 → 0.16, rewards accuracy: 0.44 → 0.95
   - Eval loss: 0.42 (stable, no overfitting)
   - Adapter saved: `results/dpo_model/` (LoRA rank 16, 400 training pairs, seed=100)
-- DPO eval SUBMITTED (Job 53811183) — behavioral eval + MMLU/GSM8k + probe re-analysis
-- Awaiting eval results to complete Phase 4
+- DPO eval partial (Job 53811183): **behavioral eval PASSED** — opinion syc 82.4%→58.6%, MMLU 62.8% (preserved)
+- Probe re-analysis step failed (HookedTransformer loading bug) — fixed, resubmitted as Job 55240703
+- Awaiting probe re-analysis to complete Phase 4
 
 ## Completion Gates
 
@@ -56,7 +57,8 @@ All methodology hardening, probe redesign, reproducibility, capability evaluatio
 | Cross-architecture replication (Mistral) | Confirmed | Strengthens claims |
 | Opinion steering L20 alpha=2: -5.7pp, 96.9% MMLU | Confirmed | Modest positive result |
 | DPO training converged (loss 0.69→0.16, accuracy 95%) | Complete | Training works |
-| DPO eval + probe re-analysis | **Running (Job 53811183)** | **Paper-making experiment** |
+| DPO behavioral: opinion syc 82.4%→58.6%, MMLU preserved | Complete | -23.8pp reduction |
+| DPO probe re-analysis | **Running (Job 55240703)** | **Paper-making experiment** |
 
 ## NeurIPS Readiness
 

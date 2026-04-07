@@ -1,0 +1,102 @@
+============================================
+SLURM Job: DPO Fine-Tuning for Sycophancy
+Model: meta-llama/Meta-Llama-3-8B-Instruct
+Train pairs: 400
+Seed: 100 (disjoint from benchmark seed=42)
+Epochs: 3
+Node: uri-gpu016
+GPU: NVIDIA A100-PCIE-40GB, 40960 MiB
+Time: Sun Mar 22 23:38:02 UTC 2026
+============================================
+======================================================================
+DPO FINE-TUNING FOR SYCOPHANCY REDUCTION
+======================================================================
+  Model:        meta-llama/Meta-Llama-3-8B-Instruct
+  Train pairs:  400
+  Seed:         100
+  Output:       results/dpo_model
+  Epochs:       3
+  LR:           5e-05
+  LoRA rank:    16
+  Batch size:   4
+  DPO beta:     0.1
+  Eval split:   0.1
+======================================================================
+======================================================================
+STEP 1: Generating DPO training pairs
+======================================================================
+Generating 400 DPO pairs with seed=100 ...
+  (Benchmark test set uses seed=42 with 500 samples — these are disjoint)
+Loading Anthropic/model-written-evals sycophancy data...
+Loaded 3252 raw samples
+Created 520 opinion sycophancy samples (skipped 0)
+Generated 400 DPO training pairs
+  Train pairs: 360
+  Eval pairs:  40
+  Saved pairs to results/dpo_model/dpo_training_pairs.json
+
+======================================================================
+STEP 2: Loading model and tokenizer
+======================================================================
+  Model: meta-llama/Meta-Llama-3-8B-Instruct
+  Device: cuda
+  flash_attn not installed, using eager attention
+  Model loaded: torch.bfloat16, cuda:0
+
+======================================================================
+STEP 3: Applying LoRA adapter
+======================================================================
+  LoRA rank: 16
+  LoRA alpha: 32
+  Target modules: q_proj, v_proj, k_proj, o_proj
+  Dropout: 0.05
+
+======================================================================
+STEP 4: Starting DPO training
+======================================================================
+  Batch size: 4 (effective: 16)
+  Epochs: 3
+  Learning rate: 5e-05
+  DPO beta: 0.1
+  Estimated total steps: 66
+  Trainable parameters: 13,631,488 / 8,043,892,736 (0.17%)
+
+Training started at 2026-03-22 23:39:42
+{'loss': 0.69, 'grad_norm': 1.859987497329712, 'learning_rate': 2.857142857142857e-05, 'rewards/chosen': -0.005187473259866238, 'rewards/rejected': -0.011610133573412895, 'rewards/accuracies': 0.4375, 'rewards/margins': 0.0064226603135466576, 'logps/chosen': -38.14883041381836, 'logps/rejected': -34.790260314941406, 'logits/chosen': 0.6993817090988159, 'logits/rejected': 0.7349736094474792, 'epoch': 0.22}
+{'loss': 0.5862, 'grad_norm': 1.7342191934585571, 'learning_rate': 4.987173308479738e-05, 'rewards/chosen': 0.002084147185087204, 'rewards/rejected': -0.2509060204029083, 'rewards/accuracies': 0.862500011920929, 'rewards/margins': 0.252990186214447, 'logps/chosen': -37.24067306518555, 'logps/rejected': -36.640560150146484, 'logits/chosen': 0.7367686629295349, 'logits/rejected': 0.727199912071228, 'epoch': 0.44}
+{'loss': 0.5064, 'grad_norm': 1.465881109237671, 'learning_rate': 4.844380330367701e-05, 'rewards/chosen': -0.2089332789182663, 'rewards/rejected': -0.8296887278556824, 'rewards/accuracies': 0.8125, 'rewards/margins': 0.6207554936408997, 'logps/chosen': -39.671241760253906, 'logps/rejected': -43.49220657348633, 'logits/chosen': 0.6666892766952515, 'logits/rejected': 0.6455170512199402, 'epoch': 0.67}
+{'loss': 0.3539, 'grad_norm': 1.7187610864639282, 'learning_rate': 4.551908603018191e-05, 'rewards/chosen': 0.07535488903522491, 'rewards/rejected': -1.2002184391021729, 'rewards/accuracies': 0.862500011920929, 'rewards/margins': 1.2755732536315918, 'logps/chosen': -36.6119499206543, 'logps/rejected': -46.36901092529297, 'logits/chosen': 0.673172652721405, 'logits/rejected': 0.5786734819412231, 'epoch': 0.89}
+{'eval_loss': 0.42870816588401794, 'eval_runtime': 1.855, 'eval_samples_per_second': 21.563, 'eval_steps_per_second': 5.391, 'eval_rewards/chosen': 0.5844489336013794, 'eval_rewards/rejected': -0.9978569149971008, 'eval_rewards/accuracies': 0.7749999761581421, 'eval_rewards/margins': 1.582305908203125, 'eval_logps/chosen': -32.2326545715332, 'eval_logps/rejected': -44.965972900390625, 'eval_logits/chosen': 0.701660692691803, 'eval_logits/rejected': 0.6474488377571106, 'epoch': 1.0}
+{'loss': 0.4141, 'grad_norm': 3.730710983276367, 'learning_rate': 4.128431206805557e-05, 'rewards/chosen': 0.6767170429229736, 'rewards/rejected': -1.0745768547058105, 'rewards/accuracies': 0.875, 'rewards/margins': 1.7512938976287842, 'logps/chosen': -32.30442810058594, 'logps/rejected': -46.05479431152344, 'logits/chosen': 0.6181403994560242, 'logits/rejected': 0.5691866874694824, 'epoch': 1.09}
+{'loss': 0.3457, 'grad_norm': 5.020824432373047, 'learning_rate': 3.600985378894086e-05, 'rewards/chosen': 0.5625893473625183, 'rewards/rejected': -1.325036883354187, 'rewards/accuracies': 0.8125, 'rewards/margins': 1.88762629032135, 'logps/chosen': -31.989704132080078, 'logps/rejected': -47.76194381713867, 'logits/chosen': 0.732596755027771, 'logits/rejected': 0.618019700050354, 'epoch': 1.31}
+{'loss': 0.2032, 'grad_norm': 2.9314424991607666, 'learning_rate': 3.0032463002216505e-05, 'rewards/chosen': 0.4875790476799011, 'rewards/rejected': -1.9043853282928467, 'rewards/accuracies': 0.9125000238418579, 'rewards/margins': 2.3919644355773926, 'logps/chosen': -32.38980484008789, 'logps/rejected': -53.041046142578125, 'logits/chosen': 0.8071686625480652, 'logits/rejected': 0.6077685356140137, 'epoch': 1.53}
+{'loss': 0.3634, 'grad_norm': 5.935009956359863, 'learning_rate': 2.3733770779032184e-05, 'rewards/chosen': 0.4343264698982239, 'rewards/rejected': -1.8300834894180298, 'rewards/accuracies': 0.8374999761581421, 'rewards/margins': 2.2644100189208984, 'logps/chosen': -33.91080856323242, 'logps/rejected': -53.60993576049805, 'logits/chosen': 0.8649539947509766, 'logits/rejected': 0.6049851775169373, 'epoch': 1.76}
+{'loss': 0.3262, 'grad_norm': 5.19090461730957, 'learning_rate': 1.7515921925666052e-05, 'rewards/chosen': 0.46449723839759827, 'rewards/rejected': -1.7691962718963623, 'rewards/accuracies': 0.8500000238418579, 'rewards/margins': 2.2336935997009277, 'logps/chosen': -32.92929458618164, 'logps/rejected': -52.240074157714844, 'logits/chosen': 0.9347418546676636, 'logits/rejected': 0.7491928339004517, 'epoch': 1.98}
+{'eval_loss': 0.4235657751560211, 'eval_runtime': 1.856, 'eval_samples_per_second': 21.551, 'eval_steps_per_second': 5.388, 'eval_rewards/chosen': 0.5122856497764587, 'eval_rewards/rejected': -1.3968044519424438, 'eval_rewards/accuracies': 0.824999988079071, 'eval_rewards/margins': 1.9090900421142578, 'eval_logps/chosen': -32.95428466796875, 'eval_logps/rejected': -48.9554443359375, 'eval_logits/chosen': 0.824277400970459, 'eval_logits/rejected': 0.693612277507782, 'epoch': 2.0}
+{'loss': 0.2579, 'grad_norm': 5.534350395202637, 'learning_rate': 1.1775899741825947e-05, 'rewards/chosen': 0.5453377366065979, 'rewards/rejected': -2.044081687927246, 'rewards/accuracies': 0.9027777910232544, 'rewards/margins': 2.589419364929199, 'logps/chosen': -32.33869171142578, 'logps/rejected': -54.17659378051758, 'logits/chosen': 0.8627932071685791, 'logits/rejected': 0.632742166519165, 'epoch': 2.18}
+{'loss': 0.2349, 'grad_norm': 2.8608040809631348, 'learning_rate': 6.880180319272006e-06, 'rewards/chosen': 0.5153729915618896, 'rewards/rejected': -1.8467937707901, 'rewards/accuracies': 0.875, 'rewards/margins': 2.3621666431427, 'logps/chosen': -31.639245986938477, 'logps/rejected': -53.34639358520508, 'logits/chosen': 0.8471954464912415, 'logits/rejected': 0.5481477975845337, 'epoch': 2.4}
+{'loss': 0.3355, 'grad_norm': 3.0562634468078613, 'learning_rate': 3.141334596385448e-06, 'rewards/chosen': 0.605690598487854, 'rewards/rejected': -1.839478850364685, 'rewards/accuracies': 0.8999999761581421, 'rewards/margins': 2.445169448852539, 'logps/chosen': -33.091896057128906, 'logps/rejected': -53.87382125854492, 'logits/chosen': 0.8572961688041687, 'logits/rejected': 0.6561177372932434, 'epoch': 2.62}
+{'loss': 0.162, 'grad_norm': 2.1912691593170166, 'learning_rate': 7.980720283448956e-07, 'rewards/chosen': 0.6240943074226379, 'rewards/rejected': -1.99990713596344, 'rewards/accuracies': 0.949999988079071, 'rewards/margins': 2.6240012645721436, 'logps/chosen': -30.8613338470459, 'logps/rejected': -54.4960823059082, 'logits/chosen': 0.8546344637870789, 'logits/rejected': 0.5585442185401917, 'epoch': 2.84}
+{'eval_loss': 0.42009562253952026, 'eval_runtime': 1.863, 'eval_samples_per_second': 21.471, 'eval_steps_per_second': 5.368, 'eval_rewards/chosen': 0.4550292491912842, 'eval_rewards/rejected': -1.4954750537872314, 'eval_rewards/accuracies': 0.824999988079071, 'eval_rewards/margins': 1.950503945350647, 'eval_logps/chosen': -33.52684783935547, 'eval_logps/rejected': -49.94215393066406, 'eval_logits/chosen': 0.8247196078300476, 'eval_logits/rejected': 0.6698532700538635, 'epoch': 3.0}
+{'train_runtime': 117.3119, 'train_samples_per_second': 9.206, 'train_steps_per_second': 0.588, 'train_loss': 0.35616764728573785, 'epoch': 3.0}
+Training finished at 2026-03-22 23:41:40
+
+======================================================================
+STEP 5: Saving adapter and metrics
+======================================================================
+  Adapter saved to results/dpo_model
+  Eval loss: 0.4201
+  Metrics saved to results/dpo_training_metrics.json
+
+======================================================================
+DPO TRAINING COMPLETE
+======================================================================
+  Train loss:  0.3562
+  Eval loss:   0.4201
+  Adapter:     results/dpo_model
+  Metrics:     results/dpo_training_metrics.json
+  Total time:  2.8 minutes
+======================================================================
+============================================
+DPO training complete: Sun Mar 22 23:41:44 UTC 2026
+============================================
