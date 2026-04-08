@@ -1,11 +1,13 @@
 # Mitigating Sycophancy in Large Language Models: A Mechanistic Investigation
 
-**Author:** Kenny Egan
+**Author:** Kenneth Egan
 **Institution:** Wentworth Institute of Technology
-**Date:** March 11, 2026
+**Contact:** kenegan2005@gmail.com
+**Date:** April 7, 2026
 **Models:** meta-llama/Meta-Llama-3-8B-Instruct, mistralai/Mistral-7B-Instruct-v0.1
 **Hardware:** NVIDIA A100-SXM4-80GB (Unity HPC Cluster, UMass)
 **Framework:** TransformerLens 2.x, PyTorch 2.10.0+cu128
+**Status:** All experiments complete. LaTeX version: `paper.tex`
 
 ---
 
@@ -99,7 +101,7 @@ All experiments ran on the Unity HPC cluster (UMass) using the `gpu` partition w
 
 ## 5. Results
 
-**Status note:** All values below are sourced from confirmed rerun artifacts validated by `results/full_rerun_manifest.json` (Mar 9, 2026). GSM8k capability scores throughout use strict normalized numeric equality on generated completions (not forced-choice logit scoring).
+**Note:** All values are sourced from confirmed artifacts validated by `results/full_rerun_manifest.json` (`missing_count: 0`). GSM8k capability scores use strict normalized numeric equality on generated completions. DPO results from `results/dpo_eval_results.json` (Apr 7, 2026).
 
 ### 5.1 Baseline Sycophancy Rate
 
@@ -631,3 +633,13 @@ This paper presents a complete mechanistic investigation of sycophancy in RLHF-t
 5. **DPO reduces opinion sycophancy by 23.8 pp while preserving capabilities.** Fine-tuning with 400 DPO preference pairs reduces opinion sycophancy from 82.4% to 58.6%, with MMLU preserved (+0.8 pp) and GSM8k improved (+5.3 pp). Training-time intervention succeeds where inference-time methods fail.
 
 6. **DPO works by converting social compliance into robust truth-tracking.** Probe re-analysis of the DPO model shows social compliance drops from 18.0% to 11.4% (−6.6 pp) while robust tracking increases from 59.9% to 75.5% (+15.6 pp). Belief corruption barely changes (−1.8 pp). DPO eliminates the output-gating failure that suppresses known truths, without altering the truth representations themselves. This is the first mechanistic evidence of how preference optimization resolves sycophantic behavior in a redundantly distributed circuit, and it confirms the social compliance hypothesis at the intervention level: the model always knew the truth; DPO teaches it to say it.
+
+---
+
+## Reproducibility Statement
+
+All random seeds are fixed (42 for evaluation, 100 for DPO training to ensure disjoint data). All result artifacts are validated by `results/full_rerun_manifest.json` (`missing_count: 0`). Code, scripts, and data processing pipelines are available in the project repository. The full experimental pipeline (Llama-3 + Mistral + DPO) requires approximately 80 A100 GPU-hours.
+
+## Ethics Statement
+
+This research uses only publicly available models (Llama-3-8B, Mistral-7B) and datasets (Anthropic model-written evals, TruthfulQA, GSM8k). No human subjects were involved. The work aims to improve AI safety by understanding and mitigating sycophantic behavior in language models.

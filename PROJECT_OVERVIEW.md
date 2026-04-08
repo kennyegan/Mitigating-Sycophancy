@@ -48,6 +48,7 @@ All methodology hardening, probe redesign, reproducibility, capability evaluatio
 - Gate E: Publication figures — **COMPLETE** (5 figures generated Mar 20)
 - Gate F: DPO intervention + probe re-analysis — **COMPLETE** (Apr 7: SC 18%→11.4%, robust 60%→75.5%)
 - Gate G: Final paper draft with all results — **COMPLETE** (DPO section, abstract, discussion, conclusion updated Apr 7)
+- Gate H: LaTeX conversion for submission — **COMPLETE** (paper.tex + references.bib, NeurIPS 2026 format)
 
 ## Key Results
 
@@ -62,6 +63,8 @@ All methodology hardening, probe redesign, reproducibility, capability evaluatio
 | DPO behavioral: opinion syc 82.4%→58.6%, MMLU preserved | Complete | -23.8pp reduction |
 | DPO probe: SC 18%→11.4%, robust 60%→75.5% | **Complete** | **First mechanistic DPO evidence** |
 | Paper updated: Sec 5.11, Abstract, Discussion, Conclusion | **Complete** | Full story in paper |
+| LaTeX conversion (paper.tex + references.bib) | **Complete** | NeurIPS 2026 submission-ready |
+| All md docs consistent with final paper | **Complete** | paper.md, context.md, PROJECT_OVERVIEW.md aligned |
 
 ## NeurIPS Readiness
 

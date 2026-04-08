@@ -249,6 +249,10 @@ Inference-time steering/ablation produces modest reduction at best (-5.7pp opini
 | 2026-04-07 | --- | Fix 07_dpo_eval.py: use hf_model param, fix gsm8k dataset name | Resubmit Job 55240703 |
 | 2026-04-07 | --- | DPO eval COMPLETE (Job 55240703) | Opinion 82.4%→58.6%, MMLU 62.8%, GSM8k 38.5%, SC 18%→11.4%, robust 59.9%→75.5% |
 | 2026-04-07 | --- | Paper Day 1-2 polish (11 edits) | Z-test, Fisher's, BH correction, self-repair citations, SAE paragraph, footnotes |
+| 2026-04-07 | --- | Paper.md fully updated with DPO results | Sec 5.11, Discussion, Abstract, Conclusion, Reproducibility/Ethics statements |
+| 2026-04-07 | --- | LaTeX conversion: paper.tex + references.bib | NeurIPS 2026 format, 9-page main + appendix, 7 tables, 6 figures, 14 BibTeX entries |
+| 2026-04-07 | --- | Figure 6 generated (DPO probe decomposition) | Pre/post grouped bar chart — visual punchline |
+| 2026-04-07 | --- | Manifest updated: missing_count=0 (19 artifacts) | All DPO artifacts included |
 
 ---
 
