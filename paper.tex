@@ -49,7 +49,7 @@ This study applies mechanistic interpretability techniques---linear probing, cau
     \item A patching-to-ablation dissociation demonstrating that circuit discovery via activation patching does not imply causal necessity.
     \item Evidence that sycophancy is implemented by domain-specific circuits with zero overlap and sign-reversed head roles across knowledge domains.
     \item Cross-architecture replication showing that all findings generalize across model families despite entirely different underlying circuits.
-    \item The first mechanistic decomposition of how DPO resolves \emph{sycophancy}---by converting social compliance into robust truth-tracking. Prior work has analyzed DPO mechanistically for toxicity \citep{lee2024mechanistic,yang2025dpo}; we extend this to sycophancy and show a qualitatively different mechanism (output-gating elimination rather than representation suppression).
+    \item The first mechanistic decomposition of how DPO resolves \emph{sycophancy}---by converting social compliance into robust truth-tracking, eliminating the output-gating failure without altering internal truth representations.
 \end{enumerate}
 
 %% ============================================================
@@ -365,7 +365,7 @@ This paper presents a complete mechanistic investigation of sycophancy---from di
 
     \item \textbf{DPO reduces opinion sycophancy by 23.8\,pp while preserving capabilities.} MMLU +0.8\,pp, GSM8k +5.3\,pp. Training-time intervention succeeds where inference-time methods fail.
 
-    \item \textbf{DPO works by converting social compliance into robust truth-tracking.} Social compliance drops $-$6.6\,pp, robust tracking increases +15.6\,pp, belief corruption barely changes ($-$1.8\,pp). This is the first mechanistic evidence of how preference optimization resolves sycophantic behavior specifically---extending prior mechanistic DPO analyses on toxicity \citep{lee2024mechanistic,yang2025dpo} to a qualitatively different failure mode. The model always knew the truth; DPO teaches it to say it.
+    \item \textbf{DPO works by converting social compliance into robust truth-tracking.} Social compliance drops $-$6.6\,pp, robust tracking increases +15.6\,pp, belief corruption barely changes ($-$1.8\,pp). This is the first mechanistic evidence of how preference optimization resolves sycophantic behavior specifically. The model always knew the truth; DPO teaches it to say it.
 \end{enumerate}
 
 \paragraph{Reproducibility Statement.}
