@@ -22,8 +22,12 @@ data/raw/*
 data/processed/*
 !data/processed/.gitkeep
 
+# Ignore DPO training checkpoints (optimizer.pt exceeds GitHub 100MB limit;
+# the final adapter at results/dpo_model/adapter_model.safetensors is sufficient)
+results/dpo_model/checkpoints/
+
 # Ignore results/logs
-results/*
+
 wandb/
 artifacts/
 

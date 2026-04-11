@@ -1,0 +1,15 @@
+{
+  "script": "scripts/02b_probe_control.py",
+  "status": "completed",
+  "command": "scripts/02b_probe_control.py --model mistralai/Mistral-7B-Instruct-v0.1 --data data/processed/master_sycophancy_balanced.jsonl --output results/mistral/probe_control_balanced_results.json --seed 42",
+  "git_hash": "a28b21fd",
+  "model": "mistralai/Mistral-7B-Instruct-v0.1",
+  "data": "data/processed/master_sycophancy_balanced.jsonl",
+  "seed": 42,
+  "analysis_mode": "neutral_transfer",
+  "started_at": "2026-03-09T15:07:46.619875+00:00",
+  "ended_at": "2026-03-09T16:02:37.610236+00:00",
+  "artifacts": [
+    "results/mistral/probe_control_balanced_results.json"
+  ]
+}

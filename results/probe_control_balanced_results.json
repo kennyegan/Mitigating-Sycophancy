@@ -1,0 +1,1459 @@
+{
+  "metadata": {
+    "model_name": "meta-llama/Meta-Llama-3-8B-Instruct",
+    "timestamp": "2026-03-04T18:10:25.876477+00:00",
+    "data_path": "data/processed/master_sycophancy_balanced.jsonl",
+    "probe_position": "final",
+    "probe_type": "logistic",
+    "analysis_mode": "neutral_transfer",
+    "script_variant": "probe_control",
+    "n_folds": 5,
+    "random_seed": 42,
+    "git_hash": "326a8b5a",
+    "environment": {
+      "python_version": "3.10.19",
+      "torch_version": "2.10.0+cu128",
+      "cuda_available": true,
+      "cuda_version": "12.8",
+      "device_count": 1
+    }
+  },
+  "schema_version": "2.0",
+  "analysis_mode": "neutral_transfer",
+  "split_definition": "neutral_transfer: StratifiedKFold on neutral only; transfer evaluated on biased holdout indices",
+  "n_samples": 1500,
+  "n_layers_probed": 32,
+  "probe_type": "logistic",
+  "probe_positions": [
+    "final"
+  ],
+  "n_folds": 5,
+  "per_position_summary": {
+    "final": {
+      "analysis_mode": "neutral_transfer",
+      "position": "final",
+      "n_samples": 1500,
+      "output_accuracy_on_biased": 0.7193333333333334,
+      "sycophancy_rate": 0.2806666666666666,
+      "best_layer": 1,
+      "best_neutral_cv_accuracy": 0.89,
+      "best_biased_transfer_accuracy": 0.7786666666666666,
+      "best_biased_transfer_accuracy_ci": [
+        0.75865,
+        0.7986666666666666
+      ],
+      "best_social_compliance_rate": 0.18,
+      "best_belief_corruption_rate": 0.10066666666666667,
+      "best_robust_rate": 0.5986666666666667,
+      "dominant_pattern_best_layer": "social_compliance",
+      "class_balance": {
+        "overall": {
+          "n_total": 1500,
+          "n_class_0": 754,
+          "n_class_1": 746,
+          "majority_fraction": 0.5026666666666667
+        },
+        "per_source": {
+          "anthropic_opinion": {
+            "n_total": 500,
+            "n_class_0": 246,
+            "n_class_1": 254,
+            "majority_fraction": 0.508
+          },
+          "truthfulqa_factual": {
+            "n_total": 500,
+            "n_class_0": 258,
+            "n_class_1": 242,
+            "majority_fraction": 0.516
+          },
+          "gsm8k_reasoning": {
+            "n_total": 500,
+            "n_class_0": 250,
+            "n_class_1": 250,
+            "majority_fraction": 0.5
+          }
+        }
+      }
+    }
+  },
+  "per_layer": {
+    "final": {
+      "0": {
+        "neutral_cv_accuracy": 0.8866666666666667,
+        "neutral_cv_std": 0.02086996778999804,
+        "neutral_fold_accuracies": [
+          0.89,
+          0.86,
+          0.8833333333333333,
+          0.9233333333333333,
+          0.8766666666666667
+        ],
+        "biased_transfer_accuracy": 0.6513333333333333,
+        "biased_transfer_std": 0.028720878971384034,
+        "biased_transfer_fold_accuracies": [
+          0.65,
+          0.6266666666666667,
+          0.6866666666666666,
+          0.68,
+          0.6133333333333333
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.6266666666666667,
+          0.6746833333333332
+        ],
+        "accuracy_drop": 0.2353333333333334,
+        "social_compliance_rate": 0.17,
+        "social_compliance_rate_ci": [
+          0.15066666666666667,
+          0.19
+        ],
+        "belief_corruption_rate": 0.11066666666666666,
+        "belief_corruption_rate_ci": [
+          0.09533333333333334,
+          0.12668333333333326
+        ],
+        "robust_rate": 0.48133333333333334,
+        "robust_rate_ci": [
+          0.4553333333333333,
+          0.5066666666666667
+        ],
+        "other_count": 357,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "1": {
+        "neutral_cv_accuracy": 0.89,
+        "neutral_cv_std": 0.014757295747452437,
+        "neutral_fold_accuracies": [
+          0.8833333333333333,
+          0.8933333333333333,
+          0.8833333333333333,
+          0.9166666666666666,
+          0.8733333333333333
+        ],
+        "biased_transfer_accuracy": 0.7786666666666666,
+        "biased_transfer_std": 0.05239168721170266,
+        "biased_transfer_fold_accuracies": [
+          0.7966666666666666,
+          0.8733333333333333,
+          0.73,
+          0.7433333333333333,
+          0.75
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.75865,
+          0.7986666666666666
+        ],
+        "accuracy_drop": 0.1113333333333334,
+        "social_compliance_rate": 0.18,
+        "social_compliance_rate_ci": [
+          0.16,
+          0.19866666666666666
+        ],
+        "belief_corruption_rate": 0.10066666666666667,
+        "belief_corruption_rate_ci": [
+          0.086,
+          0.11733333333333333
+        ],
+        "robust_rate": 0.5986666666666667,
+        "robust_rate_ci": [
+          0.574,
+          0.6226666666666667
+        ],
+        "other_count": 181,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "2": {
+        "neutral_cv_accuracy": 0.8859999999999999,
+        "neutral_cv_std": 0.023795424396766334,
+        "neutral_fold_accuracies": [
+          0.8833333333333333,
+          0.8966666666666666,
+          0.8833333333333333,
+          0.92,
+          0.8466666666666667
+        ],
+        "biased_transfer_accuracy": 0.7013333333333334,
+        "biased_transfer_std": 0.021561282171728292,
+        "biased_transfer_fold_accuracies": [
+          0.7166666666666667,
+          0.7066666666666667,
+          0.66,
+          0.7033333333333334,
+          0.72
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.6786666666666666,
+          0.7233333333333334
+        ],
+        "accuracy_drop": 0.18466666666666653,
+        "social_compliance_rate": 0.168,
+        "social_compliance_rate_ci": [
+          0.14866666666666667,
+          0.18666666666666668
+        ],
+        "belief_corruption_rate": 0.11266666666666666,
+        "belief_corruption_rate_ci": [
+          0.09733333333333333,
+          0.12933333333333333
+        ],
+        "robust_rate": 0.5333333333333333,
+        "robust_rate_ci": [
+          0.508,
+          0.558
+        ],
+        "other_count": 279,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "3": {
+        "neutral_cv_accuracy": 0.8846666666666667,
+        "neutral_cv_std": 0.02061283311165376,
+        "neutral_fold_accuracies": [
+          0.8766666666666667,
+          0.8933333333333333,
+          0.8733333333333333,
+          0.92,
+          0.86
+        ],
+        "biased_transfer_accuracy": 0.704,
+        "biased_transfer_std": 0.02370185177950825,
+        "biased_transfer_fold_accuracies": [
+          0.7366666666666667,
+          0.67,
+          0.7,
+          0.69,
+          0.7233333333333334
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.6806666666666666,
+          0.7253333333333334
+        ],
+        "accuracy_drop": 0.18066666666666675,
+        "social_compliance_rate": 0.17933333333333334,
+        "social_compliance_rate_ci": [
+          0.15998333333333337,
+          0.2
+        ],
+        "belief_corruption_rate": 0.10133333333333333,
+        "belief_corruption_rate_ci": [
+          0.08666666666666667,
+          0.11733333333333333
+        ],
+        "robust_rate": 0.5246666666666666,
+        "robust_rate_ci": [
+          0.5,
+          0.55
+        ],
+        "other_count": 292,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "4": {
+        "neutral_cv_accuracy": 0.8993333333333332,
+        "neutral_cv_std": 0.019252705437591517,
+        "neutral_fold_accuracies": [
+          0.9133333333333333,
+          0.9066666666666666,
+          0.8766666666666667,
+          0.9233333333333333,
+          0.8766666666666667
+        ],
+        "biased_transfer_accuracy": 0.7313333333333334,
+        "biased_transfer_std": 0.03145366963222784,
+        "biased_transfer_fold_accuracies": [
+          0.7866666666666666,
+          0.7133333333333334,
+          0.6966666666666667,
+          0.7433333333333333,
+          0.7166666666666667
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.7086666666666667,
+          0.7533333333333333
+        ],
+        "accuracy_drop": 0.16799999999999982,
+        "social_compliance_rate": 0.18733333333333332,
+        "social_compliance_rate_ci": [
+          0.16733333333333333,
+          0.208
+        ],
+        "belief_corruption_rate": 0.09333333333333334,
+        "belief_corruption_rate_ci": [
+          0.07866666666666666,
+          0.10866666666666666
+        ],
+        "robust_rate": 0.544,
+        "robust_rate_ci": [
+          0.5193333333333333,
+          0.5693333333333334
+        ],
+        "other_count": 263,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "5": {
+        "neutral_cv_accuracy": 0.8866666666666667,
+        "neutral_cv_std": 0.017384539747207037,
+        "neutral_fold_accuracies": [
+          0.9033333333333333,
+          0.89,
+          0.89,
+          0.8966666666666666,
+          0.8533333333333334
+        ],
+        "biased_transfer_accuracy": 0.6980000000000001,
+        "biased_transfer_std": 0.05897645481225725,
+        "biased_transfer_fold_accuracies": [
+          0.7266666666666667,
+          0.7233333333333334,
+          0.7066666666666667,
+          0.75,
+          0.5833333333333334
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.6746666666666666,
+          0.7213499999999999
+        ],
+        "accuracy_drop": 0.18866666666666665,
+        "social_compliance_rate": 0.18533333333333332,
+        "social_compliance_rate_ci": [
+          0.16533333333333333,
+          0.20533333333333334
+        ],
+        "belief_corruption_rate": 0.09533333333333334,
+        "belief_corruption_rate_ci": [
+          0.08,
+          0.11
+        ],
+        "robust_rate": 0.5126666666666667,
+        "robust_rate_ci": [
+          0.48733333333333334,
+          0.5373333333333333
+        ],
+        "other_count": 310,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "6": {
+        "neutral_cv_accuracy": 0.8686666666666667,
+        "neutral_cv_std": 0.02517494345133225,
+        "neutral_fold_accuracies": [
+          0.8566666666666667,
+          0.8666666666666667,
+          0.86,
+          0.9166666666666666,
+          0.8433333333333334
+        ],
+        "biased_transfer_accuracy": 0.6,
+        "biased_transfer_std": 0.05827139568909907,
+        "biased_transfer_fold_accuracies": [
+          0.6266666666666667,
+          0.5666666666666667,
+          0.5733333333333334,
+          0.7,
+          0.5333333333333333
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.5753166666666667,
+          0.6246666666666667
+        ],
+        "accuracy_drop": 0.2686666666666667,
+        "social_compliance_rate": 0.162,
+        "social_compliance_rate_ci": [
+          0.14266666666666666,
+          0.18134999999999993
+        ],
+        "belief_corruption_rate": 0.11866666666666667,
+        "belief_corruption_rate_ci": [
+          0.10266666666666667,
+          0.13533333333333333
+        ],
+        "robust_rate": 0.438,
+        "robust_rate_ci": [
+          0.414,
+          0.4633333333333333
+        ],
+        "other_count": 422,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "7": {
+        "neutral_cv_accuracy": 0.8793333333333333,
+        "neutral_cv_std": 0.0194821855949366,
+        "neutral_fold_accuracies": [
+          0.86,
+          0.87,
+          0.8733333333333333,
+          0.9166666666666666,
+          0.8766666666666667
+        ],
+        "biased_transfer_accuracy": 0.6413333333333334,
+        "biased_transfer_std": 0.053649065436615226,
+        "biased_transfer_fold_accuracies": [
+          0.71,
+          0.5966666666666667,
+          0.6066666666666667,
+          0.59,
+          0.7033333333333334
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.6173333333333333,
+          0.6653333333333333
+        ],
+        "accuracy_drop": 0.23799999999999988,
+        "social_compliance_rate": 0.17733333333333334,
+        "social_compliance_rate_ci": [
+          0.15666666666666668,
+          0.19733333333333333
+        ],
+        "belief_corruption_rate": 0.10333333333333333,
+        "belief_corruption_rate_ci": [
+          0.08866666666666667,
+          0.11866666666666667
+        ],
+        "robust_rate": 0.464,
+        "robust_rate_ci": [
+          0.43866666666666665,
+          0.48933333333333334
+        ],
+        "other_count": 383,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "8": {
+        "neutral_cv_accuracy": 0.8926666666666666,
+        "neutral_cv_std": 0.028237091446063168,
+        "neutral_fold_accuracies": [
+          0.8833333333333333,
+          0.8833333333333333,
+          0.8866666666666667,
+          0.9466666666666667,
+          0.8633333333333333
+        ],
+        "biased_transfer_accuracy": 0.7566666666666666,
+        "biased_transfer_std": 0.03559026084010438,
+        "biased_transfer_fold_accuracies": [
+          0.7333333333333333,
+          0.7366666666666667,
+          0.7633333333333333,
+          0.8233333333333334,
+          0.7266666666666667
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.7346666666666667,
+          0.7773333333333333
+        ],
+        "accuracy_drop": 0.136,
+        "social_compliance_rate": 0.17333333333333334,
+        "social_compliance_rate_ci": [
+          0.15398333333333336,
+          0.19333333333333333
+        ],
+        "belief_corruption_rate": 0.10733333333333334,
+        "belief_corruption_rate_ci": [
+          0.09133333333333334,
+          0.124
+        ],
+        "robust_rate": 0.5833333333333334,
+        "robust_rate_ci": [
+          0.5593333333333333,
+          0.6086666666666667
+        ],
+        "other_count": 204,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "9": {
+        "neutral_cv_accuracy": 0.9013333333333333,
+        "neutral_cv_std": 0.015289793254906292,
+        "neutral_fold_accuracies": [
+          0.8833333333333333,
+          0.91,
+          0.8933333333333333,
+          0.9266666666666666,
+          0.8933333333333333
+        ],
+        "biased_transfer_accuracy": 0.76,
+        "biased_transfer_std": 0.01429840705968481,
+        "biased_transfer_fold_accuracies": [
+          0.7466666666666667,
+          0.7833333333333333,
+          0.7633333333333333,
+          0.7633333333333333,
+          0.7433333333333333
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.7373333333333333,
+          0.782
+        ],
+        "accuracy_drop": 0.1413333333333333,
+        "social_compliance_rate": 0.18666666666666668,
+        "social_compliance_rate_ci": [
+          0.166,
+          0.20666666666666667
+        ],
+        "belief_corruption_rate": 0.094,
+        "belief_corruption_rate_ci": [
+          0.07933333333333334,
+          0.10933333333333334
+        ],
+        "robust_rate": 0.5733333333333334,
+        "robust_rate_ci": [
+          0.5466666666666666,
+          0.598
+        ],
+        "other_count": 219,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "10": {
+        "neutral_cv_accuracy": 0.9033333333333333,
+        "neutral_cv_std": 0.019090428084368474,
+        "neutral_fold_accuracies": [
+          0.8933333333333333,
+          0.9166666666666666,
+          0.8933333333333333,
+          0.9333333333333333,
+          0.88
+        ],
+        "biased_transfer_accuracy": 0.6966666666666668,
+        "biased_transfer_std": 0.050640344039554516,
+        "biased_transfer_fold_accuracies": [
+          0.79,
+          0.67,
+          0.6833333333333333,
+          0.7,
+          0.64
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.6726666666666666,
+          0.7206666666666667
+        ],
+        "accuracy_drop": 0.20666666666666655,
+        "social_compliance_rate": 0.18933333333333333,
+        "social_compliance_rate_ci": [
+          0.1693166666666667,
+          0.20933333333333334
+        ],
+        "belief_corruption_rate": 0.09133333333333334,
+        "belief_corruption_rate_ci": [
+          0.07666666666666666,
+          0.10534999999999992
+        ],
+        "robust_rate": 0.5073333333333333,
+        "robust_rate_ci": [
+          0.48265,
+          0.5326666666666666
+        ],
+        "other_count": 318,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "11": {
+        "neutral_cv_accuracy": 0.898,
+        "neutral_cv_std": 0.01627540748764492,
+        "neutral_fold_accuracies": [
+          0.8933333333333333,
+          0.9,
+          0.8933333333333333,
+          0.9266666666666666,
+          0.8766666666666667
+        ],
+        "biased_transfer_accuracy": 0.6693333333333333,
+        "biased_transfer_std": 0.048917163540917685,
+        "biased_transfer_fold_accuracies": [
+          0.71,
+          0.63,
+          0.6966666666666667,
+          0.7166666666666667,
+          0.5933333333333334
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.6453333333333333,
+          0.6926666666666667
+        ],
+        "accuracy_drop": 0.22866666666666668,
+        "social_compliance_rate": 0.19133333333333333,
+        "social_compliance_rate_ci": [
+          0.17,
+          0.212
+        ],
+        "belief_corruption_rate": 0.08933333333333333,
+        "belief_corruption_rate_ci": [
+          0.07466666666666667,
+          0.104
+        ],
+        "robust_rate": 0.478,
+        "robust_rate_ci": [
+          0.454,
+          0.5026833333333333
+        ],
+        "other_count": 362,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "12": {
+        "neutral_cv_accuracy": 0.9153333333333332,
+        "neutral_cv_std": 0.019731531449264976,
+        "neutral_fold_accuracies": [
+          0.8933333333333333,
+          0.92,
+          0.9,
+          0.95,
+          0.9133333333333333
+        ],
+        "biased_transfer_accuracy": 0.7413333333333334,
+        "biased_transfer_std": 0.018451136670797393,
+        "biased_transfer_fold_accuracies": [
+          0.7433333333333333,
+          0.7433333333333333,
+          0.7266666666666667,
+          0.7733333333333333,
+          0.72
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.7186666666666667,
+          0.7633333333333333
+        ],
+        "accuracy_drop": 0.17399999999999982,
+        "social_compliance_rate": 0.2,
+        "social_compliance_rate_ci": [
+          0.17866666666666667,
+          0.22066666666666668
+        ],
+        "belief_corruption_rate": 0.08066666666666666,
+        "belief_corruption_rate_ci": [
+          0.06666666666666667,
+          0.09466666666666666
+        ],
+        "robust_rate": 0.5413333333333333,
+        "robust_rate_ci": [
+          0.516,
+          0.5646833333333332
+        ],
+        "other_count": 267,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "13": {
+        "neutral_cv_accuracy": 0.9366666666666668,
+        "neutral_cv_std": 0.010110500592068711,
+        "neutral_fold_accuracies": [
+          0.93,
+          0.95,
+          0.9233333333333333,
+          0.9466666666666667,
+          0.9333333333333333
+        ],
+        "biased_transfer_accuracy": 0.7493333333333334,
+        "biased_transfer_std": 0.0185472369909914,
+        "biased_transfer_fold_accuracies": [
+          0.78,
+          0.75,
+          0.74,
+          0.7533333333333333,
+          0.7233333333333334
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.7273333333333334,
+          0.7706666666666667
+        ],
+        "accuracy_drop": 0.18733333333333335,
+        "social_compliance_rate": 0.22866666666666666,
+        "social_compliance_rate_ci": [
+          0.20666666666666667,
+          0.25066666666666665
+        ],
+        "belief_corruption_rate": 0.052,
+        "belief_corruption_rate_ci": [
+          0.04066666666666666,
+          0.064
+        ],
+        "robust_rate": 0.5206666666666667,
+        "robust_rate_ci": [
+          0.49533333333333335,
+          0.5460166666666666
+        ],
+        "other_count": 298,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "14": {
+        "neutral_cv_accuracy": 0.9460000000000001,
+        "neutral_cv_std": 0.014817407180595241,
+        "neutral_fold_accuracies": [
+          0.9466666666666667,
+          0.9633333333333334,
+          0.92,
+          0.9566666666666667,
+          0.9433333333333334
+        ],
+        "biased_transfer_accuracy": 0.6026666666666667,
+        "biased_transfer_std": 0.02961981318869743,
+        "biased_transfer_fold_accuracies": [
+          0.66,
+          0.5866666666666667,
+          0.59,
+          0.6,
+          0.5766666666666667
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.578,
+          0.6266666666666667
+        ],
+        "accuracy_drop": 0.3433333333333334,
+        "social_compliance_rate": 0.24666666666666667,
+        "social_compliance_rate_ci": [
+          0.22465000000000002,
+          0.2693333333333333
+        ],
+        "belief_corruption_rate": 0.034,
+        "belief_corruption_rate_ci": [
+          0.024666666666666667,
+          0.043333333333333335
+        ],
+        "robust_rate": 0.356,
+        "robust_rate_ci": [
+          0.332,
+          0.38133333333333336
+        ],
+        "other_count": 545,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "15": {
+        "neutral_cv_accuracy": 0.942,
+        "neutral_cv_std": 0.010873004286866727,
+        "neutral_fold_accuracies": [
+          0.9466666666666667,
+          0.9533333333333334,
+          0.9233333333333333,
+          0.95,
+          0.9366666666666666
+        ],
+        "biased_transfer_accuracy": 0.5786666666666667,
+        "biased_transfer_std": 0.03138293945583952,
+        "biased_transfer_fold_accuracies": [
+          0.62,
+          0.5866666666666667,
+          0.6,
+          0.5533333333333333,
+          0.5333333333333333
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.5539833333333334,
+          0.604
+        ],
+        "accuracy_drop": 0.3633333333333333,
+        "social_compliance_rate": 0.24066666666666667,
+        "social_compliance_rate_ci": [
+          0.2193166666666667,
+          0.264
+        ],
+        "belief_corruption_rate": 0.04,
+        "belief_corruption_rate_ci": [
+          0.030666666666666665,
+          0.05
+        ],
+        "robust_rate": 0.338,
+        "robust_rate_ci": [
+          0.314,
+          0.3626666666666667
+        ],
+        "other_count": 572,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "16": {
+        "neutral_cv_accuracy": 0.9400000000000001,
+        "neutral_cv_std": 0.01011050059206874,
+        "neutral_fold_accuracies": [
+          0.9366666666666666,
+          0.9533333333333334,
+          0.9333333333333333,
+          0.95,
+          0.9266666666666666
+        ],
+        "biased_transfer_accuracy": 0.572,
+        "biased_transfer_std": 0.038563079637278855,
+        "biased_transfer_fold_accuracies": [
+          0.6066666666666667,
+          0.6033333333333334,
+          0.6,
+          0.53,
+          0.52
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.5466666666666666,
+          0.5973499999999999
+        ],
+        "accuracy_drop": 0.3680000000000001,
+        "social_compliance_rate": 0.23733333333333334,
+        "social_compliance_rate_ci": [
+          0.216,
+          0.26001666666666656
+        ],
+        "belief_corruption_rate": 0.043333333333333335,
+        "belief_corruption_rate_ci": [
+          0.03333333333333333,
+          0.05333333333333334
+        ],
+        "robust_rate": 0.33466666666666667,
+        "robust_rate_ci": [
+          0.31066666666666665,
+          0.3586666666666667
+        ],
+        "other_count": 577,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "17": {
+        "neutral_cv_accuracy": 0.9366666666666668,
+        "neutral_cv_std": 0.00760116950066092,
+        "neutral_fold_accuracies": [
+          0.94,
+          0.9433333333333334,
+          0.9233333333333333,
+          0.9433333333333334,
+          0.9333333333333333
+        ],
+        "biased_transfer_accuracy": 0.5486666666666666,
+        "biased_transfer_std": 0.04587906809089402,
+        "biased_transfer_fold_accuracies": [
+          0.5533333333333333,
+          0.5866666666666667,
+          0.6,
+          0.5333333333333333,
+          0.47
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.524,
+          0.574
+        ],
+        "accuracy_drop": 0.3880000000000001,
+        "social_compliance_rate": 0.23533333333333334,
+        "social_compliance_rate_ci": [
+          0.214,
+          0.2573499999999999
+        ],
+        "belief_corruption_rate": 0.04533333333333334,
+        "belief_corruption_rate_ci": [
+          0.035333333333333335,
+          0.056
+        ],
+        "robust_rate": 0.31333333333333335,
+        "robust_rate_ci": [
+          0.28933333333333333,
+          0.3366833333333332
+        ],
+        "other_count": 609,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "18": {
+        "neutral_cv_accuracy": 0.93,
+        "neutral_cv_std": 0.006992058987801023,
+        "neutral_fold_accuracies": [
+          0.9333333333333333,
+          0.9366666666666666,
+          0.93,
+          0.9333333333333333,
+          0.9166666666666666
+        ],
+        "biased_transfer_accuracy": 0.522,
+        "biased_transfer_std": 0.04091182931351003,
+        "biased_transfer_fold_accuracies": [
+          0.55,
+          0.5466666666666666,
+          0.56,
+          0.5033333333333333,
+          0.45
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.49666666666666665,
+          0.548
+        ],
+        "accuracy_drop": 0.40800000000000003,
+        "social_compliance_rate": 0.23533333333333334,
+        "social_compliance_rate_ci": [
+          0.214,
+          0.25733333333333336
+        ],
+        "belief_corruption_rate": 0.04533333333333334,
+        "belief_corruption_rate_ci": [
+          0.035333333333333335,
+          0.056
+        ],
+        "robust_rate": 0.2866666666666667,
+        "robust_rate_ci": [
+          0.2633333333333333,
+          0.31
+        ],
+        "other_count": 649,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "19": {
+        "neutral_cv_accuracy": 0.9299999999999999,
+        "neutral_cv_std": 0.009428090415820625,
+        "neutral_fold_accuracies": [
+          0.9366666666666666,
+          0.94,
+          0.9266666666666666,
+          0.9333333333333333,
+          0.9133333333333333
+        ],
+        "biased_transfer_accuracy": 0.5813333333333334,
+        "biased_transfer_std": 0.013597385369580767,
+        "biased_transfer_fold_accuracies": [
+          0.5966666666666667,
+          0.5833333333333334,
+          0.59,
+          0.58,
+          0.5566666666666666
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.5566666666666666,
+          0.6066666666666667
+        ],
+        "accuracy_drop": 0.34866666666666657,
+        "social_compliance_rate": 0.23333333333333334,
+        "social_compliance_rate_ci": [
+          0.212,
+          0.25466666666666665
+        ],
+        "belief_corruption_rate": 0.04733333333333333,
+        "belief_corruption_rate_ci": [
+          0.037333333333333336,
+          0.058
+        ],
+        "robust_rate": 0.348,
+        "robust_rate_ci": [
+          0.3233333333333333,
+          0.37266666666666665
+        ],
+        "other_count": 557,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "20": {
+        "neutral_cv_accuracy": 0.9279999999999999,
+        "neutral_cv_std": 0.012036980056845219,
+        "neutral_fold_accuracies": [
+          0.93,
+          0.9433333333333334,
+          0.9266666666666666,
+          0.9333333333333333,
+          0.9066666666666666
+        ],
+        "biased_transfer_accuracy": 0.576,
+        "biased_transfer_std": 0.029013406862651955,
+        "biased_transfer_fold_accuracies": [
+          0.6066666666666667,
+          0.5766666666666667,
+          0.6033333333333334,
+          0.5666666666666667,
+          0.5266666666666666
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.5513333333333333,
+          0.6006833333333332
+        ],
+        "accuracy_drop": 0.352,
+        "social_compliance_rate": 0.238,
+        "social_compliance_rate_ci": [
+          0.216,
+          0.26
+        ],
+        "belief_corruption_rate": 0.042666666666666665,
+        "belief_corruption_rate_ci": [
+          0.03266666666666666,
+          0.05268333333333324
+        ],
+        "robust_rate": 0.338,
+        "robust_rate_ci": [
+          0.31333333333333335,
+          0.362
+        ],
+        "other_count": 572,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "21": {
+        "neutral_cv_accuracy": 0.9293333333333333,
+        "neutral_cv_std": 0.01103529690483123,
+        "neutral_fold_accuracies": [
+          0.92,
+          0.9333333333333333,
+          0.9366666666666666,
+          0.9433333333333334,
+          0.9133333333333333
+        ],
+        "biased_transfer_accuracy": 0.5853333333333334,
+        "biased_transfer_std": 0.013920408678547413,
+        "biased_transfer_fold_accuracies": [
+          0.5833333333333334,
+          0.5633333333333334,
+          0.6033333333333334,
+          0.5966666666666667,
+          0.58
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.5613166666666667,
+          0.6106666666666667
+        ],
+        "accuracy_drop": 0.344,
+        "social_compliance_rate": 0.242,
+        "social_compliance_rate_ci": [
+          0.21933333333333332,
+          0.264
+        ],
+        "belief_corruption_rate": 0.03866666666666667,
+        "belief_corruption_rate_ci": [
+          0.029333333333333333,
+          0.048666666666666664
+        ],
+        "robust_rate": 0.3433333333333333,
+        "robust_rate_ci": [
+          0.31865000000000004,
+          0.36733333333333335
+        ],
+        "other_count": 564,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "22": {
+        "neutral_cv_accuracy": 0.9213333333333333,
+        "neutral_cv_std": 0.012036980056845194,
+        "neutral_fold_accuracies": [
+          0.91,
+          0.9366666666666666,
+          0.92,
+          0.9333333333333333,
+          0.9066666666666666
+        ],
+        "biased_transfer_accuracy": 0.5726666666666665,
+        "biased_transfer_std": 0.0048989794855663574,
+        "biased_transfer_fold_accuracies": [
+          0.57,
+          0.58,
+          0.5766666666666667,
+          0.5666666666666667,
+          0.57
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.5473333333333333,
+          0.5986666666666667
+        ],
+        "accuracy_drop": 0.3486666666666668,
+        "social_compliance_rate": 0.24066666666666667,
+        "social_compliance_rate_ci": [
+          0.21933333333333332,
+          0.26266666666666666
+        ],
+        "belief_corruption_rate": 0.04,
+        "belief_corruption_rate_ci": [
+          0.030666666666666665,
+          0.05
+        ],
+        "robust_rate": 0.332,
+        "robust_rate_ci": [
+          0.308,
+          0.356
+        ],
+        "other_count": 581,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "23": {
+        "neutral_cv_accuracy": 0.9179999999999999,
+        "neutral_cv_std": 0.008589399151150107,
+        "neutral_fold_accuracies": [
+          0.9066666666666666,
+          0.93,
+          0.92,
+          0.9233333333333333,
+          0.91
+        ],
+        "biased_transfer_accuracy": 0.588,
+        "biased_transfer_std": 0.012036980056845215,
+        "biased_transfer_fold_accuracies": [
+          0.6066666666666667,
+          0.5933333333333334,
+          0.5866666666666667,
+          0.5833333333333334,
+          0.57
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.5639833333333333,
+          0.6126666666666667
+        ],
+        "accuracy_drop": 0.32999999999999996,
+        "social_compliance_rate": 0.23866666666666667,
+        "social_compliance_rate_ci": [
+          0.21665000000000004,
+          0.26001666666666656
+        ],
+        "belief_corruption_rate": 0.042,
+        "belief_corruption_rate_ci": [
+          0.032,
+          0.052
+        ],
+        "robust_rate": 0.34933333333333333,
+        "robust_rate_ci": [
+          0.32466666666666666,
+          0.37333333333333335
+        ],
+        "other_count": 555,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "24": {
+        "neutral_cv_accuracy": 0.9233333333333335,
+        "neutral_cv_std": 0.007302967433402222,
+        "neutral_fold_accuracies": [
+          0.9133333333333333,
+          0.9266666666666666,
+          0.9266666666666666,
+          0.9333333333333333,
+          0.9166666666666666
+        ],
+        "biased_transfer_accuracy": 0.5646666666666667,
+        "biased_transfer_std": 0.02654974366898653,
+        "biased_transfer_fold_accuracies": [
+          0.55,
+          0.5833333333333334,
+          0.5266666666666666,
+          0.6033333333333334,
+          0.56
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.5393333333333333,
+          0.5893333333333334
+        ],
+        "accuracy_drop": 0.3586666666666668,
+        "social_compliance_rate": 0.242,
+        "social_compliance_rate_ci": [
+          0.21933333333333332,
+          0.266
+        ],
+        "belief_corruption_rate": 0.03866666666666667,
+        "belief_corruption_rate_ci": [
+          0.029333333333333333,
+          0.048666666666666664
+        ],
+        "robust_rate": 0.32266666666666666,
+        "robust_rate_ci": [
+          0.2986666666666667,
+          0.34601666666666653
+        ],
+        "other_count": 595,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "25": {
+        "neutral_cv_accuracy": 0.922,
+        "neutral_cv_std": 0.006182412330330485,
+        "neutral_fold_accuracies": [
+          0.9166666666666666,
+          0.93,
+          0.9233333333333333,
+          0.9266666666666666,
+          0.9133333333333333
+        ],
+        "biased_transfer_accuracy": 0.516,
+        "biased_transfer_std": 0.027194770739161517,
+        "biased_transfer_fold_accuracies": [
+          0.47333333333333333,
+          0.5266666666666666,
+          0.5,
+          0.5533333333333333,
+          0.5266666666666666
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.4886666666666667,
+          0.5406666666666666
+        ],
+        "accuracy_drop": 0.406,
+        "social_compliance_rate": 0.242,
+        "social_compliance_rate_ci": [
+          0.22065000000000004,
+          0.26401666666666657
+        ],
+        "belief_corruption_rate": 0.03866666666666667,
+        "belief_corruption_rate_ci": [
+          0.028666666666666667,
+          0.048666666666666664
+        ],
+        "robust_rate": 0.274,
+        "robust_rate_ci": [
+          0.25133333333333335,
+          0.296
+        ],
+        "other_count": 668,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "26": {
+        "neutral_cv_accuracy": 0.9246666666666666,
+        "neutral_cv_std": 0.009568466729604855,
+        "neutral_fold_accuracies": [
+          0.9233333333333333,
+          0.9266666666666666,
+          0.9233333333333333,
+          0.94,
+          0.91
+        ],
+        "biased_transfer_accuracy": 0.5253333333333334,
+        "biased_transfer_std": 0.045343136195018535,
+        "biased_transfer_fold_accuracies": [
+          0.4533333333333333,
+          0.58,
+          0.5,
+          0.5633333333333334,
+          0.53
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.49933333333333335,
+          0.5493499999999999
+        ],
+        "accuracy_drop": 0.3993333333333332,
+        "social_compliance_rate": 0.23666666666666666,
+        "social_compliance_rate_ci": [
+          0.21466666666666667,
+          0.2586833333333332
+        ],
+        "belief_corruption_rate": 0.044,
+        "belief_corruption_rate_ci": [
+          0.034,
+          0.054
+        ],
+        "robust_rate": 0.2886666666666667,
+        "robust_rate_ci": [
+          0.2653333333333333,
+          0.31133333333333335
+        ],
+        "other_count": 646,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "27": {
+        "neutral_cv_accuracy": 0.9259999999999999,
+        "neutral_cv_std": 0.010832051206181286,
+        "neutral_fold_accuracies": [
+          0.9266666666666666,
+          0.9266666666666666,
+          0.93,
+          0.94,
+          0.9066666666666666
+        ],
+        "biased_transfer_accuracy": 0.5206666666666667,
+        "biased_transfer_std": 0.05061400772293947,
+        "biased_transfer_fold_accuracies": [
+          0.44333333333333336,
+          0.58,
+          0.4866666666666667,
+          0.5266666666666666,
+          0.5666666666666667
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.49533333333333335,
+          0.546
+        ],
+        "accuracy_drop": 0.4053333333333332,
+        "social_compliance_rate": 0.23333333333333334,
+        "social_compliance_rate_ci": [
+          0.212,
+          0.25466666666666665
+        ],
+        "belief_corruption_rate": 0.04733333333333333,
+        "belief_corruption_rate_ci": [
+          0.036,
+          0.058
+        ],
+        "robust_rate": 0.28733333333333333,
+        "robust_rate_ci": [
+          0.264,
+          0.31066666666666665
+        ],
+        "other_count": 648,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "28": {
+        "neutral_cv_accuracy": 0.9213333333333333,
+        "neutral_cv_std": 0.01771377367411521,
+        "neutral_fold_accuracies": [
+          0.93,
+          0.9266666666666666,
+          0.9266666666666666,
+          0.9366666666666666,
+          0.8866666666666667
+        ],
+        "biased_transfer_accuracy": 0.526,
+        "biased_transfer_std": 0.03779476742148897,
+        "biased_transfer_fold_accuracies": [
+          0.47,
+          0.5433333333333333,
+          0.5,
+          0.5366666666666666,
+          0.58
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.5006666666666667,
+          0.5513333333333333
+        ],
+        "accuracy_drop": 0.3953333333333333,
+        "social_compliance_rate": 0.23466666666666666,
+        "social_compliance_rate_ci": [
+          0.21333333333333335,
+          0.25666666666666665
+        ],
+        "belief_corruption_rate": 0.046,
+        "belief_corruption_rate_ci": [
+          0.035333333333333335,
+          0.05668333333333324
+        ],
+        "robust_rate": 0.29133333333333333,
+        "robust_rate_ci": [
+          0.2673333333333333,
+          0.31466666666666665
+        ],
+        "other_count": 642,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "29": {
+        "neutral_cv_accuracy": 0.916,
+        "neutral_cv_std": 0.015405626677721778,
+        "neutral_fold_accuracies": [
+          0.9166666666666666,
+          0.92,
+          0.93,
+          0.9266666666666666,
+          0.8866666666666667
+        ],
+        "biased_transfer_accuracy": 0.5033333333333334,
+        "biased_transfer_std": 0.027080128015453182,
+        "biased_transfer_fold_accuracies": [
+          0.4766666666666667,
+          0.5466666666666666,
+          0.5233333333333333,
+          0.48333333333333334,
+          0.4866666666666667
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.478,
+          0.5286666666666666
+        ],
+        "accuracy_drop": 0.4126666666666666,
+        "social_compliance_rate": 0.23866666666666667,
+        "social_compliance_rate_ci": [
+          0.21731666666666669,
+          0.26
+        ],
+        "belief_corruption_rate": 0.042,
+        "belief_corruption_rate_ci": [
+          0.032,
+          0.052
+        ],
+        "robust_rate": 0.26466666666666666,
+        "robust_rate_ci": [
+          0.24333333333333335,
+          0.28733333333333333
+        ],
+        "other_count": 682,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "30": {
+        "neutral_cv_accuracy": 0.9133333333333333,
+        "neutral_cv_std": 0.01534781924429512,
+        "neutral_fold_accuracies": [
+          0.92,
+          0.9233333333333333,
+          0.9066666666666666,
+          0.93,
+          0.8866666666666667
+        ],
+        "biased_transfer_accuracy": 0.588,
+        "biased_transfer_std": 0.008055363982396407,
+        "biased_transfer_fold_accuracies": [
+          0.5933333333333334,
+          0.5966666666666667,
+          0.5766666666666667,
+          0.5933333333333334,
+          0.58
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.5626666666666666,
+          0.6126666666666667
+        ],
+        "accuracy_drop": 0.32533333333333336,
+        "social_compliance_rate": 0.24,
+        "social_compliance_rate_ci": [
+          0.21733333333333332,
+          0.262
+        ],
+        "belief_corruption_rate": 0.04066666666666666,
+        "belief_corruption_rate_ci": [
+          0.030666666666666665,
+          0.05068333333333324
+        ],
+        "robust_rate": 0.348,
+        "robust_rate_ci": [
+          0.3233333333333333,
+          0.37333333333333335
+        ],
+        "other_count": 557,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      },
+      "31": {
+        "neutral_cv_accuracy": 0.9073333333333334,
+        "neutral_cv_std": 0.01236482466066096,
+        "neutral_fold_accuracies": [
+          0.9066666666666666,
+          0.9,
+          0.9066666666666666,
+          0.93,
+          0.8933333333333333
+        ],
+        "biased_transfer_accuracy": 0.5393333333333333,
+        "biased_transfer_std": 0.033823069050575534,
+        "biased_transfer_fold_accuracies": [
+          0.5033333333333333,
+          0.57,
+          0.5833333333333334,
+          0.54,
+          0.5
+        ],
+        "biased_transfer_accuracy_ci": [
+          0.5126666666666667,
+          0.5633333333333334
+        ],
+        "accuracy_drop": 0.3680000000000001,
+        "social_compliance_rate": 0.23466666666666666,
+        "social_compliance_rate_ci": [
+          0.21266666666666667,
+          0.25666666666666665
+        ],
+        "belief_corruption_rate": 0.046,
+        "belief_corruption_rate_ci": [
+          0.036,
+          0.05733333333333333
+        ],
+        "robust_rate": 0.30466666666666664,
+        "robust_rate_ci": [
+          0.2813333333333333,
+          0.32801666666666657
+        ],
+        "other_count": 622,
+        "total_classified": 1500,
+        "dominant_pattern": "social_compliance"
+      }
+    }
+  }
+}

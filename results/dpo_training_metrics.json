@@ -1,0 +1,22 @@
+{
+  "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+  "seed": 100,
+  "n_train_pairs": 360,
+  "n_eval_pairs": 40,
+  "epochs": 3,
+  "learning_rate": 5e-05,
+  "dpo_beta": 0.1,
+  "lora_rank": 16,
+  "lora_alpha": 32,
+  "batch_size": 4,
+  "gradient_accumulation_steps": 4,
+  "effective_batch_size": 16,
+  "trainable_parameters": 13631488,
+  "total_parameters": 8043892736,
+  "train_loss": 0.35616764728573785,
+  "train_runtime_seconds": 117.3119,
+  "eval_loss": 0.42009562253952026,
+  "total_elapsed_seconds": 170.24728727340698,
+  "output_dir": "results/dpo_model",
+  "completed_at": "2026-03-22T23:41:42.975762"
+}

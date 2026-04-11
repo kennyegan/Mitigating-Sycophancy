@@ -1,0 +1,15 @@
+{
+  "script": "scripts/02b_probe_control.py",
+  "status": "completed",
+  "command": "scripts/02b_probe_control.py --model meta-llama/Meta-Llama-3-8B-Instruct --data data/processed/master_sycophancy.jsonl --probe-type logistic --batch-size 8 --n-folds 5 --seed 42 --output results/probe_control_results.json",
+  "git_hash": "326a8b5a",
+  "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+  "data": "data/processed/master_sycophancy.jsonl",
+  "seed": 42,
+  "analysis_mode": "neutral_transfer",
+  "started_at": "2026-03-04T17:56:09.691354+00:00",
+  "ended_at": "2026-03-04T18:32:08.050910+00:00",
+  "artifacts": [
+    "results/probe_control_results.json"
+  ]
+}

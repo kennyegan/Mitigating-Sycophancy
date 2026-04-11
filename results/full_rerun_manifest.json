@@ -1,0 +1,169 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-04-07T23:37:02.851126+00:00",
+  "git_hash": "ee66ee9d",
+  "artifact_count": 17,
+  "missing_count": 0,
+  "artifacts": [
+    {
+      "label": "dataset_balanced",
+      "path": "data/processed/master_sycophancy_balanced.jsonl",
+      "exists": true,
+      "non_empty": true,
+      "status": "ok",
+      "key_metrics": {}
+    },
+    {
+      "label": "baseline_instruct",
+      "path": "results/baseline_llama3_summary.json",
+      "exists": true,
+      "non_empty": true,
+      "status": "ok",
+      "key_metrics": {
+        "sycophancy_rate": 0.28
+      }
+    },
+    {
+      "label": "baseline_base",
+      "path": "results/baseline_llama3_base_summary.json",
+      "exists": true,
+      "non_empty": true,
+      "status": "ok",
+      "key_metrics": {
+        "sycophancy_rate": 0.367
+      }
+    },
+    {
+      "label": "probes_neutral_transfer",
+      "path": "results/probe_results_neutral_transfer.json",
+      "exists": true,
+      "non_empty": true,
+      "status": "ok",
+      "key_metrics": {
+        "analysis_mode": "neutral_transfer",
+        "best_layer": 10
+      }
+    },
+    {
+      "label": "probes_mixed_diagnostic",
+      "path": "results/probe_results_mixed_diagnostic.json",
+      "exists": true,
+      "non_empty": true,
+      "status": "ok",
+      "key_metrics": {
+        "analysis_mode": "mixed_diagnostic",
+        "best_layer": 2
+      }
+    },
+    {
+      "label": "probe_control_balanced",
+      "path": "results/probe_control_balanced_results.json",
+      "exists": true,
+      "non_empty": true,
+      "status": "ok",
+      "key_metrics": {
+        "analysis_mode": "neutral_transfer",
+        "best_layer": 1
+      }
+    },
+    {
+      "label": "patching_heatmap",
+      "path": "results/patching_heatmap.json",
+      "exists": true,
+      "non_empty": true,
+      "status": "ok",
+      "key_metrics": {}
+    },
+    {
+      "label": "head_importance",
+      "path": "results/head_importance.json",
+      "exists": true,
+      "non_empty": true,
+      "status": "ok",
+      "key_metrics": {}
+    },
+    {
+      "label": "head_ablation",
+      "path": "results/head_ablation_results.json",
+      "exists": true,
+      "non_empty": true,
+      "status": "ok",
+      "key_metrics": {
+        "baseline_sycophancy": 0.28
+      }
+    },
+    {
+      "label": "corrected_ablation",
+      "path": "results/corrected_ablation_results.json",
+      "exists": true,
+      "non_empty": true,
+      "status": "ok",
+      "key_metrics": {
+        "baseline_sycophancy": 0.28
+      }
+    },
+    {
+      "label": "top10_ablation",
+      "path": "results/top10_ablation_results.json",
+      "exists": true,
+      "non_empty": true,
+      "status": "ok",
+      "key_metrics": {
+        "baseline_sycophancy": 0.28
+      }
+    },
+    {
+      "label": "top10_ablation_full_gsm8k",
+      "path": "results/top10_ablation_full_gsm8k.json",
+      "exists": true,
+      "non_empty": true,
+      "status": "ok",
+      "key_metrics": {
+        "baseline_sycophancy": 0.28
+      }
+    },
+    {
+      "label": "steering",
+      "path": "results/steering_results.json",
+      "exists": true,
+      "non_empty": true,
+      "status": "ok",
+      "key_metrics": {
+        "baseline_sycophancy": 0.28384615384615386,
+        "schema_version": "2.1"
+      }
+    },
+    {
+      "label": "steering_per_source",
+      "path": "results/steering_per_source_analysis.json",
+      "exists": true,
+      "non_empty": true,
+      "status": "ok",
+      "key_metrics": {}
+    },
+    {
+      "label": "dpo_model",
+      "path": "results/dpo_model/adapter_config.json",
+      "exists": true,
+      "non_empty": true,
+      "status": "ok",
+      "key_metrics": {}
+    },
+    {
+      "label": "dpo_training_metrics",
+      "path": "results/dpo_training_metrics.json",
+      "exists": true,
+      "non_empty": true,
+      "status": "ok",
+      "key_metrics": {}
+    },
+    {
+      "label": "dpo_eval",
+      "path": "results/dpo_eval_results.json",
+      "exists": true,
+      "non_empty": true,
+      "status": "ok",
+      "key_metrics": {}
+    }
+  ]
+}

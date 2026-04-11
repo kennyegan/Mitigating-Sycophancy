@@ -1,0 +1,15 @@
+{
+  "script": "scripts/07_dpo_eval.py",
+  "status": "completed",
+  "command": "scripts/07_dpo_eval.py --model meta-llama/Meta-Llama-3-8B-Instruct --adapter-path results/dpo_model --data data/processed/master_sycophancy.jsonl --output results/dpo_eval_results.json --mmlu-samples 500 --gsm8k-samples 200 --probe-layers 0,1,2,3,4,5 --seed 42",
+  "git_hash": "79c91aac",
+  "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+  "adapter_path": "results/dpo_model",
+  "data": "data/processed/master_sycophancy.jsonl",
+  "seed": 42,
+  "started_at": "2026-04-07T22:13:17.222011+00:00",
+  "ended_at": "2026-04-07T22:52:14.170498+00:00",
+  "artifacts": [
+    "results/dpo_eval_results.json"
+  ]
+}

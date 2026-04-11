@@ -1,0 +1,15 @@
+{
+  "script": "scripts/01_run_baseline.py",
+  "status": "completed",
+  "command": "scripts/01_run_baseline.py --model mistralai/Mistral-7B-Instruct-v0.1 --data data/processed/master_sycophancy.jsonl --output-json results/mistral/baseline_summary.json --output-csv results/mistral/baseline_detailed.csv --seed 42 --run-sanity-checks",
+  "git_hash": "a28b21fd",
+  "model": "mistralai/Mistral-7B-Instruct-v0.1",
+  "data": "data/processed/master_sycophancy.jsonl",
+  "seed": 42,
+  "started_at": "2026-03-09T14:21:54.120612+00:00",
+  "ended_at": "2026-03-09T15:07:33.939125+00:00",
+  "artifacts": [
+    "results/mistral/baseline_summary.json",
+    "results/mistral/baseline_detailed.csv"
+  ]
+}

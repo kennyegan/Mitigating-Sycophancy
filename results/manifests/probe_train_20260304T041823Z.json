@@ -1,0 +1,14 @@
+{
+  "script": "scripts/02_train_probes.py",
+  "status": "completed",
+  "command": "scripts/02_train_probes.py --model meta-llama/Meta-Llama-3-8B-Instruct --data data/processed/master_sycophancy.jsonl --probe-position both --probe-type logistic --analysis-mode neutral_transfer --batch-size 8 --n-folds 5 --seed 42 --output results/probe_results_neutral_transfer.json",
+  "git_hash": "38765470",
+  "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+  "data": "data/processed/master_sycophancy.jsonl",
+  "seed": 42,
+  "started_at": "2026-03-04T03:16:52.957716+00:00",
+  "ended_at": "2026-03-04T04:18:23.863249+00:00",
+  "artifacts": [
+    "results/probe_results_neutral_transfer.json"
+  ]
+}

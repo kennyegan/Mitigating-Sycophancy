@@ -290,7 +290,11 @@ def figure_steering_per_source(data_dir, output_dir):
 
 def figure_probe_accuracy(data_dir, output_dir):
     """Neutral CV accuracy and biased transfer accuracy by layer, with gap shading."""
-    data = _load_json(os.path.join(data_dir, "probe_results_neutral_transfer.json"))
+    # Use the balanced probe control results (randomized answer positions) to match
+    # the claim-bearing numbers in the paper text (Table 5.5). The earlier
+    # probe_results_neutral_transfer.json used the unbalanced dataset and produced
+    # higher biased transfer accuracy (~86% at Layer 1 vs. 77.9% in the balanced run).
+    data = _load_json(os.path.join(data_dir, "probe_control_balanced_results.json"))
     if data is None:
         return
 

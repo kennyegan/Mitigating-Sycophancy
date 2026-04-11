@@ -1,0 +1,15 @@
+{
+  "script": "scripts/05_representation_steering.py",
+  "status": "completed",
+  "command": "scripts/05_representation_steering.py --model mistralai/Mistral-7B-Instruct-v0.1 --data data/processed/master_sycophancy.jsonl --layers 1,2,3,4,5,10,15,20 --alphas 0.5,1.0,2.0,5.0,10.0,20.0,50.0 --n-steering-samples 200 --eval-capabilities --mmlu-samples 500 --gsm8k-samples 200 --seed 42 --checkpoint-path results/mistral/steering_results.json.checkpoint.json --save-every-condition --output results/mistral/steering_results.json",
+  "git_hash": "ed5b6c16",
+  "model": "mistralai/Mistral-7B-Instruct-v0.1",
+  "data": "data/processed/master_sycophancy.jsonl",
+  "seed": 42,
+  "started_at": "2026-03-10T01:08:02.411838+00:00",
+  "ended_at": "2026-03-11T04:59:02.516746+00:00",
+  "artifacts": [
+    "results/mistral/steering_results.json",
+    "results/mistral/steering_results.json.checkpoint.json"
+  ]
+}

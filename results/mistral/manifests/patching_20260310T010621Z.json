@@ -1,0 +1,15 @@
+{
+  "script": "scripts/03_activation_patching.py",
+  "status": "completed",
+  "command": "scripts/03_activation_patching.py --model mistralai/Mistral-7B-Instruct-v0.1 --data data/processed/master_sycophancy.jsonl --max-samples 100 --max-positions 50 --head-top-k 5 --seed 42 --output-dir results/mistral",
+  "git_hash": "a28b21fd",
+  "model": "mistralai/Mistral-7B-Instruct-v0.1",
+  "data": "data/processed/master_sycophancy.jsonl",
+  "seed": 42,
+  "started_at": "2026-03-09T15:08:20.044869+00:00",
+  "ended_at": "2026-03-10T01:06:21.469387+00:00",
+  "artifacts": [
+    "results/mistral/patching_heatmap.json",
+    "results/mistral/head_importance.json"
+  ]
+}
