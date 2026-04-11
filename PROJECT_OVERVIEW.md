@@ -34,7 +34,7 @@ All methodology hardening, probe redesign, reproducibility, capability evaluatio
   - Eval loss: 0.42 (stable, no overfitting)
   - Adapter saved: `results/dpo_model/` (LoRA rank 16, 400 training pairs, seed=100)
 - DPO eval COMPLETE (Job 55240703, Apr 7, 2026)
-  - Behavioral: opinion syc 82.4%→58.6% (-23.8pp), MMLU 62.8% (+0.8pp), GSM8k 38.5% (+5.3pp)
+  - Behavioral: opinion syc 82.4%→58.6% (-23.8pp), MMLU 62.8% (+0.8pp), GSM8k 38.5% (N=200, CI overlaps baseline; preserved)
   - Probe re-analysis: social compliance 18.0%→11.4% (-6.6pp), robust tracking 59.9%→75.5% (+15.6pp)
   - First mechanistic evidence of what DPO does to sycophancy circuits
   - Artifact: `results/dpo_eval_results.json`

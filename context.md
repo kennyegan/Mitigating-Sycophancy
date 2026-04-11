@@ -174,7 +174,7 @@ DPO fine-tuning with LoRA (400 pairs, seed=100, separate from benchmark) dramati
 | Factual sycophancy | 1.6% | 0.2% | -1.4pp |
 | Reasoning sycophancy | 0.0% | 0.0% | 0.0pp |
 | MMLU accuracy | 62.0% | 62.8% | +0.8pp (preserved) |
-| GSM8k accuracy | 33.2% | 38.5% | +5.3pp (improved) |
+| GSM8k accuracy | 33.2% | 38.5% | +5.3pp (N=200, CI overlaps baseline; preserved) |
 
 ### 6. Mechanistic Probe Re-Analysis — THE KEY FINDING
 
@@ -192,7 +192,7 @@ This is the first mechanistic evidence of what DPO does to sycophancy circuits.
 
 ### 7. Implication for AI Safety
 
-Inference-time steering/ablation produces modest reduction at best (-5.7pp opinion, L20 alpha=2). DPO achieves -23.8pp opinion reduction with full capability preservation (MMLU +0.8pp, GSM8k +5.3pp). Mechanistic probe re-analysis confirms DPO works by eliminating social compliance — the model's internal truth representations were always correct, and DPO teaches it to act on them rather than suppress them. This validates the social compliance hypothesis and provides a clear path for sycophancy mitigation in deployed systems.
+Inference-time steering/ablation produces modest reduction at best (-5.7pp opinion, L20 alpha=2). DPO achieves -23.8pp opinion reduction with full capability preservation (MMLU +0.8pp, GSM8k preserved at 38.5% with N=200 CI overlapping baseline). Mechanistic probe re-analysis confirms DPO works by eliminating social compliance — the model's internal truth representations were always correct, and DPO teaches it to act on them rather than suppress them. This validates the social compliance hypothesis and provides a clear path for sycophancy mitigation in deployed systems.
 
 ---
 

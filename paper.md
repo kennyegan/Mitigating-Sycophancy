@@ -13,7 +13,7 @@
 
 ## Abstract
 
-We apply mechanistic interpretability to sycophancy in Llama-3-8B-Instruct and Mistral-7B-Instruct, using linear probes, causal activation patching, head ablation, representation steering, and DPO fine-tuning. Format-controlled probes reveal that sycophancy is primarily **social compliance** — the model retains correct internal representations but outputs sycophantic responses — not belief corruption. Activation patching identifies attention heads that carry the sycophantic signal, but ablating the top 10 heads simultaneously produces no sycophancy reduction (+0.5 pp [percentage points] Llama-3, +1.0 pp Mistral), demonstrating a **patching-to-ablation dissociation**: these heads are sufficient carriers but not causally necessary. Control experiments on fictional entities reveal **domain-specific circuits** with zero overlap and sign-reversed head roles across knowledge domains. All findings replicate across architectures despite entirely different underlying circuits. DPO fine-tuning reduces opinion sycophancy by **23.8 percentage points** (82.4% → 58.6%) while preserving capabilities (MMLU +0.8 pp, GSM8k +5.3 pp). Probe re-analysis of the DPO model reveals the mechanism: DPO converts **social compliance into robust truth-tracking** (+15.6 pp) without altering internal truth representations (belief corruption −1.7 pp) — the first mechanistic evidence of how preference optimization resolves *sycophantic* output-gating specifically — extending analogous mechanistic DPO analyses for toxicity (Lee et al., 2024; Yang et al., 2025) to a redundantly distributed circuit.
+We apply mechanistic interpretability to sycophancy in Llama-3-8B-Instruct and Mistral-7B-Instruct, using linear probes, causal activation patching, head ablation, representation steering, and DPO fine-tuning. Format-controlled probes reveal that sycophancy is primarily **social compliance** — the model retains correct internal representations but outputs sycophantic responses — not belief corruption. Activation patching identifies attention heads that carry the sycophantic signal, but ablating the top 10 heads simultaneously produces no sycophancy reduction (+0.5 pp [percentage points] Llama-3, +1.0 pp Mistral), demonstrating a **patching-to-ablation dissociation**: these heads are sufficient carriers but not causally necessary. Control experiments on fictional entities reveal **domain-specific circuits** with zero overlap and sign-reversed head roles across knowledge domains. All findings replicate across architectures despite entirely different underlying circuits. DPO fine-tuning reduces opinion sycophancy by **23.8 percentage points** (82.4% → 58.6%) while preserving capabilities (MMLU +0.8 pp, GSM8k preserved). Probe re-analysis of the DPO model reveals the mechanism: DPO converts **social compliance into robust truth-tracking** (+15.6 pp) without altering internal truth representations (belief corruption −1.7 pp) — the first mechanistic evidence of how preference optimization resolves *sycophantic* output-gating specifically — extending analogous mechanistic DPO analyses for toxicity (Lee et al., 2024; Yang et al., 2024) to a redundantly distributed circuit.
 
 ---
 
@@ -485,9 +485,11 @@ We generated 400 opinion-domain DPO training pairs using the Anthropic model-wri
 | Factual sycophancy | 1.6% | 0.2% | −1.4 pp |
 | Reasoning sycophancy | 0.0% | 0.0% | 0.0 pp |
 | MMLU accuracy | 62.0% | 62.8% | +0.8 pp |
-| GSM8k accuracy | 33.2% | 38.5% | +5.3 pp |
+| GSM8k accuracy | 33.2% | 38.5% | +5.3 pp† |
 
-DPO reduces opinion sycophancy by 23.8 pp while fully preserving general capabilities. MMLU is unchanged (+0.8 pp, within noise) and GSM8k improves slightly (+5.3 pp). Factual and reasoning sycophancy, already near zero, remain unaffected. The intervention is domain-specific — it targets opinion compliance without degrading factual or mathematical reasoning, consistent with the domain-specific circuit structure identified in Section 5.9.
+†Post-DPO GSM8k evaluated on N=200 vs. baseline N=1,319. 95% CI [32.0%, 45.4%] overlaps baseline; improvement not statistically significant.
+
+DPO reduces opinion sycophancy by 23.8 pp while fully preserving general capabilities. MMLU is unchanged (+0.8 pp, within noise) and GSM8k is preserved (38.5%, N=200, 95% CI [32.0%, 45.4%] overlapping the N=1,319 baseline of 33.2%). Factual and reasoning sycophancy, already near zero, remain unaffected. The intervention is domain-specific — it targets opinion compliance without degrading factual or mathematical reasoning, consistent with the domain-specific circuit structure identified in Section 5.9.
 
 **Generalization caveat:** These results are in-distribution — the evaluation uses the same prompt format and source distribution (Anthropic model-written-evals) as training. Out-of-distribution evaluation on other opinion prompt formats was not conducted; generalization to novel opinion prompts, factual-domain sycophancy, or cross-domain transfer remains untested (see Limitation #7).
 
@@ -508,7 +510,7 @@ The pattern is consistent across all tested layers (0–5): social compliance de
 
 **Key finding:** DPO does not change the model's internal truth representations — belief corruption barely moves (−1.7 pp). Instead, DPO specifically eliminates **social compliance**: the output-level suppression of internally correct representations. The 15.6 pp increase in robust tracking means DPO strengthens the pathway from internal truth representations to output behavior. The model shifts from "knows the truth but suppresses it" to "knows the truth and acts on it."
 
-This provides the first mechanistic evidence of what DPO does to sycophancy specifically at the representation level, complementing analogous analyses for toxicity (Lee et al., 2024; Yang et al., 2025). The result confirms the social compliance hypothesis at the intervention level: if sycophancy is primarily an output-gating failure (the model suppresses known truths to be agreeable), then training that rewards honest disagreement should reconnect internal representations to output behavior — which is exactly what we observe.
+This provides the first mechanistic evidence of what DPO does to sycophancy specifically at the representation level, complementing analogous analyses for toxicity (Lee et al., 2024; Yang et al., 2024). The result confirms the social compliance hypothesis at the intervention level: if sycophancy is primarily an output-gating failure (the model suppresses known truths to be agreeable), then training that rewards honest disagreement should reconnect internal representations to output behavior — which is exactly what we observe.
 
 ---
 
@@ -657,7 +659,7 @@ This paper presents a complete mechanistic investigation of sycophancy in RLHF-t
 
 4. **All findings replicate across architectures.** Full replication on Mistral-7B-Instruct confirms social compliance dominance (6.4:1 SC/BC ratio), the patching-to-ablation dissociation, and the steering null — despite entirely different circuits and inverted sycophancy profiles.
 
-5. **DPO reduces opinion sycophancy by 23.8 pp while preserving capabilities.** Fine-tuning with 400 DPO preference pairs reduces opinion sycophancy from 82.4% to 58.6%, with MMLU preserved (+0.8 pp) and GSM8k improved (+5.3 pp). Training-time intervention succeeds where inference-time methods fail.
+5. **DPO reduces opinion sycophancy by 23.8 pp while preserving capabilities.** Fine-tuning with 400 DPO preference pairs reduces opinion sycophancy from 82.4% to 58.6%, with MMLU preserved (+0.8 pp) and GSM8k preserved (38.5%, N=200, 95% CI overlapping baseline). Training-time intervention succeeds where inference-time methods fail.
 
 6. **DPO works by converting social compliance into robust truth-tracking.** Probe re-analysis of the DPO model shows social compliance drops from 18.0% to 11.4% (−6.6 pp) while robust tracking increases from 59.9% to 75.5% (+15.6 pp). Belief corruption barely changes (−1.7 pp). DPO eliminates the output-gating failure that suppresses known truths, without altering the truth representations themselves. This is the first mechanistic evidence of how preference optimization resolves sycophantic behavior specifically — extending the mechanistic DPO analysis paradigm established for toxicity by Lee et al. (2024) and Yang et al. (2025) to the sycophancy domain — and it confirms the social compliance hypothesis at the intervention level: the model always knew the truth; DPO teaches it to say it.
 
@@ -665,7 +667,7 @@ This paper presents a complete mechanistic investigation of sycophancy in RLHF-t
 
 ## Reproducibility Statement
 
-All random seeds are fixed (42 for evaluation, 100 for DPO training to ensure disjoint data). All result artifacts are validated by `results/full_rerun_manifest.json` (`missing_count: 0`). Code, scripts, and data processing pipelines are available in the project repository. The full experimental pipeline (Llama-3 + Mistral + DPO) requires approximately 80 A100 GPU-hours.
+All random seeds are fixed (42 for evaluation, 100 for DPO training to ensure disjoint data). All result artifacts are validated by `results/full_rerun_manifest.json` (`missing_count: 0`). Code, scripts, and data processing pipelines are available in the project repository. The full experimental pipeline (Llama-3 + Mistral + DPO) requires approximately 80 A100 GPU-hours. A preliminary archive (`results_archive/`) is retained for provenance but is superseded by the canonical `results/` directory. The preliminary snapshot (March 3) used a different balanced-dataset randomization for probe evaluation; the canonical run uses the finalized balanced-dataset generation described in Section 5.5, which accounts for the shift in probe decomposition fractions (e.g., social compliance 22.5%→18.0%) while transfer accuracy remains identical (77.9%).
 
 ## Ethics Statement
 
