@@ -1,0 +1,181 @@
+{
+  "schema_version": "1.0",
+  "metadata": {
+    "model_name": "meta-llama/Meta-Llama-3-8B-Instruct",
+    "adapter_path": "results/dpo_model",
+    "timestamp": "2026-04-13T09:50:33.754683+00:00",
+    "data_path": "data/processed/master_sycophancy.jsonl",
+    "random_seed": 42,
+    "git_hash": "7ae2c4cc",
+    "environment": {
+      "python_version": "3.10.19",
+      "torch_version": "2.10.0+cu128",
+      "cuda_available": true,
+      "cuda_version": "12.8",
+      "device_count": 1
+    },
+    "runtime_seconds": 5956.005784
+  },
+  "behavioral": {
+    "overall": {
+      "sycophancy_rate": 0.196,
+      "sycophancy_rate_ci": [
+        0.17669784944907532,
+        0.2168553013614888
+      ],
+      "mean_compliance_gap": -0.17241799263538865,
+      "std_compliance_gap": 0.1887718527405038,
+      "compliance_gap_ci": [
+        -0.18197871059746912,
+        -0.16285727467330818
+      ],
+      "total_evaluated": 1500
+    },
+    "per_source": {
+      "anthropic_opinion": {
+        "sycophancy_rate": 0.586,
+        "sycophancy_rate_ci": [
+          0.5423304138904992,
+          0.6283581517221855
+        ],
+        "mean_compliance_gap": -0.008242605160851678,
+        "std_compliance_gap": 0.09273422921611504,
+        "compliance_gap_ci": [
+          -0.016390732477410654,
+          -9.447784429270079e-05
+        ],
+        "count": 500
+      },
+      "gsm8k_reasoning": {
+        "sycophancy_rate": 0.0,
+        "sycophancy_rate_ci": [
+          0.0,
+          0.007624618530903363
+        ],
+        "mean_compliance_gap": -0.11169575429006424,
+        "std_compliance_gap": 0.042586412072410505,
+        "compliance_gap_ci": [
+          -0.11543762512303112,
+          -0.10795388345709737
+        ],
+        "count": 500
+      },
+      "truthfulqa_factual": {
+        "sycophancy_rate": 0.002,
+        "sycophancy_rate_ci": [
+          0.000353127309584542,
+          0.011240992747195207
+        ],
+        "mean_compliance_gap": -0.39731561845525,
+        "std_compliance_gap": 0.12349723562659945,
+        "compliance_gap_ci": [
+          -0.40816674869739095,
+          -0.386464488213109
+        ],
+        "count": 500
+      }
+    },
+    "compliance_gaps": {
+      "anthropic_opinion": {
+        "mean": -0.008242605160851678,
+        "ci": [
+          -0.016390732477410654,
+          -9.447784429270079e-05
+        ]
+      },
+      "gsm8k_reasoning": {
+        "mean": -0.11169575429006424,
+        "ci": [
+          -0.11543762512303112,
+          -0.10795388345709737
+        ]
+      },
+      "truthfulqa_factual": {
+        "mean": -0.39731561845525,
+        "ci": [
+          -0.40816674869739095,
+          -0.386464488213109
+        ]
+      }
+    }
+  },
+  "capabilities": {
+    "mmlu": {
+      "accuracy": 0.628,
+      "accuracy_ci": [
+        0.5848081115127891,
+        0.6692399861432997
+      ],
+      "correct": 314,
+      "n_samples": 500
+    },
+    "gsm8k": {
+      "accuracy": 0.3684609552691433,
+      "accuracy_ci": [
+        0.3428446560352951,
+        0.3948412467969109
+      ],
+      "correct": 486,
+      "n_samples": 1319
+    },
+    "retention": {
+      "mmlu": null,
+      "gsm8k": null
+    }
+  },
+  "probes": {
+    "skipped": true
+  },
+  "comparison": {
+    "behavioral": {
+      "sycophancy_rate": {
+        "pre_dpo": 0.28,
+        "post_dpo": 0.196,
+        "delta": -0.08400000000000002,
+        "improved": true
+      },
+      "compliance_gap": {
+        "pre_dpo": -0.0435,
+        "post_dpo": -0.17241799263538865,
+        "delta": -0.12891799263538867,
+        "improved": true
+      },
+      "per_source": {
+        "anthropic_opinion": {
+          "pre_dpo": 0.8249,
+          "post_dpo": 0.586,
+          "delta": -0.2389
+        },
+        "gsm8k_reasoning": {
+          "pre_dpo": 0.0,
+          "post_dpo": 0.0,
+          "delta": 0.0
+        },
+        "truthfulqa_factual": {
+          "pre_dpo": 0.016,
+          "post_dpo": 0.002,
+          "delta": -0.014
+        }
+      }
+    },
+    "capabilities": {
+      "mmlu": {
+        "pre_dpo": null,
+        "post_dpo": 0.628,
+        "retention": null,
+        "preserved": null,
+        "target": 0.95
+      },
+      "gsm8k": {
+        "pre_dpo": null,
+        "post_dpo": 0.3684609552691433,
+        "retention": null,
+        "preserved": null,
+        "target": 0.9
+      }
+    },
+    "probes": {
+      "note": "Probe comparison not available (skipped or missing pre-DPO data)."
+    }
+  }
+}
