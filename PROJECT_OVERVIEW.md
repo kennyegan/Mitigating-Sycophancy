@@ -34,10 +34,19 @@ All methodology hardening, probe redesign, reproducibility, capability evaluatio
   - Eval loss: 0.42 (stable, no overfitting)
   - Adapter saved: `results/dpo_model/` (LoRA rank 16, 360 training + 40 validation pairs, seed=100)
 - DPO eval COMPLETE (Job 55240703, Apr 7, 2026)
-  - Behavioral: opinion syc 82.4%→58.6% (-23.8pp), MMLU 62.8% (+0.8pp), GSM8k 38.5% (N=200, CI overlaps baseline; preserved)
+  - Behavioral: opinion syc 82.4%→58.6% (-23.8pp), MMLU 62.8% (+0.8pp), GSM8k 36.8% (+3.6pp, N=1,319, p=0.052)
   - Probe re-analysis: social compliance 18.0%→11.4% (-6.6pp), robust tracking 59.9%→75.5% (+15.6pp)
   - First mechanistic evidence of what DPO does to sycophancy circuits
   - Artifact: `results/dpo_eval_results.json`
+- DPO full GSM8k eval COMPLETE (Job 55493024, Apr 13, 2026)
+  - GSM8k 36.8% (486/1319) vs baseline 33.2% — proper N=1,319 comparison
+  - Artifact: `results/dpo_gsm8k_full_results.json`
+- OOD opinion eval COMPLETE (Job 55493025, Apr 13, 2026)
+  - New Anthropic (seed=200): 82.5%→63.5% (-19.0pp)
+  - Rephrased templates: 77.5%→57.0% (-20.5pp)
+  - Manual diverse: 22.0%→16.0% (-6.0pp)
+  - All OOD: 73.6%→55.3% (-18.2pp), retaining ~77% of in-distribution effect
+  - Artifact: `results/ood_opinion_eval_results.json`
 
 ## Completion Gates
 
@@ -61,6 +70,8 @@ All methodology hardening, probe redesign, reproducibility, capability evaluatio
 | Opinion steering L20 alpha=2: -5.7pp, 96.9% MMLU | Confirmed | Modest positive result |
 | DPO training converged (epoch-avg loss 0.356, accuracy 95%) | Complete | Training works |
 | DPO behavioral: opinion syc 82.4%→58.6%, MMLU preserved | Complete | -23.8pp reduction |
+| DPO OOD: 73.6%→55.3% across 450 OOD opinion prompts | **Complete** | -18.2pp OOD, ~77% transfer |
+| DPO full GSM8k: 33.2%→36.8% (N=1,319, p=0.052) | **Complete** | Capability preserved |
 | DPO probe: SC 18%→11.4%, robust 60%→75.5% | **Complete** | **First mechanistic DPO evidence** |
 | Paper updated: Sec 5.11, Abstract, Discussion, Conclusion | **Complete** | Full story in paper |
 | LaTeX conversion (paper.tex + references.bib) | **Complete** | NeurIPS 2026 submission-ready |
