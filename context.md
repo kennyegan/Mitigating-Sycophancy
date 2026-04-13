@@ -244,7 +244,7 @@ Inference-time steering/ablation produces modest reduction at best (-5.7pp opini
 | 2026-03-20 | --- | Figure references added to paper.md | Fig 1-5 referenced in Sections 5.3, 5.4, 5.6.1, 5.8 |
 | 2026-03-20 | --- | Paper Section 5.8 key finding rewritten | No longer contradicts per-source result; acknowledges modest L15/L20 opinion reduction |
 | 2026-03-20 | --- | L15/L20 alpha=2 added to steering sweep table | Were missing despite having capability data |
-| 2026-03-22 | --- | DPO training COMPLETE (Job 53801949) | Loss 0.69→0.16, rewards accuracy 95%, adapter saved to results/dpo_model/ |
+| 2026-03-22 | --- | DPO training COMPLETE (Job 53801949) | Epoch-avg loss 0.356, rewards accuracy 95%, adapter saved to results/dpo_model/ |
 | 2026-03-22 | --- | DPO eval Job 53811183: behavioral PASSED, probe step FAILED | Opinion syc 82.4%→58.6%, MMLU 62.8% (preserved). HookedTransformer temp-dir bug |
 | 2026-04-07 | --- | Fix 07_dpo_eval.py: use hf_model param, fix gsm8k dataset name | Resubmit Job 55240703 |
 | 2026-04-07 | --- | DPO eval COMPLETE (Job 55240703) | Opinion 82.4%→58.6%, MMLU 62.8%, GSM8k 38.5%, SC 18%→11.4%, robust 59.9%→75.5% |
@@ -393,7 +393,7 @@ If L15/L20 alpha=2 preserves capability, test layer-normalized distributed steer
 
 1. [x] Generate 400 NEW opinion pairs (seed=100, separate from benchmark test set)
 2. [x] DPO fine-tune Llama-3-8B-Instruct (TRL DPOTrainer, LoRA rank 16)
-   - Training COMPLETE (Job 53801949, Mar 22): loss 0.69→0.16, rewards accuracy 95%
+   - Training COMPLETE (Job 53801949, Mar 22): epoch-avg loss 0.356, rewards accuracy 95%
    - Adapter saved: `results/dpo_model/`
 3. [x] Evaluate DPO model (Job 55240703, COMPLETE Apr 7)
    - Opinion syc 82.4%→58.6%, MMLU 62.8%, GSM8k 38.5%

@@ -30,9 +30,9 @@ All methodology hardening, probe redesign, reproducibility, capability evaluatio
 ### Milestone 8: DPO Training-Time Intervention — IN PROGRESS
 
 - DPO training COMPLETE (Job 53801949, Mar 22, 2026)
-  - Train loss: 0.69 → 0.16, rewards accuracy: 0.44 → 0.95
+  - Train loss (epoch-averaged): 0.356, rewards accuracy: 0.44 → 0.95
   - Eval loss: 0.42 (stable, no overfitting)
-  - Adapter saved: `results/dpo_model/` (LoRA rank 16, 400 training pairs, seed=100)
+  - Adapter saved: `results/dpo_model/` (LoRA rank 16, 360 training + 40 validation pairs, seed=100)
 - DPO eval COMPLETE (Job 55240703, Apr 7, 2026)
   - Behavioral: opinion syc 82.4%→58.6% (-23.8pp), MMLU 62.8% (+0.8pp), GSM8k 38.5% (N=200, CI overlaps baseline; preserved)
   - Probe re-analysis: social compliance 18.0%→11.4% (-6.6pp), robust tracking 59.9%→75.5% (+15.6pp)
@@ -59,7 +59,7 @@ All methodology hardening, probe redesign, reproducibility, capability evaluatio
 | Domain-specific circuits (zero overlap) | Confirmed | Adds novelty |
 | Cross-architecture replication (Mistral) | Confirmed | Strengthens claims |
 | Opinion steering L20 alpha=2: -5.7pp, 96.9% MMLU | Confirmed | Modest positive result |
-| DPO training converged (loss 0.69→0.16, accuracy 95%) | Complete | Training works |
+| DPO training converged (epoch-avg loss 0.356, accuracy 95%) | Complete | Training works |
 | DPO behavioral: opinion syc 82.4%→58.6%, MMLU preserved | Complete | -23.8pp reduction |
 | DPO probe: SC 18%→11.4%, robust 60%→75.5% | **Complete** | **First mechanistic DPO evidence** |
 | Paper updated: Sec 5.11, Abstract, Discussion, Conclusion | **Complete** | Full story in paper |
