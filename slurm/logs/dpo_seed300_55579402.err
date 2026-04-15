@@ -1,0 +1,59 @@
+No conda package cache directories found outside your home directory. To
+prevent conda from filling up your home directory, you can create a new
+directory at `/work/pi_<your_pi_name>/$USER/.conda/pkgs` and reload the module. 
+No conda environment directories found outside your home directory. To prevent
+conda from filling up your home directory, you can create a new directory at
+`/work/pi_<your_pi_name>/$USER/.conda/envs` and reload the module. 
+Loading conda version miniforge3-24.7.1
+`trust_remote_code` is not supported anymore.
+Please check that the Hugging Face dataset 'Anthropic/model-written-evals' isn't based on a loading script and remove `trust_remote_code`.
+If the dataset is based on a loading script, please ask the dataset author to remove it and convert it to a standard format like Parquet.
+Using the latest cached version of the dataset since Anthropic/model-written-evals couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'default' at /home/egank2_wit_edu/Mitigating-Sycophancy/.cache/huggingface/datasets/Anthropic___model-written-evals/default/0.0.0/d533f626cc321c92175a58ee570aa3cdb87238d1 (last modified on Fri Feb 27 02:20:16 2026).
+Processing Anthropic opinion samples:   0%|          | 0/520 [00:00<?, ?it/s]Processing Anthropic opinion samples: 100%|██████████| 520/520 [00:00<00:00, 95996.39it/s]
+`torch_dtype` is deprecated! Use `dtype` instead!
+/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/torch/cuda/__init__.py:435: UserWarning: 
+    Found GPU0 NVIDIA GeForce GTX 1080 Ti which is of cuda capability 6.1.
+    Minimum and Maximum cuda capability supported by this version of PyTorch is
+    (7.0) - (12.0)
+    
+  queued_call()
+/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/torch/cuda/__init__.py:435: UserWarning: 
+    Please install PyTorch with a following CUDA
+    configurations:  12.6 following instructions at
+    https://pytorch.org/get-started/locally/
+    
+  queued_call()
+/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/torch/cuda/__init__.py:435: UserWarning: 
+NVIDIA GeForce GTX 1080 Ti with CUDA capability sm_61 is not compatible with the current PyTorch installation.
+The current PyTorch install supports CUDA capabilities sm_70 sm_75 sm_80 sm_86 sm_90 sm_100 sm_120.
+If you want to use the NVIDIA GeForce GTX 1080 Ti GPU with PyTorch, please check the instructions at https://pytorch.org/get-started/locally/
+
+  queued_call()
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:17<00:53, 17.94s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:33<00:32, 16.29s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:33<00:09,  9.04s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:33<00:00,  8.38s/it]
+Some parameters are on the meta device because they were offloaded to the cpu.
+Traceback (most recent call last):
+  File "/home/egank2_wit_edu/Mitigating-Sycophancy/scripts/06_dpo_training.py", line 443, in main
+    return train_dpo(args)
+  File "/home/egank2_wit_edu/Mitigating-Sycophancy/scripts/06_dpo_training.py", line 342, in train_dpo
+    trainer = DPOTrainer(
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/trl/trainer/dpo_trainer.py", line 306, in __init__
+    model = self._prepare_peft_model(model, ref_model, peft_config, args)
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/trl/trainer/dpo_trainer.py", line 573, in _prepare_peft_model
+    model = get_peft_model(model, peft_config)
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/peft/mapping_func.py", line 122, in get_peft_model
+    return MODEL_TYPE_TO_PEFT_MODEL_MAPPING[peft_config.task_type](
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/peft/peft_model.py", line 1885, in __init__
+    super().__init__(model, peft_config, adapter_name, **kwargs)
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/peft/peft_model.py", line 132, in __init__
+    self.base_model._cast_adapter_dtype(
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/peft/tuners/tuners_utils.py", line 542, in _cast_adapter_dtype
+    cast_adapter_dtype(self.model, adapter_name=adapter_name, autocast_adapter_dtype=autocast_adapter_dtype)
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/peft/tuners/tuners_utils.py", line 2016, in cast_adapter_dtype
+    param.data = param.data.to(torch.float32)
+torch.AcceleratorError: CUDA error: no kernel image is available for execution on the device
+Search for `cudaErrorNoKernelImageForDevice' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+

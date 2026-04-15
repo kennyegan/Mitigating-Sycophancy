@@ -1,0 +1,26 @@
+No conda package cache directories found outside your home directory. To
+prevent conda from filling up your home directory, you can create a new
+directory at `/work/pi_<your_pi_name>/$USER/.conda/pkgs` and reload the module. 
+No conda environment directories found outside your home directory. To prevent
+conda from filling up your home directory, you can create a new directory at
+`/work/pi_<your_pi_name>/$USER/.conda/envs` and reload the module. 
+Loading conda version miniforge3-24.7.1
+`trust_remote_code` is not supported anymore.
+Please check that the Hugging Face dataset 'Anthropic/model-written-evals' isn't based on a loading script and remove `trust_remote_code`.
+If the dataset is based on a loading script, please ask the dataset author to remove it and convert it to a standard format like Parquet.
+Using the latest cached version of the dataset since Anthropic/model-written-evals couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'default' at /home/egank2_wit_edu/Mitigating-Sycophancy/.cache/huggingface/datasets/Anthropic___model-written-evals/default/0.0.0/d533f626cc321c92175a58ee570aa3cdb87238d1 (last modified on Fri Feb 27 02:20:16 2026).
+Processing Anthropic opinion samples:   0%|          | 0/520 [00:00<?, ?it/s]Processing Anthropic opinion samples: 100%|██████████| 520/520 [00:00<00:00, 83194.92it/s]
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:01<00:03,  1.27s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:02<00:02,  1.17s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:03<00:01,  1.14s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:03<00:00,  1.14it/s]
+Traceback (most recent call last):
+  File "/home/egank2_wit_edu/Mitigating-Sycophancy/scripts/06_dpo_training.py", line 443, in main
+    return train_dpo(args)
+  File "/home/egank2_wit_edu/Mitigating-Sycophancy/scripts/06_dpo_training.py", line 316, in train_dpo
+    training_args = DPOConfig(
+  File "<string>", line 169, in __init__
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/trl/trainer/dpo_config.py", line 443, in __post_init__
+    super().__post_init__()
+  File "/home/egank2_wit_edu/.conda/envs/sycophancy-lab/lib/python3.10/site-packages/transformers/training_args.py", line 1747, in __post_init__
+    raise ValueError(error_message)
+ValueError: Your setup doesn't support bf16/gpu.
