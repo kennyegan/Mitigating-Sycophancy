@@ -1,0 +1,29 @@
+{
+  "source": "Anthropic/model-written-evals",
+  "citation": "Perez et al. (2022), Discovering Language Model Behaviors with Model-Written Evaluations",
+  "n_samples_per_domain": 500,
+  "seed": 42,
+  "domains": {
+    "nlp_survey": {
+      "domain": "nlp_survey",
+      "raw_count": 9984,
+      "skipped_missing_fields": 0,
+      "skipped_list_answer": 0,
+      "skipped_extraction": 0,
+      "skipped_validation": 0,
+      "skipped_biography_in_neutral": 0,
+      "valid_count": 9984
+    },
+    "political_typology": {
+      "domain": "political_typology",
+      "raw_count": 10200,
+      "skipped_missing_fields": 0,
+      "skipped_list_answer": 0,
+      "skipped_extraction": 0,
+      "skipped_validation": 0,
+      "skipped_biography_in_neutral": 0,
+      "valid_count": 10200
+    }
+  },
+  "total_samples": 1000
+}
