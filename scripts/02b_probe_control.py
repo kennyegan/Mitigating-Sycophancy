@@ -6,6 +6,7 @@ This script preserves the dedicated probe-control entrypoint while delegating
 core logic to the unified probe pipeline implementation.
 """
 
+import os
 import sys
 import json
 import argparse
@@ -51,6 +52,8 @@ def parse_args() -> argparse.Namespace:
                         help="Random seed")
     parser.add_argument("--output", "-o", type=str, default=DEFAULT_OUTPUT,
                         help=f"Output JSON path (default: {DEFAULT_OUTPUT})")
+    parser.add_argument("--adapter", type=str, default=None,
+                        help="Path to LoRA adapter directory (merges into base model before probing)")
     parser.add_argument("--device", type=str, default=None,
                         choices=["cpu", "cuda", "mps"],
                         help="Device (default: auto-detect)")
@@ -98,6 +101,7 @@ def main():
     print("PROBE CONTROL (UNIFIED PIPELINE)")
     print("=" * 80)
     print(f"Model:          {args.model}")
+    print(f"Adapter:        {args.adapter or 'None'}")
     print(f"Data:           {args.data}")
     print(f"Max Samples:    {args.max_samples or 'all'}")
     print(f"Probe Position: {args.probe_position}")
@@ -111,7 +115,51 @@ def main():
     dataset = probe_module.load_data(args.data, args.max_samples)
     print(f"Loaded {len(dataset)} samples\n")
 
-    model = probe_module.SycophancyModel(args.model, device=args.device)
+    if args.adapter and os.path.exists(args.adapter):
+        # Merge LoRA adapter into base model, then wrap as SycophancyModel
+        import torch
+        from transformer_lens import HookedTransformer
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+
+        device = args.device or ("cuda" if torch.cuda.is_available() else "cpu")
+        print(f"Loading base model + LoRA adapter from {args.adapter}...")
+
+        base_hf = AutoModelForCausalLM.from_pretrained(
+            args.model, torch_dtype=torch.float16, device_map="cpu", trust_remote_code=True,
+        )
+        tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=True)
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
+
+        from peft import PeftModel
+        base_hf = PeftModel.from_pretrained(base_hf, args.adapter)
+        base_hf = base_hf.merge_and_unload()
+        print("LoRA merged.")
+        base_hf = base_hf.to(device)
+
+        hooked = HookedTransformer.from_pretrained(
+            args.model, hf_model=base_hf, device=device, dtype=torch.float16,
+            fold_ln=False, center_writing_weights=False, center_unembed=False,
+            tokenizer=tokenizer,
+        )
+        del base_hf
+        torch.cuda.empty_cache() if torch.cuda.is_available() else None
+        hooked.eval()
+        hooked.cfg.use_attn_result = True
+        hooked.setup()
+
+        # Wrap as SycophancyModel-compatible object
+        model = probe_module.SycophancyModel.__new__(probe_module.SycophancyModel)
+        model.model = hooked
+        model.model_name = args.model
+        model.device = device
+        model.dtype = torch.float16
+        model.n_layers = hooked.cfg.n_layers
+        model.n_heads = hooked.cfg.n_heads
+        model.d_model = hooked.cfg.d_model
+        print(f"Loaded! Layers: {model.n_layers}, Heads: {model.n_heads}, d_model: {model.d_model}")
+    else:
+        model = probe_module.SycophancyModel(args.model, device=args.device)
     if args.layers is None or args.layers == "all":
         layers = list(range(model.n_layers))
     else:
@@ -136,6 +184,7 @@ def main():
     output = {
         "metadata": {
             "model_name": args.model,
+            "adapter_path": args.adapter,
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "data_path": args.data,
             "probe_position": args.probe_position,

@@ -204,7 +204,9 @@ def load_dpo_model_for_probes(model_name: str, adapter_path: str, device: str = 
 
     # Load into HookedTransformer using the original model name but with merged weights
     # Pass the merged HF model directly via hf_model parameter
-    base_model = base_model.to(device)
+    # Do NOT move to device here — TransformerLens handles device placement
+    # internally during from_pretrained (fold_value_biases creates CPU tensors
+    # that conflict if the hf_model is already on CUDA).
 
     hooked_model = HookedTransformer.from_pretrained(
         model_name,
