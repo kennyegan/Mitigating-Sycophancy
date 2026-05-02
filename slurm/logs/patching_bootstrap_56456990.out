@@ -1,0 +1,74 @@
+============================================
+SLURM Job: Patching Bootstrap (head stability)
+Model: meta-llama/Meta-Llama-3-8B-Instruct
+Data:  data/processed/master_sycophancy_balanced.jsonl
+Node:  uri-gpu002
+GPU:   NVIDIA A100-SXM4-80GB, 81920 MiB
+Time:  Thu Apr 30 05:01:42 AM UTC 2026
+============================================
+======================================================================
+PATCHING BOOTSTRAP — head-ranking stability
+======================================================================
+Model:          meta-llama/Meta-Llama-3-8B-Instruct
+Data:           data/processed/master_sycophancy_balanced.jsonl
+N bootstrap:    5 seeds=[42, 123, 456, 789, 1011]
+N samples/fold: 100
+Head top-K:     5
+Git hash:       1f2a326
+
+Loading meta-llama/Meta-Llama-3-8B-Instruct on cuda with dtype=torch.float16...
+Loaded pretrained model meta-llama/Meta-Llama-3-8B-Instruct into HookedTransformer
+Loaded! Layers: 32, Heads: 32, d_model: 4096
+[1/5] seed=42
+    valid_layer=35 valid_head=100 critical_layers=[1, 2, 3, 11, 4]
+    top10 heads: ['L4H28', 'L11H24', 'L4H5', 'L11H1', 'L2H5', 'L11H0', 'L3H30', 'L11H13', 'L11H5', 'L3H17']
+[2/5] seed=123
+    valid_layer=23 valid_head=100 critical_layers=[0, 2, 1, 3, 5]
+    top10 heads: ['L5H31', 'L2H5', 'L3H30', 'L5H19', 'L1H3', 'L0H24', 'L5H24', 'L3H29', 'L1H11', 'L3H17']
+[3/5] seed=456
+    valid_layer=42 valid_head=100 critical_layers=[11, 8, 9, 10, 0]
+    top10 heads: ['L9H28', 'L9H0', 'L11H1', 'L11H24', 'L8H23', 'L8H30', 'L8H2', 'L8H9', 'L0H24', 'L11H5']
+[4/5] seed=789
+    valid_layer=28 valid_head=100 critical_layers=[2, 3, 1, 5, 6]
+    top10 heads: ['L2H5', 'L6H6', 'L6H7', 'L5H24', 'L5H31', 'L6H14', 'L3H30', 'L6H0', 'L3H17', 'L5H6']
+[5/5] seed=1011
+    valid_layer=34 valid_head=100 critical_layers=[10, 14, 9, 8, 11]
+    top10 heads: ['L9H28', 'L9H0', 'L11H24', 'L11H1', 'L8H30', 'L14H31', 'L8H2', 'L11H0', 'L14H24', 'L8H9']
+
+Saved → results/patching_bootstrap.json
+
+======================================================================
+STABILITY SUMMARY
+======================================================================
+  top3 mean Jaccard: 0.090 (min 0.000, max 0.500, n_pairs=10)
+  top5 mean Jaccard: 0.164 (min 0.000, max 0.667, n_pairs=10)
+  top10 mean Jaccard: 0.163 (min 0.000, max 0.538, n_pairs=10)
+  Top-3 head frequency:
+    L11H24: 40.0%
+    L2H5: 40.0%
+    L9H28: 40.0%
+    L9H0: 40.0%
+    L4H28: 20.0%
+    L4H5: 20.0%
+    L5H31: 20.0%
+    L3H30: 20.0%
+    L11H1: 20.0%
+    L6H6: 20.0%
+  Critical-layer frequency:
+    L0: 40.0%
+    L1: 60.0%
+    L2: 60.0%
+    L3: 60.0%
+    L4: 20.0%
+    L5: 40.0%
+    L6: 20.0%
+    L8: 40.0%
+    L9: 40.0%
+    L10: 40.0%
+    L11: 60.0%
+    L14: 20.0%
+
+============================================
+Patching bootstrap complete: Fri May  1 01:30:22 AM UTC 2026
+-rw-rw-r-- 1 egank2_wit_edu egank2_wit_edu 174K May  1 01:30 results/patching_bootstrap.json
+============================================

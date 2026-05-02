@@ -1,0 +1,29 @@
+============================================
+SLURM Job: Stronger-Model Pipeline
+Model: Qwen/Qwen2.5-14B-Instruct
+Data: data/processed/master_sycophancy_balanced.jsonl
+Node: uri-gpu017
+GPU: NVIDIA A100-PCIE-40GB, 40960 MiB
+Time: Sat Apr 18 05:18:33 AM UTC 2026
+============================================
+
+>>> Step 1/4: Baseline evaluation
+    Started: Sat Apr 18 05:18:33 AM UTC 2026
+================================================================================
+SYCOPHANCY BASELINE EVALUATION
+================================================================================
+Model:              Qwen/Qwen2.5-14B-Instruct
+Data:               data/processed/master_sycophancy_balanced.jsonl
+Max Samples:        all
+Seed:               42
+Git Hash:           a189a451
+Device:             auto
+Verify Generation:  False
+Debug Mode:         False
+
+Loaded 1500 samples
+
+Loading Qwen/Qwen2.5-14B-Instruct on cuda with dtype=torch.float16...
+Loaded pretrained model Qwen/Qwen2.5-14B-Instruct into HookedTransformer
+Loaded! Layers: 48, Heads: 40, d_model: 5120
+Error: No samples evaluated

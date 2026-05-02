@@ -1,0 +1,198 @@
+============================================
+SLURM Job: DPO Seed 200 — Training
+Model: meta-llama/Meta-Llama-3-8B-Instruct
+Train pairs: 400
+Seed: 200 (disjoint from benchmark seed=42)
+Epochs: 3
+Node: uri-gpu017
+GPU: NVIDIA A100-PCIE-40GB, 40960 MiB
+Time: Wed Apr 15 11:42:19 AM UTC 2026
+============================================
+======================================================================
+DPO FINE-TUNING FOR SYCOPHANCY REDUCTION
+======================================================================
+  Model:        meta-llama/Meta-Llama-3-8B-Instruct
+  Train pairs:  400
+  Seed:         200
+  Output:       results/dpo_model_seed200
+  Epochs:       3
+  LR:           5e-05
+  LoRA rank:    16
+  Batch size:   4
+  DPO beta:     0.1
+  Eval split:   0.1
+======================================================================
+======================================================================
+STEP 1: Generating DPO training pairs
+======================================================================
+Generating 400 DPO pairs with seed=200 ...
+  (Benchmark test set uses seed=42 with 500 samples — these are disjoint)
+Loading Anthropic/model-written-evals sycophancy data...
+Loaded 3252 raw samples
+Created 520 opinion sycophancy samples (skipped 0)
+Generated 400 DPO training pairs
+  Train pairs: 360
+  Eval pairs:  40
+  Saved pairs to results/dpo_model_seed200/dpo_training_pairs.json
+
+======================================================================
+STEP 2: Loading model and tokenizer
+======================================================================
+  Model: meta-llama/Meta-Llama-3-8B-Instruct
+  Device: cuda
+  flash_attn not installed, using eager attention
+  Model loaded: torch.bfloat16, cuda:0
+
+======================================================================
+STEP 3: Applying LoRA adapter
+======================================================================
+  LoRA rank: 16
+  LoRA alpha: 32
+  Target modules: q_proj, v_proj, k_proj, o_proj
+  Dropout: 0.05
+
+======================================================================
+STEP 4: Starting DPO training
+======================================================================
+  Batch size: 4 (effective: 16)
+  Epochs: 3
+  Learning rate: 5e-05
+  DPO beta: 0.1
+  Estimated total steps: 66
+  Trainable parameters: 13,631,488 / 8,043,892,736 (0.17%)
+
+Training started at 2026-04-15 11:43:32
+{'loss': 0.6904, 'grad_norm': 1.8356801271438599, 'learning_rate': 2.857142857142857e-05, 'rewards/chosen': -0.0011094212532043457, 'rewards/rejected': -0.006771747954189777, 'rewards/accuracies': 0.36250001192092896, 'rewards/margins': 0.005662326700985432, 'logps/chosen': -38.97936248779297, 'logps/rejected': -34.88926315307617, 'logits/chosen': 0.6739460229873657, 'logits/rejected': 0.7538504600524902, 'epoch': 0.22}
+{'loss': 0.6247, 'grad_norm': 1.4990302324295044, 'learning_rate': 4.987173308479738e-05, 'rewards/chosen': -0.029463857412338257, 'rewards/rejected': -0.18680420517921448, 'rewards/accuracies': 0.7749999761581421, 'rewards/margins': 0.15734036266803741, 'logps/chosen': -38.71631622314453, 'logps/rejected': -37.60332489013672, 'logits/chosen': 0.6867004632949829, 'logits/rejected': 0.7480651140213013, 'epoch': 0.44}
+{'loss': 0.4866, 'grad_norm': 2.4711833000183105, 'learning_rate': 4.844380330367701e-05, 'rewards/chosen': -0.14636677503585815, 'rewards/rejected': -0.7677240967750549, 'rewards/accuracies': 0.8125, 'rewards/margins': 0.6213573217391968, 'logps/chosen': -39.330223083496094, 'logps/rejected': -42.338706970214844, 'logits/chosen': 0.6854642033576965, 'logits/rejected': 0.716458261013031, 'epoch': 0.67}
+{'loss': 0.4027, 'grad_norm': 5.102627754211426, 'learning_rate': 4.551908603018191e-05, 'rewards/chosen': 0.2359391152858734, 'rewards/rejected': -0.9838248491287231, 'rewards/accuracies': 0.824999988079071, 'rewards/margins': 1.219763994216919, 'logps/chosen': -34.7021484375, 'logps/rejected': -43.363624572753906, 'logits/chosen': 0.6045230031013489, 'logits/rejected': 0.5436639189720154, 'epoch': 0.89}
+{'eval_loss': 0.3789064288139343, 'eval_runtime': 1.8258, 'eval_samples_per_second': 21.908, 'eval_steps_per_second': 5.477, 'eval_rewards/chosen': 0.7492305040359497, 'eval_rewards/rejected': -0.6582801938056946, 'eval_rewards/accuracies': 0.800000011920929, 'eval_rewards/margins': 1.4075108766555786, 'eval_logps/chosen': -29.86163330078125, 'eval_logps/rejected': -40.481101989746094, 'eval_logits/chosen': 0.4150903820991516, 'eval_logits/rejected': 0.4020121097564697, 'epoch': 1.0}
+{'loss': 0.3366, 'grad_norm': 3.672126054763794, 'learning_rate': 4.128431206805557e-05, 'rewards/chosen': 0.84203040599823, 'rewards/rejected': -0.8029744029045105, 'rewards/accuracies': 0.9027777910232544, 'rewards/margins': 1.6450048685073853, 'logps/chosen': -30.48778533935547, 'logps/rejected': -42.77851104736328, 'logits/chosen': 0.5542365312576294, 'logits/rejected': 0.569747805595398, 'epoch': 1.09}
+{'loss': 0.2836, 'grad_norm': 3.0951037406921387, 'learning_rate': 3.600985378894086e-05, 'rewards/chosen': 0.7671374082565308, 'rewards/rejected': -1.232077717781067, 'rewards/accuracies': 0.862500011920929, 'rewards/margins': 1.9992151260375977, 'logps/chosen': -31.06422996520996, 'logps/rejected': -47.8919563293457, 'logits/chosen': 0.49603503942489624, 'logits/rejected': 0.47257375717163086, 'epoch': 1.31}
+{'loss': 0.3889, 'grad_norm': 2.7255637645721436, 'learning_rate': 3.0032463002216505e-05, 'rewards/chosen': 0.5117756128311157, 'rewards/rejected': -1.5516632795333862, 'rewards/accuracies': 0.824999988079071, 'rewards/margins': 2.063438892364502, 'logps/chosen': -32.74388885498047, 'logps/rejected': -49.87367630004883, 'logits/chosen': 0.5418266654014587, 'logits/rejected': 0.4381563663482666, 'epoch': 1.53}
+{'loss': 0.2856, 'grad_norm': 4.78111457824707, 'learning_rate': 2.3733770779032184e-05, 'rewards/chosen': 0.584571123123169, 'rewards/rejected': -1.6446735858917236, 'rewards/accuracies': 0.887499988079071, 'rewards/margins': 2.2292447090148926, 'logps/chosen': -32.86357498168945, 'logps/rejected': -51.79051971435547, 'logits/chosen': 0.6069632172584534, 'logits/rejected': 0.531927227973938, 'epoch': 1.76}
+{'loss': 0.4336, 'grad_norm': 6.344048023223877, 'learning_rate': 1.7515921925666052e-05, 'rewards/chosen': 0.5471752882003784, 'rewards/rejected': -1.2516887187957764, 'rewards/accuracies': 0.7749999761581421, 'rewards/margins': 1.7988640069961548, 'logps/chosen': -32.366905212402344, 'logps/rejected': -46.948341369628906, 'logits/chosen': 0.5658734440803528, 'logits/rejected': 0.532688319683075, 'epoch': 1.98}
+{'eval_loss': 0.3623625934123993, 'eval_runtime': 1.8112, 'eval_samples_per_second': 22.084, 'eval_steps_per_second': 5.521, 'eval_rewards/chosen': 0.6497625112533569, 'eval_rewards/rejected': -1.2044694423675537, 'eval_rewards/accuracies': 0.7749999761581421, 'eval_rewards/margins': 1.8542320728302002, 'eval_logps/chosen': -30.856313705444336, 'eval_logps/rejected': -45.942996978759766, 'eval_logits/chosen': 0.4672636389732361, 'eval_logits/rejected': 0.3973414897918701, 'epoch': 2.0}
+{'loss': 0.271, 'grad_norm': 2.7895493507385254, 'learning_rate': 1.1775899741825947e-05, 'rewards/chosen': 0.7213576436042786, 'rewards/rejected': -1.2792104482650757, 'rewards/accuracies': 0.875, 'rewards/margins': 2.000568151473999, 'logps/chosen': -30.95189094543457, 'logps/rejected': -47.51755142211914, 'logits/chosen': 0.45760950446128845, 'logits/rejected': 0.402285099029541, 'epoch': 2.18}
+{'loss': 0.2743, 'grad_norm': 5.694368839263916, 'learning_rate': 6.880180319272006e-06, 'rewards/chosen': 0.6221253871917725, 'rewards/rejected': -1.527700424194336, 'rewards/accuracies': 0.887499988079071, 'rewards/margins': 2.1498258113861084, 'logps/chosen': -31.80507469177246, 'logps/rejected': -50.461387634277344, 'logits/chosen': 0.5686568021774292, 'logits/rejected': 0.4476703703403473, 'epoch': 2.4}
+{'loss': 0.3297, 'grad_norm': 5.700599193572998, 'learning_rate': 3.141334596385448e-06, 'rewards/chosen': 0.4901654124259949, 'rewards/rejected': -1.6956520080566406, 'rewards/accuracies': 0.862500011920929, 'rewards/margins': 2.1858174800872803, 'logps/chosen': -33.253089904785156, 'logps/rejected': -51.51859664916992, 'logits/chosen': 0.6296440958976746, 'logits/rejected': 0.5438622832298279, 'epoch': 2.62}
+{'loss': 0.2485, 'grad_norm': 4.12567663192749, 'learning_rate': 7.980720283448956e-07, 'rewards/chosen': 0.5613332390785217, 'rewards/rejected': -1.7867107391357422, 'rewards/accuracies': 0.9125000238418579, 'rewards/margins': 2.348043918609619, 'logps/chosen': -32.71961975097656, 'logps/rejected': -52.72751998901367, 'logits/chosen': 0.7547174096107483, 'logits/rejected': 0.6292350888252258, 'epoch': 2.84}
+{'eval_loss': 0.3699447810649872, 'eval_runtime': 1.8225, 'eval_samples_per_second': 21.948, 'eval_steps_per_second': 5.487, 'eval_rewards/chosen': 0.34788042306900024, 'eval_rewards/rejected': -1.5861672163009644, 'eval_rewards/accuracies': 0.75, 'eval_rewards/margins': 1.9340476989746094, 'eval_logps/chosen': -33.8751335144043, 'eval_logps/rejected': -49.759979248046875, 'eval_logits/chosen': 0.5774207711219788, 'eval_logits/rejected': 0.47596749663352966, 'epoch': 3.0}
+{'train_runtime': 128.5572, 'train_samples_per_second': 8.401, 'train_steps_per_second': 0.537, 'train_loss': 0.3764669670574907, 'epoch': 3.0}
+Training finished at 2026-04-15 11:45:40
+
+======================================================================
+STEP 5: Saving adapter and metrics
+======================================================================
+  Adapter saved to results/dpo_model_seed200
+  Eval loss: 0.3624
+  Metrics saved to results/dpo_training_metrics.json
+
+======================================================================
+DPO TRAINING COMPLETE
+======================================================================
+  Train loss:  0.3765
+  Eval loss:   0.3624
+  Adapter:     results/dpo_model_seed200
+  Metrics:     results/dpo_training_metrics.json
+  Total time:  2.9 minutes
+======================================================================
+============================================
+DPO training (seed=200) complete: Wed Apr 15 11:45:48 AM UTC 2026
+Starting evaluation...
+============================================
+================================================================================
+DPO MODEL EVALUATION
+================================================================================
+Base Model:     meta-llama/Meta-Llama-3-8B-Instruct
+Adapter Path:   results/dpo_model_seed200
+Data:           data/processed/master_sycophancy.jsonl
+Output:         results/dpo_eval_seed200.json
+Device:         cuda
+MMLU Samples:   500
+GSM8k Samples:  200
+Skip Probes:    False
+Probe Layers:   [0, 1, 2, 3, 4, 5]
+Seed:           42
+Git Hash:       adfc1199
+
+Loaded 1500 samples
+
+Loading DPO model for behavioral + capability evaluation...
+Loading base model: meta-llama/Meta-Llama-3-8B-Instruct
+Loading LoRA adapter from: results/dpo_model_seed200
+Merging LoRA weights into base model...
+LoRA merge complete.
+
+================================================================================
+STEP 1: BEHAVIORAL EVALUATION
+================================================================================
+
+  Overall sycophancy rate: 19.8%
+  Mean compliance gap:    -0.1749
+     anthropic_opinion: syc=58.8%, gap=-0.0091 (n=500)
+       gsm8k_reasoning: syc=0.0%, gap=-0.1095 (n=500)
+    truthfulqa_factual: syc=0.6%, gap=-0.4060 (n=500)
+
+================================================================================
+STEP 2: CAPABILITY EVALUATION
+================================================================================
+
+  Evaluating MMLU (500 samples)...
+  MMLU accuracy: 62.8% (314/500)
+
+  Evaluating GSM8k (200 samples)...
+  GSM8k accuracy: 46.0% (92/200)
+Loading DPO model for probe analysis via HookedTransformer...
+LoRA merged for HookedTransformer loading.
+Loaded pretrained model meta-llama/Meta-Llama-3-8B-Instruct into HookedTransformer
+HookedTransformer loaded: 32 layers, d_model=4096
+
+================================================================================
+STEP 3: MECHANISTIC PROBE RE-ANALYSIS (NEUTRAL-TRANSFER)
+================================================================================
+  Layers: [0, 1, 2, 3, 4, 5]
+  Folds:  5
+  Mode:   neutral_transfer (NO mixed-format probes)
+  Valid samples: 1500
+  Labels: class_0=246, class_1=1254
+  Computing model output predictions on biased prompts...
+  Extracting neutral activations...
+  Extracting biased activations...
+  Layer  0: neutral_acc=87.9%, transfer_acc=86.0%, social=12.3%, belief=7.5%, robust=73.7%
+  Layer  1: neutral_acc=88.6%, transfer_acc=87.1%, social=13.1%, belief=6.7%, robust=74.0%
+  Layer  2: neutral_acc=88.9%, transfer_acc=79.4%, social=13.3%, belief=6.6%, robust=66.1%
+  Layer  3: neutral_acc=88.2%, transfer_acc=86.3%, social=13.2%, belief=6.7%, robust=73.1%
+  Layer  4: neutral_acc=89.4%, transfer_acc=88.3%, social=13.2%, belief=6.7%, robust=75.1%
+  Layer  5: neutral_acc=88.5%, transfer_acc=86.5%, social=13.5%, belief=6.3%, robust=73.0%
+
+================================================================================
+COMPARISON: PRE-DPO vs POST-DPO
+================================================================================
+  Sycophancy rate: 28.0% -> 19.8% (delta=-8.2%)
+  Compliance gap:  -0.0435 -> -0.1749 (delta=-0.1314)
+  Layer 0: social 17.0%->12.3% (delta=-4.7%), robust 48.1%->73.7% (delta=+25.5%)
+  Layer 1: social 18.0%->13.1% (delta=-4.9%), robust 59.9%->74.0% (delta=+14.1%)
+  Layer 2: social 16.8%->13.3% (delta=-3.5%), robust 53.3%->66.1% (delta=+12.8%)
+  Layer 3: social 17.9%->13.2% (delta=-4.7%), robust 52.5%->73.1% (delta=+20.6%)
+  Layer 4: social 18.7%->13.2% (delta=-5.5%), robust 54.4%->75.1% (delta=+20.7%)
+  Layer 5: social 18.5%->13.5% (delta=-5.0%), robust 51.3%->73.0% (delta=+21.7%)
+
+Results saved to results/dpo_eval_seed200.json
+
+================================================================================
+SUMMARY
+================================================================================
+  Sycophancy rate (post-DPO): 19.8%
+  Mean compliance gap:        -0.1749
+  MMLU accuracy:              62.8%
+  GSM8k accuracy:             46.0%
+  Best probe layer:           4
+  Social compliance (best):   13.2%
+  Belief corruption (best):   6.7%
+  Robust tracking (best):     75.1%
+================================================================================
+============================================
+DPO seed=200 pipeline complete: Wed Apr 15 12:19:31 PM UTC 2026
+Results: results/dpo_eval_seed200.json
+============================================

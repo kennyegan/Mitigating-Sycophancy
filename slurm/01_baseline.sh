@@ -17,7 +17,7 @@
 set -euo pipefail
 
 # Load cluster config
-source "/home/egank2_wit_edu/Mitigating-Sycophancy/slurm/config.sh"
+source "/work/pi_larsonj_wit_edu/egank2_wit_edu/Mitigating-Sycophancy/slurm/config.sh"
 
 
 # Account/QOS (only if set)

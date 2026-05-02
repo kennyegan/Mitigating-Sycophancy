@@ -1,0 +1,5 @@
+Loaded pretrained model Qwen/Qwen2.5-14B-Instruct into HookedTransformer
+Load VRAM: 29.9GB
+Peak VRAM: 30.1GB
+Layers: 48, d_model: 5120
+Cache entries: 963

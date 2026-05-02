@@ -1,0 +1,82 @@
+============================================
+SLURM Job: Free-Form Transcript Generation
+Model: meta-llama/Meta-Llama-3-8B-Instruct
+Prompts: data/freeform/
+Node: uri-gpu015
+GPU: NVIDIA A100-PCIE-40GB, 40960 MiB
+Time: Wed Apr 15 11:01:43 PM UTC 2026
+============================================
+
+============================================
+Step 1: Baseline generation (no adapter)
+Time: Wed Apr 15 11:01:43 PM UTC 2026
+============================================
+======================================================================
+FREE-FORM SYCOPHANCY TRANSCRIPT GENERATION
+======================================================================
+Model:        meta-llama/Meta-Llama-3-8B-Instruct
+Adapter:      (none)
+Prompts dir:  data/freeform/
+Output:       results/freeform/llama3_base_transcripts.jsonl
+Seed:         42
+Device:       cuda
+
+  Loaded data/freeform/advice_highstakes.jsonl (10+ prompts)
+  Loaded data/freeform/factual_falsehood.jsonl (50+ prompts)
+  Loaded data/freeform/fictional_entity.jsonl (70+ prompts)
+  Loaded data/freeform/opinion_disagreement.jsonl (120+ prompts)
+  Loaded data/freeform/reasoning_pressure.jsonl (150+ prompts)
+Total prompts loaded: 150
+Loading model: meta-llama/Meta-Llama-3-8B-Instruct
+
+======================================================================
+SUMMARY
+======================================================================
+Total prompts processed: 150
+  Previously completed:  0
+  Generated this run:    150
+Avg response length:     1772 chars
+Output saved to:         results/freeform/llama3_base_transcripts.jsonl
+======================================================================
+Baseline generation complete: Thu Apr 16 12:09:57 AM UTC 2026
+
+============================================
+Step 2: DPO model generation
+Time: Thu Apr 16 12:09:57 AM UTC 2026
+============================================
+======================================================================
+FREE-FORM SYCOPHANCY TRANSCRIPT GENERATION
+======================================================================
+Model:        meta-llama/Meta-Llama-3-8B-Instruct
+Adapter:      results/dpo_model
+Prompts dir:  data/freeform/
+Output:       results/freeform/llama3_dpo_transcripts.jsonl
+Seed:         42
+Device:       cuda
+
+  Loaded data/freeform/advice_highstakes.jsonl (10+ prompts)
+  Loaded data/freeform/factual_falsehood.jsonl (50+ prompts)
+  Loaded data/freeform/fictional_entity.jsonl (70+ prompts)
+  Loaded data/freeform/opinion_disagreement.jsonl (120+ prompts)
+  Loaded data/freeform/reasoning_pressure.jsonl (150+ prompts)
+Total prompts loaded: 150
+Loading model: meta-llama/Meta-Llama-3-8B-Instruct
+Loading LoRA adapter from: results/dpo_model
+LoRA merge complete.
+
+======================================================================
+SUMMARY
+======================================================================
+Total prompts processed: 150
+  Previously completed:  0
+  Generated this run:    150
+Avg response length:     1727 chars
+Output saved to:         results/freeform/llama3_dpo_transcripts.jsonl
+======================================================================
+
+============================================
+Free-form generation complete: Thu Apr 16 01:17:12 AM UTC 2026
+Results:
+  Baseline: results/freeform/llama3_base_transcripts.jsonl
+  DPO:      results/freeform/llama3_dpo_transcripts.jsonl
+============================================

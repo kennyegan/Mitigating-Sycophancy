@@ -1,0 +1,70 @@
+============================================
+SLURM Job: Stronger-Model Pipeline
+Model: Qwen/Qwen2.5-14B-Instruct
+Data: data/processed/master_sycophancy_balanced.jsonl
+Node: uri-gpu001
+GPU: NVIDIA A100-SXM4-80GB, 81920 MiB
+Time: Fri May  1 09:20:33 PM UTC 2026
+============================================
+
+>>> Step 1/4: Baseline evaluation — REUSING existing artifact
+-rw-rw-r-- 1 egank2_wit_edu egank2_wit_edu 593K Apr 30 07:36 results/stronger/baseline_details.csv
+-rw-rw-r-- 1 egank2_wit_edu egank2_wit_edu 8.0K Apr 30 07:36 results/stronger/baseline_summary.json
+    Skipped (reused): Fri May  1 09:20:33 PM UTC 2026
+
+>>> Step 2/4: Probe control
+    Started: Fri May  1 09:20:33 PM UTC 2026
+================================================================================
+PROBE CONTROL (UNIFIED PIPELINE)
+================================================================================
+Model:          Qwen/Qwen2.5-14B-Instruct
+Adapter:        None
+Data:           data/processed/master_sycophancy_balanced.jsonl
+Max Samples:    all
+Probe Position: final
+Probe Type:     logistic
+Analysis Mode:  neutral_transfer
+CV Folds:       5
+Seed:           42
+Git Hash:       1f2a3264
+
+Loaded 1500 samples
+
+Loading Qwen/Qwen2.5-14B-Instruct on cuda with dtype=torch.float16...
+Loaded pretrained model Qwen/Qwen2.5-14B-Instruct into HookedTransformer
+Loaded! Layers: 48, Heads: 40, d_model: 5120
+Probing 48 layers: 0..47
+
+Results saved to results/stronger/probe_control_balanced.json
+
+--- Position: final ---
+Best layer: 8
+Best transfer accuracy: 77.7%
+Transfer 95% CI: [75.5%, 79.8%]
+Social compliance: 18.0%
+Belief corruption: 10.3%
+Dominant pattern: social_compliance
+    Completed: Fri May  1 10:49:37 PM UTC 2026
+
+>>> Step 3/4: Activation patching
+    Started: Fri May  1 10:49:37 PM UTC 2026
+================================================================================
+CAUSAL ACTIVATION PATCHING — Sycophancy Circuit Discovery
+================================================================================
+Model:          Qwen/Qwen2.5-14B-Instruct
+Data:           data/processed/master_sycophancy_balanced.jsonl
+Max Samples:    100
+Max Positions:  50
+Head Top-K:     5
+Seed:           42
+Git Hash:       1f2a3264
+
+Loaded 100 samples
+
+Loading Qwen/Qwen2.5-14B-Instruct on cuda with dtype=torch.float16...
+Loaded pretrained model Qwen/Qwen2.5-14B-Instruct into HookedTransformer
+Loaded! Layers: 48, Heads: 40, d_model: 5120
+Patching 48 layers: 0..47
+
+[Phase 1] Layer × Position Patching
+------------------------------------------------------------

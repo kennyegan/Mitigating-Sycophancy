@@ -7,9 +7,9 @@
 #SBATCH --ntasks=1
 #SBATCH --partition=gpu
 #SBATCH --account=pi_larsonj_wit_edu
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:a100:1
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=64G
+#SBATCH --mem=80G
 
 # =============================================================================
 # Job: DPO Training + Eval — Seed 300
@@ -33,7 +33,7 @@
 
 set -euo pipefail
 
-source "/home/egank2_wit_edu/Mitigating-Sycophancy/slurm/config.sh"
+source "/work/pi_larsonj_wit_edu/egank2_wit_edu/Mitigating-Sycophancy/slurm/config.sh"
 
 module load ${CONDA_MODULE}
 conda activate ${CONDA_ENV}

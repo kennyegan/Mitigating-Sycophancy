@@ -1,0 +1,19 @@
+============================================
+SLURM Job: Patching Bootstrap (head stability)
+Model: meta-llama/Meta-Llama-3-8B-Instruct
+Data:  data/processed/master_sycophancy_balanced.jsonl
+Node:  gpu024
+GPU:   NVIDIA A100-SXM4-80GB, 81920 MiB
+Time:  Sun Apr 19 02:31:27 PM UTC 2026
+============================================
+======================================================================
+PATCHING BOOTSTRAP — head-ranking stability
+======================================================================
+Model:          meta-llama/Meta-Llama-3-8B-Instruct
+Data:           data/processed/master_sycophancy_balanced.jsonl
+N bootstrap:    5 seeds=[42, 123, 456, 789, 1011]
+N samples/fold: 100
+Head top-K:     5
+Git hash:       a189a45
+
+Loading meta-llama/Meta-Llama-3-8B-Instruct on cuda with dtype=torch.float16...

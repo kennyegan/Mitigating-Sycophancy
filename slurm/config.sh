@@ -15,8 +15,9 @@ export CONDA_MODULE="conda/latest"             # loads miniforge3-24.7.1 on Unit
 export CONDA_ENV="sycophancy-lab"              # your conda env name
 
 # --- Project paths ---
-export PROJECT_DIR="/home/egank2_wit_edu/Mitigating-Sycophancy"
+export PROJECT_DIR="/work/pi_larsonj_wit_edu/egank2_wit_edu/Mitigating-Sycophancy"
 export HF_HOME="${PROJECT_DIR}/.cache/huggingface"  # HuggingFace cache (avoids re-downloads)
+export HF_HUB_OFFLINE=1                              # use cached weights; skip HF.co license check (fixes 401 on gated repos)
 export TORCH_HOME="${PROJECT_DIR}/.cache/torch"
 
 # --- GPU settings ---

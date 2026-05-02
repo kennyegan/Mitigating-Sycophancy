@@ -1,0 +1,9 @@
+No conda package cache directories found outside your home directory. To
+prevent conda from filling up your home directory, you can create a new
+directory at `/work/pi_<your_pi_name>/$USER/.conda/pkgs` and reload the module. 
+No conda environment directories found outside your home directory. To prevent
+conda from filling up your home directory, you can create a new directory at
+`/work/pi_<your_pi_name>/$USER/.conda/envs` and reload the module. 
+Loading conda version miniforge3-24.7.1
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:23<01:10, 23.43s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:52<00:53, 26.52s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [01:05<00:20, 20.57s/it]Loading checkpoint shards: 100%|██████████| 4/4 [01:07<00:00, 13.06s/it]Loading checkpoint shards: 100%|██████████| 4/4 [01:07<00:00, 16.78s/it]
