@@ -167,7 +167,9 @@ def extract_activations_batch(
             acts = model.get_activations(prompt, layers=layers, components=["resid_post"])
             for layer in layers:
                 key = f"blocks.{layer}.hook_resid_post"
-                act_at_pos = acts[key][0, pos, :].cpu().float().numpy()
+                seq_len = acts[key].shape[1]
+                actual_pos = min(max(pos, 0), seq_len - 1)
+                act_at_pos = acts[key][0, actual_pos, :].cpu().float().numpy()
                 layer_activations[layer].append(act_at_pos)
 
     return {layer: np.array(vecs) for layer, vecs in layer_activations.items()}

@@ -125,8 +125,8 @@ def main():
         print(f"Loading base model + LoRA adapter from {args.adapter}...")
 
         base_hf = AutoModelForCausalLM.from_pretrained(
-            args.model, torch_dtype=torch.float16, device_map="cpu", trust_remote_code=True,
-        )
+            args.model, torch_dtype=torch.float16, trust_remote_code=True,
+        ).to(device)
         tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=True)
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
@@ -135,7 +135,6 @@ def main():
         base_hf = PeftModel.from_pretrained(base_hf, args.adapter)
         base_hf = base_hf.merge_and_unload()
         print("LoRA merged.")
-        base_hf = base_hf.to(device)
 
         hooked = HookedTransformer.from_pretrained(
             args.model, hf_model=base_hf, device=device, dtype=torch.float16,

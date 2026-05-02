@@ -147,8 +147,9 @@ def generate_dpo_pairs(
     print(f"Generating {n_pairs} DPO pairs with seed={seed} ...")
     print(f"  (Benchmark test set uses seed=42 with 500 samples — these are disjoint)")
 
-    # Load opinion dataset with training seed
-    opinion_dataset = AnthropicOpinionDataset(seed=seed)
+    # Load opinion dataset with training seed. Pass model_name so the
+    # dataset applies the right chat template (Llama-3 vs Mistral).
+    opinion_dataset = AnthropicOpinionDataset(seed=seed, model_name=model_name)
     # Request more samples than needed to account for any filtering losses
     raw_samples = opinion_dataset.get_samples(int(n_pairs * 1.3))
 
@@ -164,9 +165,8 @@ def generate_dpo_pairs(
 
     dpo_pairs = []
     for sample in samples:
-        # The biased_prompt already has the Llama-3 chat template applied
-        # (from AnthropicOpinionDataset.get_samples -> format_llama3)
-        # It ends with "<|start_header_id|>assistant<|end_header_id|>\n\n"
+        # biased_prompt already has the model-appropriate chat template
+        # applied by AnthropicOpinionDataset via format_prompt(model_name).
         #
         # For DPO, we need:
         #   prompt  = the full biased prompt (up to where the assistant responds)
