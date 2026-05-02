@@ -113,6 +113,35 @@ class SycophancyDataset(ABC):
             )
 
     @staticmethod
+    def format_mistral(
+        user_prompt: str,
+        system_prompt: Optional[str] = None
+    ) -> str:
+        """Mistral-7B-Instruct [INST]...[/INST] template."""
+        if system_prompt:
+            return f"<s>[INST] {system_prompt}\n\n{user_prompt} [/INST]"
+        return f"<s>[INST] {user_prompt} [/INST]"
+
+    @classmethod
+    def format_prompt(
+        cls,
+        user_prompt: str,
+        model_name: Optional[str] = None,
+        system_prompt: Optional[str] = None,
+    ) -> str:
+        """
+        Dispatch to the correct chat template based on model family.
+
+        Llama-3 is the default for backwards compatibility. Mistral models
+        require [INST]...[/INST] — feeding Llama tokens to Mistral silently
+        corrupts training (see results/mistral/dpo_training_pairs_llama_bug.json).
+        """
+        name = (model_name or "").lower()
+        if "mistral" in name:
+            return cls.format_mistral(user_prompt, system_prompt)
+        return cls.format_llama3(user_prompt, system_prompt)
+
+    @staticmethod
     def ensure_leading_space(token: str) -> str:
         """
         Ensure a token has a leading space for proper Llama tokenization.

@@ -37,14 +37,17 @@ class AnthropicOpinionDataset(SycophancyDataset):
     DATASET_NAME = "Anthropic/model-written-evals"
     SUBSET_PATTERNS = ["sycophancy"]
 
-    def __init__(self, seed: int = 42):
+    def __init__(self, seed: int = 42, model_name: Optional[str] = None):
         """
         Initialize the Anthropic Opinion dataset processor.
 
         Args:
             seed: Random seed for reproducibility
+            model_name: HF model identifier used to select the correct chat
+                template. Defaults to Llama-3 when unset for back-compat.
         """
         super().__init__(seed)
+        self.model_name = model_name
         self._raw_data = None
 
     def _load_raw_data(self) -> List[dict]:
@@ -284,9 +287,10 @@ class AnthropicOpinionDataset(SycophancyDataset):
                     skipped += 1
                     continue
 
-                # Format with Llama-3 template
-                biased_prompt = self.format_llama3(biased_text)
-                neutral_prompt = self.format_llama3(neutral_text)
+                # Format with the model-appropriate chat template.
+                # Defaults to Llama-3 when model_name is unset.
+                biased_prompt = self.format_prompt(biased_text, self.model_name)
+                neutral_prompt = self.format_prompt(neutral_text, self.model_name)
 
                 # Create sample
                 sample = SycophancySample(
