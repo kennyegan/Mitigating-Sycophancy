@@ -5,7 +5,10 @@
 \usepackage{hyperref}
 \usepackage{url}
 \usepackage{booktabs}
+\usepackage{amsmath}
 \usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{bm}
 \usepackage{nicefrac}
 \usepackage{microtype}
 \usepackage{graphicx}
@@ -13,6 +16,7 @@
 \usepackage{subcaption}
 \usepackage{xcolor}
 \usepackage{multirow}
+\usepackage{array}
 
 \title{Mitigating Sycophancy in Large Language Models:\\A Mechanistic Investigation}
 
@@ -25,60 +29,230 @@
 
 \maketitle
 
+
 \begin{abstract}
-We apply mechanistic interpretability to sycophancy in Llama-3-8B-Instruct, Mistral-7B-Instruct, and Qwen2.5-14B-Instruct, using linear probes, causal activation patching, head ablation, representation steering, and preference-based fine-tuning. Format-controlled probes reveal that sycophancy is best characterized as \textbf{social compliance}---the model retains correct internal representations but outputs sycophantic responses---not belief corruption. Activation patching identifies attention heads carrying the sycophantic signal, but ablating the top 10 heads simultaneously produces no sycophancy reduction (+0.5\,pp Llama-3, +1.0\,pp Mistral), demonstrating a \textbf{patching-to-ablation dissociation}: these heads are sufficient carriers but not causally necessary. A 5-resample bootstrap confirms the dissociation is robust to head selection---top-3 head pairwise Jaccard is only 0.09 across resamples, yet the ablation null holds for every head set. Control experiments on fictional entities reveal \textbf{domain-specific circuits} with zero overlap and sign-reversed head roles across knowledge domains. Behavioral findings replicate across architectures despite entirely different underlying circuits. DPO fine-tuning reduces opinion sycophancy by \textbf{25.3\,$\pm$\,2.8\,pp} across three independent training seeds (82.4\%\,$\to$\,57.1\%), transfers to rephrased-template OOD ($-$18.2\,pp) with attenuated transfer to held-out Anthropic subcategories ($-$4.9\,pp on $N{=}1{,}000$), and preserves capabilities (MMLU 62.9\,$\pm$\,0.1\%, GSM8k 40.2\,$\pm$\,2.9\% at full $N{=}1{,}319$). A free-form generation evaluation ($N{=}300$ multi-turn conversations, judge-scored across 5 dimensions with bootstrap CIs) confirms forced-choice findings directionally (sycophancy 2.66\,$\to$\,2.43, truthfulness 3.48\,$\to$\,3.71 on 1--5 scales). An SFT baseline on identical preference data achieves stronger raw reduction but collapses GSM8k from 33.2\% to 5.8\% at full $N$, demonstrating DPO's superior \textbf{capability-safety tradeoff}. Cross-scale evaluation on Qwen-14B reveals heterogeneity: high baseline agreement (75\% on opinion) with a near-zero mean compliance gap, indicating bias-induced shifts vary across model families and motivating bounded scope claims. Probe re-analysis reveals the mechanism: DPO converts social compliance into robust truth-tracking (+15.6\,pp) without altering internal truth representations ($-$1.7\,pp belief corruption)---the first mechanistic evidence of how preference optimization resolves sycophantic output-gating specifically.
+We apply controlled probes, activation patching, head ablation, and preference-based fine-tuning to sycophancy in instruction-tuned LLMs. Format-controlled probes on Llama-3-8B-Instruct and Mistral-7B-Instruct suggest the dominant failure mode is \textbf{social compliance} (the model retains correct internal representations under biased prompts but outputs sycophantic responses) rather than belief corruption: 18.0\% vs.\ 10.1\% at the best-transfer layer in Llama-3 (Fisher's $p < 0.001$). Activation patching identifies attention heads that carry the sycophantic signal, but ablating the top 10 heads simultaneously yields no reduction (+0.5\,pp Llama-3, +1.0\,pp Mistral)---a \textbf{patching-to-ablation dissociation}: the heads are sufficient carriers, not causally necessary. A 5-resample bootstrap shows the head ranking is unstable (top-3 pairwise Jaccard 0.09) yet the ablation null holds for every resampled head set. On Llama-3, DPO fine-tuning reduces opinion sycophancy across three independent training seeds (82.4\% $\to$ 57.1\,$\pm$\,2.8\%) while preserving full-$N{=}1{,}319$ GSM8k (40.2\,$\pm$\,2.9\% vs.\ 33.2\% baseline); SFT on identical preference data collapses GSM8k to 5.8\%. The DPO probe decomposition shifts from social compliance toward robust tracking ($-$6.6\,pp / +15.6\,pp). Generality is bounded: Mistral DPO collapses GSM8k under matched preference-pair construction; Qwen-14B exhibits a near-zero compliance gap; free-form evaluation directionally supports the findings without statistical significance.
 \end{abstract}
 
 %% ============================================================
 \section{Introduction}
 \label{sec:intro}
 
-Sycophancy---the tendency of a language model to validate user beliefs regardless of factual accuracy---poses a fundamental alignment challenge. A sycophantic model tells users what they want to hear rather than what is true, undermining its usefulness for tasks requiring honest information retrieval, reasoning, or advice.
+Sycophancy---a language model's tendency to validate user beliefs regardless of factual accuracy---is a documented failure mode of RLHF-trained models \citep{perez2022discovering, sharma2024towards} that undermines their usefulness for honest information retrieval, reasoning, and advice. Two competing internal mechanisms could produce this behavior: \textbf{belief corruption} (the biased social context shifts the model's internal representation of the correct answer, so the model ``believes'' the sycophantic response) or \textbf{social compliance} (the model retains an accurate internal belief but suppresses it in favor of the socially expected response). The two predict different mitigations---knowledge-representation interventions for the former, output-gating interventions for the latter.
 
-Two competing hypotheses exist for the internal mechanism:
-\begin{enumerate}
-    \item \textbf{Belief Corruption}: The biased social context shifts the model's internal representation of the correct answer. The model ``believes'' the sycophantic response is correct.
-    \item \textbf{Social Compliance}: The model retains an accurate internal belief about the correct answer but suppresses it in favor of the socially expected response.
-\end{enumerate}
-Distinguishing between these has direct implications for mitigation: belief corruption requires fixing knowledge representations, while social compliance requires targeting the output layer or decoding mechanism.
+A separate methodological question concerns mechanistic interpretability itself. Activation patching \citep{wang2022interpretability} identifies which components \emph{can carry} a behavioral signal under intervention, but whether those components are causally \emph{necessary} requires ablation \citep{heimersheim2024patching}. For complex behaviors implemented through redundant pathways, patching-identified components may be ablated with no measurable effect---a sufficiency-vs-necessity dissociation with direct consequences for which interventions can be expected to work.
 
-This study applies mechanistic interpretability techniques---linear probing, causal activation patching, head ablation, representation steering, and preference-based fine-tuning---to Llama-3-8B-Instruct, Mistral-7B-Instruct, and Qwen2.5-14B-Instruct to localize, characterize, and mitigate sycophantic computation. We make seven novel contributions:
+We apply controlled probes, activation patching, head ablation, and preference-based fine-tuning to sycophancy in Llama-3-8B-Instruct, with cross-architecture replication on Mistral-7B-Instruct and cross-scale evaluation on Qwen2.5-14B-Instruct. Our contributions are:
 \begin{enumerate}
-    \item Format-controlled probes that distinguish social compliance from belief corruption as the dominant sycophantic pattern, with a quantitative four-way decomposition (social compliance, belief corruption, robust tracking, other).
-    \item A patching-to-ablation dissociation, validated by a 5-resample bootstrap showing the dissociation is robust to head selection (top-3 pairwise Jaccard 0.09; null ablation holds for every resampled head set), demonstrating that head-level circuit discovery via activation patching does not imply causal necessity.
-    \item Evidence that sycophancy is implemented by domain-specific circuits with zero overlap and sign-reversed head roles across knowledge domains.
-    \item Cross-architecture \emph{and} cross-scale evaluation across three model families (7B, 8B, 14B) showing behavioral findings replicate across Llama-3 and Mistral despite entirely different underlying circuits, while Qwen-14B exhibits a heterogeneous bias profile that bounds the scope of social-compliance dominance claims.
-    \item The first mechanistic decomposition of how DPO resolves \emph{sycophancy} specifically---extending the methodological approach of \citet{lee2024mechanistic} and \citet{yang2024dpo} for toxicity---by showing that DPO converts social compliance into robust truth-tracking without altering internal truth representations.
-    \item A robustness evaluation of the DPO result across three independent training seeds (opinion sycophancy 57.1\,$\pm$\,2.8\%; CV $<$ 12\%), two OOD evaluation protocols (rephrased templates and held-out Anthropic subcategories, $N{=}1{,}000$), and a 300-conversation free-form benchmark with judge-scored 5-dimension rubric and bootstrap confidence intervals.
-    \item A training-time intervention comparison showing DPO achieves a superior capability-safety tradeoff vs.\ supervised fine-tuning on identical preference data---DPO retains GSM8k at 40.2\,$\pm$\,2.9\% (vs.\ 33.2\% baseline) while SFT collapses to 5.8\% at full $N{=}1{,}319$.
+  \item Controlled probes (neutral-transfer design with randomized answer positions) suggest social compliance dominates belief corruption in Llama-3 (1.8:1) and Mistral-7B (6.4:1) under our forced-choice evaluation.
+  \item Activation patching identifies heads that carry the sycophantic signal, but top-3 and top-10 zero-ablations produce no sycophancy reduction in either model. A 5-resample bootstrap confirms the ablation null is robust to head selection: pairwise Jaccard for the top-3 ranking is 0.09, yet every resampled head set yields a null---results consistent with redundant implementation.
+  \item In Llama-3, DPO reduces opinion sycophancy across three training seeds (82.4\% $\to$ 57.1\,$\pm$\,2.8\%) with better capability retention than SFT on identical preference data; the probe decomposition shifts from social compliance toward robust tracking.
+  \item Cross-model and free-form evaluations bound the claim: Mistral DPO fails to preserve capabilities; Qwen-14B's bias-induced shift is near zero despite high baseline opinion-agreement; free-form gains are directional but not significant at the pilot $N$.
 \end{enumerate}
 
 %% ============================================================
 \section{Related Work}
 \label{sec:related}
 
-\paragraph{Sycophancy Characterization.}
-\citet{perez2022discovering} first documented sycophancy as a named behavior in RLHF-trained models, providing the \texttt{anthropic\_opinion} dataset used here. \citet{sharma2024towards} produced the most comprehensive behavioral characterization, demonstrating that sycophancy scales with model capability and is amplified by RLHF. \citet{wei2023simple} showed that training on synthetic disagreement examples reduces sycophancy, establishing a training-data baseline. Our work provides the first mechanistic account of where sycophancy is computed within the network.
+\paragraph{Sycophancy.} \citet{perez2022discovering} introduced the \texttt{anthropic\_opinion} dataset used here; \citet{sharma2024towards} characterized sycophancy as scaling with model capability and being amplified by RLHF; \citet{wei2023simple} demonstrated training-data mitigation via synthetic disagreement. Concurrent mechanistic work on sycophancy \citep{chen2024pinpoint, li2025truth, obrien2026fewbad} is summarized in Appendix~\ref{app:concurrent}.
 
-\paragraph{Mechanistic Interpretability.}
-\citet{wang2022interpretability} established circuit discovery via activation patching on GPT-2 small, which we adapt for sycophancy identification. \citet{conmy2023towards} extended this with automated circuit discovery. For probe-based analysis, we build on \citet{marks2023geometry}, who showed true/false statements are linearly separable in LLM representations, and \citet{burns2023discovering}, who introduced unsupervised methods for finding truth directions. Our probe control experiment adds a methodological caution: probes trained on format-mixed data can learn superficial cues rather than genuine representations. Concurrent work has begun applying circuit discovery directly to sycophancy: \citet{chen2024pinpoint} use gradient- and activation-based module selection on Llama-2-Chat to identify sycophancy-related modules and apply Supervised Pinpoint Tuning (SPT)---targeted fine-tuning of only the identified modules while freezing the rest---achieving substantial reduction. Notably, Chen et al.\ study challenge-induced sycophancy (model reverses a correct answer under pushback), while we study assertion-based sycophancy (model agrees with an initial opinion)---a distinction we revisit in Section~\ref{sec:discussion}. \citet{li2025truth} apply logit-lens and activation patching to Llama-3.1-8B-Instruct, finding that sycophantic output crystallizes in late layers (16--23). \citet{obrien2026fewbad} use sparse autoencoders on Gemma-2 to isolate ${\sim}3\%$ of MLP neurons responsible for sycophancy, demonstrating successful neuron-level correction via gradient-masked fine-tuning.
+\paragraph{Mechanistic interpretability.} We adapt activation patching for circuit discovery \citep{wang2022interpretability, conmy2023towards}. \citet{heimersheim2024patching} formalize the distinction between denoising patching (sufficiency) and noising patching (necessity) that motivates our ablation analysis. For probe-based truth representations we build on \citet{marks2023geometry, burns2023discovering}. Self-repair phenomena \citep{mcgrath2023hydra, rushing2024explorations} predict that ablating circuit components may not impair behavior; our patching-to-ablation dissociation is an empirical instance.
 
-\paragraph{Inference-Time Intervention.}
-\citet{li2023inference} applied activation steering to improve truthfulness without retraining. \citet{turner2023activation} and \citet{zou2023representation} showed that mean differences between contrastive prompts can steer behavior via residual stream addition. \citet{panickssery2023steering} extended this approach to Llama-2 with contrastive activation addition. Our ablation results suggest these approaches may face the same redundancy problem we document: patching-identified heads can be ablated with no measurable effect, implying that effective steering may require broader targets than head-level circuit discovery alone identifies. Recent neuron-level SAE-based correction \citep{obrien2026fewbad} demonstrates that sparse feature decomposition can succeed where dense activation manipulation fails---suggesting the ``redundantly distributed'' characterization applies specifically to head- and residual-stream-level interventions, not necessarily to all granularities of analysis.
-
-\paragraph{Unfaithful Reasoning.}
-\citet{turpin2024language} demonstrated that chain-of-thought explanations can be post-hoc rationalizations. Our probe results offer a complementary perspective: early-layer probes (0--10) show robust transfer across prompt conditions, while deep-layer probes (13+) collapse under distribution shift---consistent with surface-level reasoning artifacts diverging from underlying computation.
+\paragraph{Inference-time intervention and preference optimization.} Activation steering \citep{li2023inference, turner2023activation, zou2023representation, panickssery2023steering} adds direction vectors to the residual stream; our results suggest these face the redundancy problem we document. DPO \citep{rafailov2023direct} provides our training-time intervention. Mechanistic analysis of DPO has been applied to toxicity \citep{lee2024mechanistic, yang2024dpo}; we extend this paradigm to sycophancy.
 
 %% ============================================================
-\section{Dataset and Methods}
+\section{Experimental Setup}
 \label{sec:methods}
 
-\paragraph{Dataset.}
-We constructed a 1,500-sample evaluation set from three domains: \texttt{anthropic\_opinion} (500 opinion/preference questions with user-stated positions), \texttt{truthfulqa\_factual} (500 factual questions where a biased prompt asserts a false belief), and \texttt{gsm8k\_reasoning} (500 mathematical reasoning problems with an incorrect suggested answer). Each sample contains a neutral prompt (no user bias) and a biased prompt (user opinion embedded). Sycophancy is measured as the increase in probability of the incorrect/user-preferred answer under biased vs.\ neutral conditions. Control groups include fictional entities, uncertain knowledge, and adversarially true prompts.
+\paragraph{Dataset.} A 1{,}500-sample evaluation set across three domains ($N{=}500$ each): \texttt{anthropic\_opinion} (opinion questions with user-stated positions), \texttt{truthfulqa\_factual} (factual questions where a biased prompt asserts a false belief), and \texttt{gsm8k\_reasoning} (math problems with an incorrect suggested answer). Each sample contains a neutral and a biased prompt. \emph{Sycophancy rate} is the fraction of samples where $P(\text{sycophantic}) > P(\text{correct})$ under the biased prompt; \emph{compliance gap} is $P(\text{sycophantic} \mid \text{biased}) - P(\text{sycophantic} \mid \text{neutral})$. Probes assign each sample to robust tracking (probe correct, output correct), social compliance (probe correct, output sycophantic), belief corruption (probe corrupted, output sycophantic), or other.
+
+\paragraph{Models, probes, patching.} Llama-3-8B-Instruct (primary), Mistral-7B-Instruct-v0.1 (replication), Qwen2.5-14B-Instruct (cross-scale), via TransformerLens with \texttt{dtype=float16}. Logistic regression probes are trained at each residual stream layer using a \textbf{neutral-transfer} design (trained on neutral activations, evaluated on biased) to prevent learning prompt-format cues; 5-fold stratified cross-validation on 1{,}500 samples with randomized answer positions. We refer to ``best-transfer layer'' as the layer maximizing biased-condition accuracy under this protocol. Following \citet{wang2022interpretability}, we identify critical layers via layer$\times$position patching, then perform head-level patching within the top-5 layers. Zero-ablation tests causal necessity. A 5-resample bootstrap ($N{=}100$ each, seeds 42/123/456/789/1011) quantifies head-ranking stability over critical layers 0--11.
+
+\paragraph{DPO and SFT.} 400 opinion-domain preference pairs constructed from Anthropic-MWE held-out from evaluation; LoRA fine-tuning ($r{=}16$, q/k/v/o); DPO ($\beta{=}0.1$, lr $5{\times}10^{-5}$, 3 epochs); SFT trained on the same chosen responses with identical LoRA configuration and dataset. Three DPO training seeds (100/200/300) regenerate the preference data per seed. Full hyperparameters and training-size sensitivity are in Appendices~\ref{app:reproducibility}--\ref{app:size_sensitivity}.
+
+%% ============================================================
+\section{Results}
+\label{sec:results}
+
+\subsection{Baseline and probe decomposition}
+\label{sec:probes}
 
 \begin{table}[t]
 \centering
-\caption{Key notation and definitions used throughout.}
+\caption{\textbf{Llama-3-8B-Instruct: baseline rates and probe decomposition.} \emph{Top:} forced-choice sycophancy is concentrated in the opinion domain. \emph{Bottom:} probe categories at Layer 1 (best-transfer layer; neutral CV 89.0\%, biased transfer 77.9\%); under the neutral-transfer design, social compliance dominates belief corruption (Fisher's $p<0.001$, OR 1.95).}
+\label{tab:probe}
+\small
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Source} & \textbf{Sycophancy rate} & \textbf{95\% CI} \\
+\midrule
+\texttt{anthropic\_opinion} & 82.4\% & [78.8, 85.5] \\
+\texttt{truthfulqa\_factual} & 1.6\% & [0.8, 3.1] \\
+\texttt{gsm8k\_reasoning} & 0.0\% & [0.0, 0.8] \\
+Overall & 28.0\% & [25.8, 30.3] \\
+\midrule
+\textbf{Probe category (Layer 1)} & \textbf{Rate} & \textbf{95\% CI} \\
+\midrule
+Robust tracking & 59.9\% & [57.4, 62.3] \\
+\textbf{Social compliance} & \textbf{18.0\%} & [16.0, 19.9] \\
+Belief corruption & 10.1\% & [8.6, 11.7] \\
+Other (probe uncertain) & 12.1\% & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Sycophancy on Llama-3-8B-Instruct concentrates in the opinion domain (82.4\%) and is near-zero on factual (1.6\%) and math (0.0\%) (Table~\ref{tab:probe}, top). The probe decomposition at the best-transfer layer (bottom) shows social compliance (18.0\%) exceeds belief corruption (10.1\%) at a 1.8:1 ratio. The model retains correct internal representations under biased prompts but outputs sycophantic responses---evidence consistent with an output-gating failure rather than belief corruption. Probes trained on format-mixed data achieve near-perfect accuracy but learn surface prompt-format cues; the neutral-transfer design with randomized answer positions is necessary for valid claims about internal representations. Per-layer probe accuracies, the base-model comparison, and the format-mixed control are in Appendices~\ref{app:base}, \ref{app:probe_layers}.
+
+\subsection{Patching-to-ablation dissociation}
+\label{sec:circuit}
+
+Layer$\times$position patching localizes sycophancy carriers to early layers (1--5; mean total effect $2.105 \pm 2.728$ over 34/100 samples with measurable effects; Figure~\ref{fig:dissociation}a); head-level patching identifies L4H28 (recovery $0.443 \pm 0.550$), L4H5 ($0.302 \pm 0.537$), L5H31 ($0.256 \pm 0.549$). Standard deviations exceed means due to right-skewed recovery and small effective sample size; \emph{the specific ranking should be treated as approximate}. A 5-resample bootstrap quantifies this: pairwise Jaccard for the top-3 ranking is 0.09 (range 0.00--0.50); the originally-named top-3 heads appear in only 1/5 resamples each; new heads (L11H24, L2H5, L9H28, L9H0) emerge at 2/5 (Appendix~\ref{app:bootstrap}).
+
+\begin{figure}[t]
+\centering
+\begin{subfigure}[t]{0.48\linewidth}
+    \includegraphics[width=\linewidth]{fig1_patching_heatmap.pdf}
+    \caption{Layer$\times$position patching}
+    \label{fig:dissociation_a}
+\end{subfigure}
+\hfill
+\begin{subfigure}[t]{0.48\linewidth}
+    \includegraphics[width=\linewidth]{fig5_ablation_comparison.pdf}
+    \caption{Zero-ablation of patching-identified heads}
+    \label{fig:dissociation_b}
+\end{subfigure}
+\caption{\textbf{Patching-to-ablation dissociation on Llama-3-8B-Instruct.} Activation patching (a) identifies sufficient carriers concentrated in layers 1--5; zero-ablation (b) of the same heads---individually, in pairs, jointly, or extended to top-10---produces no sycophancy reduction (max $\pm 0.5$\,pp), revealing that patching-identified components are sufficient carriers but not causally necessary.}
+\label{fig:dissociation}
+\end{figure}
+
+\begin{table}[t]
+\centering
+\caption{\textbf{Patching-to-ablation dissociation on Llama-3-8B-Instruct.} Zero-ablating the patching-identified top-3 heads individually, in pairs, jointly, or extended to top-10 produces no sycophancy reduction. The null holds for every one of the 5 bootstrap-resampled top-3 head sets (Appendix~\ref{app:bootstrap}).}
+\label{tab:ablation}
+\small
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Condition} & \textbf{Syc.} & \textbf{$\Delta$ (pp)} & \textbf{Opinion} & \textbf{MMLU} & \textbf{GSM8k} \\
+\midrule
+Baseline & 28.0\% & --- & 82.4\% & 62.2\% & 34.0\% \\
+L4H28 only (zero) & 28.1\% & $+0.1$ & 82.6\% & 62.1\% & 35.0\% \\
+L4H5 only (zero) & 27.9\% & $-0.1$ & 82.4\% & 62.5\% & 36.5\% \\
+L5H31 only (zero) & 27.9\% & $-0.1$ & 82.6\% & 63.3\% & 33.0\% \\
+All 3 (zero) & 27.7\% & $-0.3$ & 82.4\% & 62.5\% & 37.5\% \\
+Top-10 (zero) & 28.5\% & $+0.5$ & 82.8\% & 63.4\% & 29.9\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Zero-ablation of the validated top-3 heads (individually, in pairs, jointly) produces $\pm 0.3$\,pp change from baseline, well within sampling noise. Extending to all 10 patching-identified heads yields the same null: $+0.5$\,pp ($z{=}0.28$, $p{=}0.78$, 95\% CI $[-2.9, +3.9]$\,pp; Table~\ref{tab:ablation}). Patching identifies sufficient carriers, not necessary components: the heads \emph{can} carry the sycophantic signal (patching through them restores honest behavior) but are not causally required. Crucially, the head ranking is unstable but the ablation null is not---it holds for every one of the 5 bootstrap-resampled top-3 head sets, strengthening the dissociation interpretation. Our ablation results are consistent with redundant implementation \citep{mcgrath2023hydra, rushing2024explorations}; the bootstrap-resample evidence is also consistent with a degenerate circuit with multiple redundant pathways. Representation steering experiments (Appendix~\ref{app:steering}) yield only small opinion-domain reductions ($-6.9$\,pp at layer 15, $\alpha{=}2$) that do not survive FDR correction; under aggressive $\alpha$, the intervention destroys capability rather than reducing sycophancy. Together, these inference-time results motivate the training-time intervention in Section~\ref{sec:dpo}.
+
+\subsection{DPO mitigation and DPO vs.\ SFT}
+\label{sec:dpo}
+
+\begin{table}[t]
+\centering
+\caption{\textbf{Capability--safety tradeoff on identical preference data.} SFT and DPO use the same 400 chosen/rejected pairs, the same LoRA configuration, and the same seed (100); the loss differs. SFT achieves stronger raw sycophancy reduction but collapses GSM8k from 33.2\% to 5.8\% at full $N{=}1{,}319$. DPO retains both capabilities; multi-seed mean is across seeds 100/200/300 with regenerated preference data per seed.}
+\label{tab:sft_dpo}
+\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Metric} & \textbf{Baseline} & \textbf{SFT} & \textbf{DPO (seed 100)} & \textbf{DPO (3-seed mean)} \\
+\midrule
+Overall sycophancy & 28.0\% & \textbf{8.3\%} & 19.6\% & 19.1\,$\pm$\,1.0\% \\
+Opinion sycophancy & 82.4\% & 24.8\% & 58.6\% & 57.1\,$\pm$\,2.8\% \\
+MMLU ($N{=}500$) & 62.0\% & 60.0\% & 62.8\% & 62.9\,$\pm$\,0.1\% \\
+\textbf{GSM8k (full $N{=}1{,}319$)} & \textbf{33.2\%} & \textbf{5.8\%} & \textbf{36.8\%} & \textbf{40.2\,$\pm$\,2.9\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Across three independent DPO training seeds with regenerated preference data per seed, opinion sycophancy on Llama-3-8B-Instruct drops from 82.4\% to 57.1\,$\pm$\,2.8\% (CV $<$ 12\%); MMLU is preserved at 62.9\,$\pm$\,0.1\% and full-$N{=}1{,}319$ GSM8k at 40.2\,$\pm$\,2.9\% (vs.\ 33.2\% baseline). \textbf{In Llama-3, DPO shifts the probe decomposition from social compliance toward robust tracking}: at Layer 1, social compliance drops $-6.6$\,pp, belief corruption barely changes ($-1.7$\,pp), robust tracking rises $+15.6$\,pp; these probe effects are the most stable across seeds (SC SD 1.4\,pp, RT 1.3\,pp, BC 0.6\,pp; Appendix~\ref{app:probe_decomp}, Appendix~\ref{app:multiseed}).
+
+A supervised baseline trained on the chosen responses from the same 400 preference pairs collapses GSM8k from 33.2\% to 5.8\% at full $N{=}1{,}319$ while reducing opinion sycophancy more aggressively (24.8\%; Table~\ref{tab:sft_dpo}, Figure~\ref{fig:sft_dpo}). DPO retains both. The capability-safety tradeoff is dictated by the loss, not the data: SFT teaches the chosen-response style uniformly (including the hedging that destroys arithmetic accuracy), while DPO uses the chosen-vs-rejected contrast to reshape only parameters where the contrast matters.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.7\linewidth]{fig11_sft_dpo_tradeoff.pdf}
+\caption{\textbf{DPO reduces sycophancy while preserving full-$N$ GSM8k; SFT on identical preference data achieves stronger raw reduction but collapses GSM8k.} Each point plots opinion sycophancy (lower is better) against full-$N{=}1{,}319$ GSM8k accuracy (higher is better). All three DPO seeds cluster at preserved-or-better GSM8k while reducing opinion sycophancy by 23.8--28.6\,pp.}
+\label{fig:sft_dpo}
+\end{figure}
+
+\subsection{Generality checks}
+\label{sec:generality}
+
+\begin{table}[t]
+\centering
+\caption{\textbf{Generality bounds.} Several architecture-level findings replicate across Llama and Mistral, while DPO mitigation, cross-scale bias profiles, OOD transfer, and free-form transfer each set scope conditions on the central claims. ``$-$'' = not applicable.}
+\label{tab:generality}
+\footnotesize
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.20\linewidth}>{\raggedright\arraybackslash}p{0.76\linewidth}@{}}
+\toprule
+\textbf{Test} & \textbf{Result} \\
+\midrule
+Mistral-7B replication & SC:BC $6.4{:}1$; top-10 ablation $+1.0$\,pp; entirely different circuit (Mistral L1/9/11 vs.\ Llama L4--5; zero head overlap); steering null replicates. \\[2pt]
+Mistral-7B DPO & Opinion sycophancy $-31.7$\,pp \emph{but} GSM8k collapses $9.3\% \to 0.0\%$ and factual sycophancy $\to 100\%$; reproduces under two HP regimes (App~\ref{app:reproducibility}). DPO mechanism established on Llama-3 only. \\[2pt]
+Qwen-14B baseline & Opinion-agreement 75.3\% with mean compliance gap $+0.006$ (95\% CI [$-0.015$, $+0.027$], crosses zero); bias injection barely shifts choices. \\[2pt]
+Qwen-14B ablation & Single-head null replicates (max $-2.4$\,pp); top-3 zero-ablation \emph{increases} sycophancy by $+20.3$\,pp (and pair L0H0+L0H17 by $+22.6$\,pp)---scope condition on the redundancy claim. \\[2pt]
+DPO OOD (Llama, Protocol A) & Rephrased templates $-18.2$\,pp combined ($\sim$77\% retention); rephrased subset alone $-20.5$\,pp (format-invariant). \\[2pt]
+DPO OOD (Llama, Protocol B) & Held-out Anthropic subcategories $N{=}1{,}000$: $-4.9$\,pp ($\sim$20\% retention); domain-attenuated. \\[2pt]
+Free-form (Llama, $N{=}150$/cond) & Sycophancy $2.66 \to 2.43$ ($\Delta\,{-}0.23$, 95\% bootstrap CI $[-0.55, +0.10]$); truthfulness $3.48 \to 3.71$; hedging $0.64 \to 0.64$. Directional, not significant at pilot $N$. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Cross-architecture (Mistral-7B-Instruct).} Several architecture-level findings replicate (Table~\ref{tab:generality}, rows 1--2). Social compliance dominates more lopsidedly (6.4:1); the patching-to-ablation dissociation holds (top-10 ablation $+1.0$\,pp); steering fails. Mistral and Llama-3 implement sycophancy through entirely different circuits (zero head overlap) yet show the same high-level properties. \emph{However, Mistral DPO mitigation does not replicate}: under matched preference-pair construction (with corrected Mistral chat templating) and two independent HP regimes, Mistral DPO reduces opinion sycophancy substantially but collapses GSM8k from 9.3\% to 0.0\% and pushes factual sycophancy to 100\%. The DPO probe-decomposition mechanism is established on Llama-3 only; cross-architecture mitigation remains open.
+
+\paragraph{Cross-scale (Qwen-14B).} Qwen-14B's high baseline opinion-agreement coexists with a near-zero compliance gap whose CI crosses zero (Table~\ref{tab:generality}, row 3): the bias injection that strongly moves Llama-3 barely moves Qwen. We bound the social-compliance dominance characterization to certain RLHF-trained models, not a universal property at this scale. The architecture-level patching profile parallels Llama-3 (early-layer concentration; top-3 heads in Layer 0); single-head zero-ablations replicate the null. Top-3 ($+20.3$\,pp) and pair L0H0+L0H17 ($+22.6$\,pp) zero-ablations both \emph{increase} sycophancy, suggesting these heads are functionally opposed in Qwen rather than implementing a homogeneous redundant circuit; mean-ablation degrades the model entirely (sycophancy, MMLU, and GSM8k all drop to 0\%, consistent with the Llama-3 mean-ablation degradation in Appendix~\ref{app:original_ablation}). Full Qwen ablation table in Appendix~\ref{app:qwen_visuals}.
+
+\paragraph{OOD and free-form.} Two OOD protocols (Appendix~\ref{app:ood}) decompose generalization: rephrased templates retain $\sim$77\% of in-distribution effect ($-18.2$\,pp); held-out Anthropic subcategories ($N{=}1{,}000$) retain only $\sim$20\% ($-4.9$\,pp). DPO is format-robust but domain-attenuated at this preference-data scale. A 300-conversation free-form judge-scored evaluation (Appendix~\ref{app:freeform}) directionally supports, but does not significantly establish, the forced-choice findings: sycophancy $2.66 \to 2.43$ with bootstrap 95\% CI crossing zero; truthfulness $3.48 \to 3.71$; hedging is essentially unchanged. The hedging null supports a content-vs-style distinction in DPO's effect: DPO changes \emph{what} the model commits to, not \emph{how deferentially} it expresses the answer.
+
+%% ============================================================
+\section{Discussion}
+\label{sec:discussion}
+
+\paragraph{Social compliance and the DPO mechanism.}
+The probe decomposition (pre-DPO) and the post-DPO probe re-analysis are consistent in direction: under our forced-choice evaluation, the model already retains correct internal representations of the right answer, and DPO operates on the output-gating step rather than re-learning truth. In Llama-3, DPO shifts the probe decomposition from social compliance toward robust tracking. Inference-time activation manipulation cannot reach this distributed gating in our setting; preference optimization can.
+
+\paragraph{Sufficiency vs.\ necessity in mechanistic interpretability.}
+The patching-to-ablation dissociation is our most methodologically significant finding. Activation patching measures sufficiency, not necessity \citep{heimersheim2024patching}; for behaviors implemented through redundant pathways, patching-identified heads can be zero-ablated with no behavioral effect. Bootstrap-instability of the head ranking does not weaken the dissociation: the ablation null holds for every resampled head set. Validation via ablation or other necessity tests is essential before drawing causal localization conclusions from patching alone.
+
+\paragraph{Why DPO helps in Llama, fails in Mistral, and is bounded by free-form / cross-scale.}
+On Llama-3 the DPO mitigation preserves capabilities and shifts the probe decomposition. On Mistral the same construction collapses GSM8k under two HP regimes. On Qwen the bias-induced shift the social-compliance characterization rests on is itself near zero, so the frame may not apply. Free-form gains are directional but underpowered. Several architecture-level findings replicate across Llama and Mistral, while mitigation and bias profiles vary. We treat the central DPO claim as a property of one model at one preference-data scale, not a universal mechanism.
+
+\paragraph{Limitations.}
+(i) Three model families is a small sample; 70B+, constitutional AI, and non-transformer architectures remain open. (ii) Forced-choice (A)/(B) cannot capture style-level deference; our free-form judge-scored evaluation is a 150-per-condition pilot with bootstrap CIs that cross zero, single-judge---a 50-conversation human audit for Cohen's $\kappa$ is in progress, to appear in camera-ready. (iii) Head ranking is unstable (top-3 Jaccard 0.09); the load-bearing finding is the ablation null, not a precise localization. (iv) DPO mitigation does not transfer to Mistral at this preference-data scale ($\sim$360 effective opinion-domain pairs). (v) DPO generalization is format-robust but domain-attenuated ($\sim$20\% retention on held-out Anthropic subcategories at $N{=}1{,}000$). (vi) Whether the SC$\to$RT probe shift holds under OOD prompts or multi-turn pushback is untested.
+
+%% ============================================================
+\section{Conclusion}
+\label{sec:conclusion}
+
+\textbf{(1)} Probe-based evidence under our forced-choice evaluation suggests social compliance dominates belief corruption in Llama-3 and Mistral, consistent with an output-gating failure. \textbf{(2)} Activation patching identifies sufficient carriers; ablation reveals these are not causally necessary, exposing a sufficiency-vs-necessity dissociation that is robust to head-ranking instability. \textbf{(3)} On Llama-3, DPO reduces opinion sycophancy and shifts the probe decomposition toward robust tracking, while preserving GSM8k where SFT on identical data collapses it. \textbf{(4)} Generality is bounded: cross-architecture mitigation does not preserve capabilities, cross-scale bias profiles vary, and free-form gains are directional. Head-level circuit discovery for safety-relevant behaviors should be validated by ablation, and mitigation claims should be reported with explicit cross-architecture and free-form bounds.
+
+\paragraph{Reproducibility statement.}
+Random seeds are fixed (42 for evaluation; 100/200/300 for DPO; 42/123/456/789/1011 for patching bootstrap). Manifest \texttt{results/full\_rerun\_manifest.json} validates the Llama-3 pipeline. Code, scripts, and data will be released upon acceptance. The full pipeline requires $\sim$120 A100 GPU-hours and $\sim$\$8 in judge-API costs.
+
+\paragraph{Ethics statement.}
+This research uses publicly available models (Llama-3-8B-Instruct, Mistral-7B-Instruct, Qwen2.5-14B-Instruct) and datasets (Anthropic model-written-evals, TruthfulQA, GSM8k, MMLU). The DPO and SFT mitigation results are evaluated for capability retention to avoid recommending interventions that trade safety against general usefulness; the SFT GSM8k-collapse finding explicitly argues against deploying naive supervised correction on this preference data.
+
+%% ============================================================
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+%% ============================================================
+\appendix
+
+
+\section{Concurrent Work on Sycophancy Interpretability}
+\label{app:concurrent}
+
+Three concurrent papers apply mechanistic interpretability to sycophancy with partially divergent results. \citet{li2025truth} apply logit-lens and activation patching to Llama-3.1-8B-Instruct, finding that sycophantic output crystallizes in late layers (16--23); our patching identifies early layers (1--5) as primary carriers, which is complementary---patching measures where information \emph{enters} the computation, while logit-lens measures where the \emph{output decision} crystallizes. \citet{chen2024pinpoint} achieve sycophancy reduction via Supervised Pinpoint Tuning (targeted fine-tuning of gradient/activation-identified modules) in Llama-2-Chat, while our zero-ablation in Llama-3 produces a null. Their success with targeted \emph{fine-tuning}---which reshapes rather than removes components---is consistent with our DPO finding that training-time methods succeed where head-level inference-time ablation fails. Chen et al.\ study challenge-induced sycophancy (model reverses a correct answer under pushback) while we study assertion-based sycophancy (model agrees with an initial opinion); these may engage circuits with different redundancy properties. \citet{obrien2026fewbad} use sparse autoencoders on Gemma-2 to isolate ${\sim}3\%$ of MLP neurons responsible for sycophancy and demonstrate successful neuron-level correction via gradient-masked fine-tuning, suggesting the redundantly-distributed characterization applies specifically to head-level and residual-stream-level interventions, not necessarily to all granularities of analysis.
+
+\section{Notation}
+\label{app:notation}
+
+\begin{table}[h]
+\centering
+\caption{Key notation used throughout the paper.}
 \label{tab:notation}
 \small
 \begin{tabular}{@{}ll@{}}
@@ -95,170 +269,63 @@ Recovery score & Fraction of sycophantic logit-diff recovered by patching a comp
 \end{tabular}
 \end{table}
 
-\paragraph{Models and Infrastructure.}
-All experiments use Llama-3-8B-Instruct (primary) and Mistral-7B-Instruct-v0.1 (replication), loaded via TransformerLens with \texttt{dtype=float16} on NVIDIA A100-SXM4-80GB GPUs. Random seed is fixed at 42 throughout (DPO training uses seed 100 for data disjointness). GSM8k capability scores use strict normalized numeric equality on model-generated completions, with an answer extraction pipeline that parses chain-of-thought output for a final numeric answer after normalization.
+\section{Probe Layers, Patching, and Steering Visuals}
+\label{app:probe_layers}
 
-\paragraph{Linear Probes.}
-Logistic regression probes were trained at each residual stream layer using a \textbf{neutral-transfer} design: probes trained exclusively on neutral prompt activations and tested on biased prompt activations from the same samples. This prevents learning prompt-format cues. Labels encode the correct answer identity. The balanced dataset randomizes answer positions (50.0--51.6\% majority fraction). 5-fold stratified cross-validation on 1,500 samples.
-
-\paragraph{Causal Activation Patching.}
-Following \citet{wang2022interpretability}, we first identify critical layers via layer$\times$position patching, then perform head-level patching within the top-5 layers. Patching replaces biased-run activations with neutral-run activations and measures sycophancy recovery.
-
-\paragraph{Ablation and Steering.}
-Zero-ablation of patching-identified heads tests causal necessity. Representation steering adds mean-difference vectors (biased minus neutral activations) to the residual stream at target layers, sweeping 8 layers and 7 alpha values.
-
-\paragraph{DPO Fine-Tuning.}
-We generated 400 opinion-domain preference pairs (seed 100, disjoint from evaluation), split into 360 training and 40 validation pairs, and fine-tuned Llama-3-8B-Instruct with LoRA (rank 16, alpha 32, targeting q/k/v/o projections) using DPO ($\beta=0.1$, lr $5\times10^{-5}$, cosine schedule, 3 epochs) \citep{rafailov2023direct}. Epoch-averaged train loss: 0.356; eval loss: 0.420. Post-DPO probe re-analysis uses the identical neutral-transfer methodology.
-
-%% ============================================================
-\section{Results}
-\label{sec:results}
-
-\subsection{Baseline Sycophancy Rate}
-\label{sec:baseline}
-
-\begin{table}[t]
+\begin{figure}[h]
 \centering
-\caption{Baseline sycophancy rates for Llama-3-8B-Instruct ($N=1{,}493$).}
-\label{tab:baseline}
-\small
-\begin{tabular}{@{}lccc@{}}
-\toprule
-\textbf{Source} & \textbf{Sycophancy Rate} & \textbf{95\% CI} & \textbf{Mean Compliance Gap} \\
-\midrule
-\texttt{anthropic\_opinion} & 82.4\% & [78.8\%, 85.5\%] & +0.0123 \\
-\texttt{truthfulqa\_factual} & 1.6\% & [0.8\%, 3.1\%] & $-$0.1341 \\
-\texttt{gsm8k\_reasoning} & 0.0\% & [0.0\%, 0.8\%] & $-$0.0083 \\
-\midrule
-\textbf{Overall} & \textbf{28.0\%} & [25.8\%, 30.3\%] & $-$0.0435 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Sycophancy is strongly domain-dependent (Table~\ref{tab:baseline}). Opinion questions show an 82.4\% sycophancy rate while the model is nearly immune to social pressure on mathematical reasoning (0.0\%) and resists false factual claims (1.6\%). The 0.0\% GSM8k rate is not a measurement artifact: the biased prompts contain explicit wrong answers with plausible justifications, yet all 500 samples produce $P(\text{sycophantic}) < 0.001$. This is consistent with the domain-verifiability hypothesis: RLHF specifically trains out math-domain sycophancy while leaving opinion-domain sycophancy intact. The base model comparison (Appendix~\ref{app:base}) supports this---Llama-3-8B-Base shows 21.8\% GSM8k sycophancy, reduced to 0.0\% by instruction tuning.
-
-\subsection{Probes: Social Compliance Dominates}
-\label{sec:probes}
-
-\begin{table}[t]
-\centering
-\caption{Probe cross-tabulation at Layer 1 (best balanced transfer). Neutral-transfer design: probes trained on neutral activations, tested on biased activations. $N=1{,}500$.}
-\label{tab:probe_crosstab}
-\small
-\begin{tabular}{@{}lcc@{}}
-\toprule
-\textbf{Category} & \textbf{Rate} & \textbf{95\% CI} \\
-\midrule
-Robust tracking & 59.9\% & [57.4\%, 62.3\%] \\
-\textbf{Social compliance} & \textbf{18.0\%} & [16.0\%, 19.9\%] \\
-Belief corruption & 10.1\% & [8.6\%, 11.7\%] \\
-Other (probe uncertain) & 12.1\% & --- \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.8\columnwidth]{fig4_probe_accuracy.pdf}
+\includegraphics[width=0.7\columnwidth]{fig4_probe_accuracy.pdf}
 \caption{Probe accuracy across layers under the balanced neutral-transfer design (randomized answer positions). Layer 1 achieves the best cross-condition transfer (89.0\% neutral CV, 77.9\% biased transfer, 11.1\,pp drop).}
 \label{fig:probe_accuracy}
 \end{figure}
 
-Under the balanced neutral-transfer design (Figure~\ref{fig:probe_accuracy}), the best layer (Layer 1) achieves 89.0\% neutral CV accuracy and 77.9\% biased transfer accuracy. The cross-tabulation (Table~\ref{tab:probe_crosstab}) reveals the dominant pattern: \textbf{social compliance} (18.0\%) exceeds belief corruption (10.1\%) at a ratio of approximately 1.8:1. Fisher's exact test confirms this difference ($p < 0.001$, odds ratio 1.95). The model retains correct internal representations under biased prompts but outputs sycophantic responses---consistent with an output-gating failure rather than genuine belief corruption.
+The Llama-3 patching heatmap and head-ablation bar plot are shown in the main text (Figure~\ref{fig:dissociation}).
 
-A critical methodological finding: probes trained on format-mixed data achieved near-perfect accuracy but primarily learned prompt-format cues (e.g., ``I think\ldots'' preambles). Training on one condition and testing on another is essential for validating that probes track genuine internal representations.
+\section{Multi-Seed DPO and Probe Decomposition Visual}
+\label{app:multiseed}
 
-\subsection{Circuit Discovery and Ablation}
-\label{sec:circuit}
-
-\begin{figure}[t]
+\begin{table}[h]
 \centering
-\includegraphics[width=\columnwidth]{fig1_patching_heatmap.pdf}
-\caption{Layer $\times$ position activation patching heatmap. The sycophantic circuit concentrates in early layers (1--5). Three heads---L4H28 (0.443), L4H5 (0.302), L5H31 (0.256)---show the highest recovery scores.}
-\label{fig:patching_heatmap}
-\end{figure}
-
-\paragraph{Patching.}
-Layer$\times$position patching (Figure~\ref{fig:patching_heatmap}) localizes the sycophantic circuit to early layers (1--5), with a mean total effect of 2.105 ($\pm$2.728) over 34/100 samples showing measurable effects. The 34/100 rate reflects a total-effect threshold: only samples where biased and neutral prompts produced meaningfully different outputs were included in layer importance scoring. Head-level patching patches all 100 samples regardless of total effect; samples with near-zero effect contribute near-zero recovery, diluting but not biasing the ranking. Head-level patching within the critical layers identifies three heads with the highest recovery: L4H28 (0.443, $\sigma=0.550$), L4H5 (0.302, $\sigma=0.537$), and L5H31 (0.256, $\sigma=0.549$). Standard deviations exceed means for all top-ranked heads, reflecting right-skewed recovery distributions and the small effective sample size (34/100 with measurable effects). Two runs of the same pipeline produced different top-3 rankings; the specific ranking should be treated as approximate.
-
-\paragraph{Ablation reveals redundancy.}
-We zero-ablated the validated top-3 heads individually, in pairwise combinations, and simultaneously (Table~\ref{tab:ablation}). Every condition shows $\pm$0.3\,pp change from baseline, well within sampling noise. Extending to all 10 patching-identified heads produces the same null: +0.5\,pp ($z=0.28$, $p=0.78$, 95\% CI: [$-$2.9\,pp, +3.9\,pp]).
-
-\begin{table}[t]
-\centering
-\caption{Corrected ablation results for the validated top-3 heads. No condition produces meaningful sycophancy reduction.}
-\label{tab:ablation}
+\caption{Multi-seed DPO robustness on Llama-3-8B-Instruct ($N{=}500$ opinion benchmark, full $N{=}1{,}319$ GSM8k, $N{=}500$ MMLU). Behavioral effect is stable (CV $<$ 12\%); the probe-decomposition mechanism is the most stable effect (SC SD\,$=$\,1.4\,pp, RT SD\,$=$\,1.3\,pp, BC SD\,$=$\,0.6\,pp).}
+\label{tab:dpo_multiseed}
 \small
-\begin{tabular}{@{}lccccc@{}}
+\begin{tabular}{@{}lcccc@{}}
 \toprule
-\textbf{Condition} & \textbf{Syc.\ Rate} & \textbf{$\Delta$ (pp)} & \textbf{Opinion} & \textbf{MMLU} & \textbf{GSM8k} \\
+\textbf{Metric} & \textbf{Seed 100} & \textbf{Seed 200} & \textbf{Seed 300} & \textbf{Mean\,$\pm$\,SD} \\
 \midrule
-Baseline & 28.0\% & --- & 82.4\% & 62.2\% & 34.0\% \\
-L4H28 only & 28.1\% & +0.1 & 82.6\% & 62.1\% & 35.0\% \\
-L4H5 only & 27.9\% & $-$0.1 & 82.4\% & 62.5\% & 36.5\% \\
-L5H31 only & 27.9\% & $-$0.1 & 82.6\% & 63.3\% & 33.0\% \\
-All 3 (zero) & 27.7\% & $-$0.3 & 82.4\% & 62.5\% & 37.5\% \\
-\midrule
-Top-10 (zero) & 28.5\% & +0.5 & 82.8\% & 63.4\% & 29.9\% \\
+Opinion sycophancy & 58.6\% & 58.8\% & 53.8\% & 57.1\,$\pm$\,2.8\% \\
+Overall sycophancy & 19.6\% & 19.8\% & 17.9\% & 19.1\,$\pm$\,1.0\% \\
+MMLU ($N{=}500$) & 62.8\% & 62.8\% & 63.0\% & 62.9\,$\pm$\,0.1\% \\
+GSM8k ($N{=}1{,}319$) & 36.8\% & 42.2\% & 41.7\% & 40.2\,$\pm$\,2.9\% \\
+Probe SC (best layer) & 12.0\% & 13.2\% & 10.3\% & 11.8\,$\pm$\,1.4\% \\
+Probe BC (best layer) & 7.7\% & 6.7\% & 7.6\% & 7.3\,$\pm$\,0.6\% \\
+Probe RT (best layer) & 76.3\% & 75.1\% & 77.8\% & 76.4\,$\pm$\,1.3\% \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\begin{figure}[t]
+\begin{figure}[h]
 \centering
-\includegraphics[width=\columnwidth]{fig5_ablation_comparison.pdf}
-\caption{Comparison of ablation conditions. Neither individual nor combined ablation of patching-identified heads reduces sycophancy, demonstrating the patching-to-ablation dissociation.}
-\label{fig:ablation_comparison}
+\includegraphics[width=0.85\columnwidth]{fig6_dpo_probe_decomposition.pdf}
+\caption{Pre- vs.\ post-DPO probe decomposition at Layer 1. Social compliance drops $-6.6$\,pp while robust tracking increases $+15.6$\,pp; belief corruption is essentially unchanged.}
+\label{fig:dpo_decomposition}
 \end{figure}
 
-This \textbf{patching-to-ablation dissociation} (Figure~\ref{fig:ablation_comparison}) demonstrates that activation patching measures sufficiency, not necessity. The identified heads \emph{can} carry the sycophantic signal (patching through them restores honest behavior) but are not causally required (ablating them has no effect). This is consistent with a \textbf{redundantly distributed circuit}: when one pathway is removed, the network routes through alternatives with no behavioral change. The self-repair literature predicts this in principle \citep{mcgrath2023hydra, rushing2024explorations}; we demonstrate it empirically on a safety-relevant behavior with cross-architecture replication.
-
-This dissociation is analogous to the well-known fMRI vs.\ lesion dissociation in neuroscience: fMRI identifies brain regions active during a task (sufficient carriers), but lesioning those regions may not impair performance when redundant pathways exist. Activation patching is the fMRI of mechanistic interpretability---it identifies \emph{where} a computation is expressed, not whether it is \emph{uniquely} expressed there.
-
-\paragraph{Bootstrap stability of head ranking.}
-To quantify head-ranking stability formally, we ran the head-level patching pipeline on 5 independent bootstrap resamples ($N{=}100$ prompts each, fresh random subsets, seeds 42/123/456/789/1011) over critical layers 0--11. The originally claimed top-3 heads (L4H28, L4H5, L5H31) appear in only 20\% of resamples; new heads emerge at higher frequencies (L11H24, L2H5, L9H28, L9H0 each appear in 40\% of resamples). Mean pairwise Jaccard across resamples is \textbf{0.09 for top-3} (range 0.00--0.50), 0.16 for top-5, and 0.16 for top-10---near-orthogonal head sets across different bootstrap draws. The originally-named heads should be treated as one realization of an unstable ranking rather than a precise localization claim. Crucially, \textbf{the ablation null holds for every resampled head set}---neither the validated top-3 nor the broader top-10 produces sycophancy reduction. This is the empirical signature of a redundantly distributed circuit and \emph{strengthens} the patching-to-ablation dissociation interpretation: if the dissociation depended on a specific head set, ranking instability would be a problem; instead, the dissociation is robust to head selection. We document the bootstrap result honestly rather than reporting a single point estimate that would overstate localization precision. Per-head rank statistics, recovery 95\% CIs, and the 5 individual resample top-10 lists are in Appendix~\ref{app:bootstrap}. Artifact: \texttt{results/patching\_bootstrap.json}.
-
-\subsection{Representation Steering}
-\label{sec:steering}
-
-\begin{figure}[t]
+\begin{figure}[h]
 \centering
-\begin{subfigure}[t]{0.48\columnwidth}
-    \includegraphics[width=\textwidth]{fig2_steering_sweep.pdf}
-    \caption{Full alpha sweep across layers.}
-    \label{fig:steering_sweep}
-\end{subfigure}
-\hfill
-\begin{subfigure}[t]{0.48\columnwidth}
-    \includegraphics[width=\textwidth]{fig3_steering_per_source.pdf}
-    \caption{Per-source opinion-domain analysis.}
-    \label{fig:steering_per_source}
-\end{subfigure}
-\caption{Representation steering results. (a) At safe alpha values ($\leq$5), no condition achieves more than $\pm$1\,pp overall sycophancy change. (b) Per-source analysis reveals a modest opinion-domain signal at later layers.}
-\label{fig:steering}
+\includegraphics[width=0.85\columnwidth]{fig7_dpo_seed_robustness.pdf}
+\caption{Multi-seed DPO robustness across three independent training seeds (100, 200, 300) with regenerated 400-pair preference data per seed; error bars are $\pm 1$\,SD.}
+\label{fig:dpo_seeds}
 \end{figure}
 
-Steering vectors were computed as mean differences between biased and neutral residual stream activations (200 held-out samples) and added to the residual stream during evaluation on the remaining 1,300 samples. We swept 8 layers $\times$ 7 alpha values plus a multi-layer condition (Figure~\ref{fig:steering}).
+The SFT-vs-DPO capability-safety scatter is shown in the main text (Figure~\ref{fig:sft_dpo}).
 
-At safe alpha values ($\leq$5), no condition achieves more than $\pm$1\,pp overall sycophancy change. However, per-source analysis reveals a domain-specific signal: \textbf{layer 15, $\alpha=2.0$} reduces opinion sycophancy from 83.0\% to 76.1\% ($-$6.9\,pp) with MMLU at 93.7\% and GSM8k at 76.8\%; \textbf{layer 20, $\alpha=2.0$} achieves $-$5.7\,pp with better capability retention (96.9\% MMLU, 87.3\% GSM8k). These reductions are masked in the overall rate because factual and reasoning sycophancy remain at ${\sim}0\%$, diluting the opinion-domain signal.
+\section{Cross-Architecture (Mistral) Detail}
+\label{app:mistral}
 
-At high alpha values ($\geq$10), the intervention destroys the model: the apparent ``best'' result (layer 10, $\alpha=50$: $-$12.2\,pp) collapses MMLU to 27.5\% and GSM8k to 0.0\%. After Benjamini-Hochberg FDR correction, no aggregate condition survives at $\alpha_{\text{FDR}}=0.05$, though the opinion-domain reductions at layers 15 and 20 fall outside the baseline Wilson CI. This partial success combined with the complete ablation failure suggests that \textbf{effective full mitigation requires training-time intervention}.
-
-\subsection{Domain-Specific Circuits}
-\label{sec:domain}
-
-Control experiments with 100 fictional-entity prompts (fabricated people, places, equations) reveal a 93.0\% sycophancy rate [86.3\%, 96.6\%]---far exceeding the opinion rate (82.4\%). Because no stored knowledge contradicts these claims, the model defaults to agreement.
-
-Critically, activation patching identifies an \textbf{entirely different circuit}. The fictional-entity circuit operates through early-layer heads (L1H10, L0H2, L0H0), while the opinion circuit uses mid-network heads (L4H28, L4H5, L5H31). There is \textbf{zero overlap} in the top-5 heads. Head L1H20 exhibits a \textbf{sign reversal}: positive recovery (+0.040) in opinion patching, negative ($-$0.115) in fictional-entity patching---the same head facilitates sycophancy in one domain and suppresses it in another, ruling out any domain-general ``social agreement'' computation.
-
-This means sycophancy is not a single mechanism but a \textbf{family of domain-dependent behaviors} implemented by distinct circuits. An intervention targeting one circuit leaves others untouched. Concurrent work by \citet{vennemeyer2026domain} reports a parallel finding for cross-domain circuit heterogeneity in mechanistic interpretability more broadly, supporting our claim that domain-specificity is not a sycophancy-specific artifact.
-
-\subsection{Cross-Architecture Replication}
-\label{sec:cross_arch}
-
-\begin{table}[t]
+\begin{table}[h]
 \centering
-\caption{Cross-architecture comparison. Core findings replicate despite entirely different circuits and inverted sycophancy profiles.}
+\caption{Cross-architecture comparison. Several architecture-level findings replicate despite entirely different circuits and inverted sycophancy profiles.}
 \label{tab:cross_arch}
 \small
 \begin{tabular}{@{}lcc@{}}
@@ -272,225 +339,21 @@ Reasoning sycophancy & 0.0\% & 0.2\% \\
 \midrule
 SC:BC ratio (probes) & 1.8:1 & 6.4:1 \\
 Top patching head & L4H28 (0.443) & L11H17 (0.306) \\
-Top-10 ablation $\Delta$ & +0.5\,pp & +1.0\,pp \\
+Top-10 ablation $\Delta$ & $+0.5$\,pp & $+1.0$\,pp \\
 MMLU & 62.0\% & 50.6\% \\
 GSM8k & 33.2\% & 9.3\% \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Full replication on Mistral-7B-Instruct (Table~\ref{tab:cross_arch}) confirms all three core results despite a strikingly different sycophancy profile (near-universal factual sycophancy, moderate opinion sycophancy---the inverse of Llama-3). Social compliance dominates with a 6.4:1 SC:BC ratio (even more lopsided than Llama-3's 1.8:1). The patching-to-ablation dissociation replicates (+1.0\,pp with top-10 ablation). Steering fails identically. The two models implement sycophancy through \textbf{entirely different circuits} (Llama-3 layers 4--5 vs.\ Mistral layers 1/9/11) with zero head overlap, yet the high-level pattern is the same: redundant implementation, no tractable ablation target, no safe steering point. This suggests redundancy is an \textbf{inherent consequence of how RLHF shapes model behavior}, not an artifact of a single model's training.
+\paragraph{Mistral DPO failure case.} Under matched preference-pair construction (corrected Mistral-format chat templating, \texttt{<s>[INST]\ldots[/INST]}) and conservative hyperparameters tuned for the smaller architecture ($\beta{=}0.05$, lr $1\times10^{-5}$, 2 epochs), Mistral-7B-Instruct DPO reduces opinion sycophancy substantially ($82.5\% \to 50.8\%$, $-31.7$\,pp) but induces complete GSM8k collapse ($9.3\% \to 0.0\%$) and near-total factual sycophancy ($1.6\% \to 100\%$). The collapse reproduces under a second HP regime ($\beta{=}0.1$/lr $5{\times}10^{-5}$/3ep), indicating the failure is structural rather than HP-tuning. Cross-architecture \emph{behavioral} replication holds at the architecture-mechanism level; cross-architecture DPO mitigation that preserves capabilities does not, at this preference-data scale ($\sim$360 effective Anthropic-MWE opinion pairs). The DPO probe-decomposition mechanism is established on Llama-3-8B-Instruct only. Artifact: \texttt{results/mistral/dpo\_eval\_results.json}.
 
-\paragraph{Cross-architecture DPO does not replicate cleanly.}
-We attempted DPO replication on Mistral-7B-Instruct using matched preference-pair construction (with corrected Mistral-format chat templating, \texttt{<s>[INST]\ldots[/INST]}) and conservative hyperparameters tuned for the smaller architecture ($\beta{=}0.05$, lr $1\times10^{-5}$, 2 epochs). Mistral DPO reduces opinion sycophancy substantially ($82.5\% \to 50.8\%$, $-31.7$\,pp) but induces \textbf{complete GSM8k collapse} ($9.3\% \to 0.0\%$) and \textbf{near-total factual sycophancy} ($1.6\% \to 100\%$). The collapse reproduces under two independent hyperparameter regimes ($\beta{=}0.1$/lr\,$5\times10^{-5}$/3ep and the conservative regime above), indicating the failure is structural rather than HP-tuning. Cross-architecture \emph{behavioral} replication holds; cross-architecture DPO mitigation that preserves capabilities does not, at this preference-data scale ($\sim$360 effective pairs from Anthropic-MWE opinions). The DPO probe-decomposition mechanism we report (Section~\ref{sec:dpo}) is established on Llama-3-8B-Instruct only; cross-architecture capability-preserving DPO is left open. Artifact: \texttt{results/mistral/dpo\_eval\_results.json}.
+\section{Cross-Scale (Qwen) Visuals}
+\label{app:qwen_visuals}
 
-\subsection{DPO Intervention}
-\label{sec:dpo}
-
-\begin{table}[t]
+\begin{table}[h]
 \centering
-\caption{DPO behavioral results. Opinion sycophancy drops 23.8\,pp while capabilities are preserved or improved.}
-\label{tab:dpo_behavioral}
-\small
-\begin{tabular}{@{}lccc@{}}
-\toprule
-\textbf{Metric} & \textbf{Pre-DPO} & \textbf{Post-DPO} & \textbf{$\Delta$} \\
-\midrule
-Overall sycophancy & 28.0\% & 19.6\% & $-$8.4\,pp \\
-\textbf{Opinion sycophancy} & \textbf{82.4\%} & \textbf{58.6\%} & $\boldsymbol{-}$\textbf{23.8\,pp} \\
-Factual sycophancy & 1.6\% & 0.2\% & $-$1.4\,pp \\
-Reasoning sycophancy & 0.0\% & 0.0\% & 0.0\,pp \\
-MMLU accuracy & 62.0\% & 62.8\% & +0.8\,pp \\
-GSM8k accuracy & 33.2\% & 36.8\% & +3.6\,pp \\
-\bottomrule
-\multicolumn{4}{l}{\footnotesize GSM8k: $N{=}1{,}319$ for both; 95\% CI on $\Delta$: [$-$0.0, +7.2]\,pp ($p{=}0.052$).}\\
-\multicolumn{4}{l}{\footnotesize MMLU: $N{=}500$ for both pre- and post-DPO.}
-\end{tabular}
-\end{table}
-
-\begin{table}[t]
-\centering
-\caption{\textbf{Pre-DPO vs.\ Post-DPO probe decomposition at Layer 1.} DPO converts social compliance into robust truth-tracking without altering internal truth representations. Post-DPO, the best-transfer layer shifts from 1 to 4 (88.3\% transfer accuracy); we report Layer 1 for direct comparability. Layer 4 results show qualitatively identical but larger effects (robust tracking +21.9\,pp).}
-\label{tab:dpo_probes}
-\small
-\begin{tabular}{@{}lccc@{}}
-\toprule
-\textbf{Category} & \textbf{Pre-DPO} & \textbf{Post-DPO} & \textbf{$\Delta$} \\
-\midrule
-\textbf{Robust tracking} & \textbf{59.9\%} & \textbf{75.5\%} & \textbf{+15.6\,pp} \\
-\textbf{Social compliance} & \textbf{18.0\%} & \textbf{11.4\%} & $\boldsymbol{-}$\textbf{6.6\,pp} \\
-Belief corruption & 10.1\% & 8.3\% & $-$1.7\,pp \\
-Other & 12.1\% & 4.8\% & $-$7.3\,pp \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.8\columnwidth]{fig6_dpo_probe_decomposition.pdf}
-\caption{\textbf{DPO probe decomposition.} Pre- vs.\ post-DPO cross-tabulation at Layer 1. Social compliance drops $-$6.6\,pp while robust tracking increases +15.6\,pp. Belief corruption is essentially unchanged ($-$1.7\,pp), confirming that DPO eliminates the output-gating failure without altering internal truth representations.}
-\label{fig:dpo_decomposition}
-\end{figure}
-
-Sections~\ref{sec:circuit}--\ref{sec:steering} establish that inference-time methods cannot selectively reduce sycophancy due to circuit redundancy. DPO succeeds where they fail (Table~\ref{tab:dpo_behavioral}): opinion sycophancy drops 23.8\,pp while MMLU is preserved (+0.8\,pp) and GSM8k is preserved (+3.6\,pp, $N{=}1{,}319$ for both, $p{=}0.052$). The intervention is domain-specific---factual and reasoning sycophancy, already near zero, remain unaffected.
-
-\paragraph{Robustness across training seeds.}
-To test whether the DPO effect reflects the training objective rather than a specific initialization, we trained two additional models with seeds 200 and 300, regenerating the 400-pair preference dataset under each new seed and otherwise holding all hyperparameters fixed. All three seeds use disjoint preference data and are evaluated on the same $N{=}500$ opinion benchmark (seed 42) and full $N{=}1{,}319$ GSM8k (Table~\ref{tab:dpo_multiseed}).
-
-\begin{table}[t]
-\centering
-\caption{Multi-seed DPO robustness ($N{=}500$ opinion benchmark, full $N{=}1{,}319$ GSM8k, $N{=}500$ MMLU). Behavioral effect is stable (CV $<$ 12\%); the probe-decomposition mechanism is the most stable effect of all (SC SD\,$=$\,1.4\,pp, RT SD\,$=$\,1.3\,pp, BC SD\,$=$\,0.6\,pp).}
-\label{tab:dpo_multiseed}
-\small
-\begin{tabular}{@{}lcccc@{}}
-\toprule
-\textbf{Metric} & \textbf{Seed 100} & \textbf{Seed 200} & \textbf{Seed 300} & \textbf{Mean\,$\pm$\,SD} \\
-\midrule
-Opinion sycophancy & 58.6\% & 58.8\% & 53.8\% & \textbf{57.1\,$\pm$\,2.8\%} \\
-Overall sycophancy & 19.6\% & 19.8\% & 17.9\% & 19.1\,$\pm$\,1.0\% \\
-MMLU ($N{=}500$) & 62.8\% & 62.8\% & 63.0\% & 62.9\,$\pm$\,0.1\% \\
-GSM8k ($N{=}1{,}319$) & 36.8\% & 42.2\% & 41.7\% & \textbf{40.2\,$\pm$\,2.9\%} \\
-Probe SC (best layer) & 12.0\% & 13.2\% & 10.3\% & 11.8\,$\pm$\,1.4\% \\
-Probe BC (best layer) & 7.7\% & 6.7\% & 7.6\% & 7.3\,$\pm$\,0.6\% \\
-Probe RT (best layer) & 76.3\% & 75.1\% & 77.8\% & 76.4\,$\pm$\,1.3\% \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{fig7_dpo_seed_robustness.pdf}
-\caption{Multi-seed DPO robustness across three independent training seeds (100, 200, 300) with regenerated 400-pair preference data per seed. Error bars are $\pm$1\,SD. Behavioral effect (opinion sycophancy 57.1\,$\pm$\,2.8\%, full $N{=}1{,}319$ GSM8k 40.2\,$\pm$\,2.9\%) and probe decomposition (social compliance 11.8\,$\pm$\,1.4\%, robust tracking 76.4\,$\pm$\,1.3\%) both stable across seeds. CV\,$<$\,12\% on the headline opinion-sycophancy reduction.}
-\label{fig:dpo_seeds}
-\end{figure}
-
-The behavioral effect is stable (Figure~\ref{fig:dpo_seeds}): opinion sycophancy reduction across seeds is 25.3\,$\pm$\,2.8\,pp against a baseline of 82.4\%, giving CV\,$<$\,12\%. Full $N{=}1{,}319$ GSM8k is preserved at 40.2\,$\pm$\,2.9\% across all three seeds (vs.\ 33.2\% baseline)---closing the prior asymmetric-$N$ caveat in our reproducibility statement. The probe-decomposition mechanism is the most stable effect of all (SC SD\,$=$\,1.4\,pp, RT SD\,$=$\,1.3\,pp), consistent with the interpretation that DPO is altering a stable representational pathway rather than an idiosyncratic decision boundary.
-
-\paragraph{Training-size sensitivity.}
-A separate sensitivity sweep at $N{=}\{100, 200, 400, 800\}$ pairs (held seed and HPs fixed) identifies $N{=}400$ as the empirical sweet spot: $N{=}100$ is undertrained (78.6\% opinion sycophancy), $N{=}400$ achieves 58.6\%, and $N{=}800$ regresses to 67.0\% (likely overfitting on 360 effective training pairs after eval split). The 400-pair scale was selected from this independent sweep before the multi-seed runs, not via test-set HP search. Artifact: \texttt{results/dpo\_size\_sensitivity/summary.json}.
-
-\paragraph{Out-of-distribution generalization (two protocols).}
-We evaluate DPO transfer under two complementary protocols: \textbf{Protocol~A} (rephrased templates and manual diverse questions, $N{=}450$) and \textbf{Protocol~B} (held-out Anthropic subcategories, $N{=}1{,}000$). Protocol~A retains ${\sim}77\%$ of the in-distribution effect ($-$18.2\,pp combined; rephrased-template subset at $-$20.5\,pp shows the reduction is format-invariant rather than template-overfit). Protocol~B reveals format-robust but \emph{domain-attenuated} transfer: NLP Survey ($96.8\% \to 91.8\%$, $-$5.0\,pp) and Political Typology ($85.8\% \to 81.0\%$, $-$4.8\,pp), combined $-$4.9\,pp, retaining only ${\sim}20\%$ of in-distribution effect (Figure~\ref{fig:ood_grouped}; Appendix~\ref{app:ood} for full breakdowns). \textbf{Honest framing}: at this preference-data scale (${\sim}360$ effective pairs all from Anthropic-MWE opinions), DPO generalizes across prompt formats but only partially across opinion content. Larger and topic-diverse preference datasets are likely required to close the cross-subcategory gap. We treat this as a scope condition on the DPO claim rather than a refutation. Artifacts: \texttt{results/ood\_opinion\_eval\_results.json} (Protocol~A), \texttt{results/ood\_eval\_results.json} (Protocol~B).
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{fig8_ood_generalization.pdf}
-\caption{OOD generalization under two complementary protocols. Protocol~A (rephrased templates and manual diverse questions, $N{=}450$) retains ${\sim}77\%$ of the in-distribution effect; the rephrased-template subset alone reaches $-$20.5\,pp, showing format invariance. Protocol~B (held-out Anthropic subcategories, $N{=}1{,}000$) retains only ${\sim}20\%$ of the in-distribution effect ($-$4.9\,pp combined), revealing format-robust but domain-attenuated transfer at this preference-data scale.}
-\label{fig:ood_grouped}
-\end{figure}
-
-The mechanistic probe re-analysis (Table~\ref{tab:dpo_probes}, Figure~\ref{fig:dpo_decomposition}) reveals \emph{how} DPO achieves this reduction. \textbf{DPO does not change internal truth representations}---belief corruption barely moves ($-$1.7\,pp). Instead, DPO specifically eliminates social compliance ($-$6.6\,pp) while increasing robust tracking (+15.6\,pp). The pattern is consistent across all tested layers (0--5): social compliance decreases 5.7--6.7\,pp, robust tracking increases 15.0--27.1\,pp, belief corruption changes minimally ($-$1.6 to $-$2.7\,pp). Fisher's exact test confirms both the social compliance reduction ($p < 0.001$) and robust tracking increase ($p < 0.001$).
-
-The model shifts from ``knows the truth but suppresses it'' to ``knows the truth and acts on it.'' DPO succeeds because it modifies the \emph{learned mapping} from representation to output across the entire network simultaneously, rather than targeting localized components. The gradient signal from preference pairs reaches all parameters involved in the output-gating decision, reshaping the distributed circuit in a way that inference-time perturbation cannot.
-
-\subsection{Free-Form Generation Evaluation}
-\label{sec:freeform}
-
-The forced-choice (A)/(B) measurement used throughout Sections~\ref{sec:baseline}--\ref{sec:dpo} enables clean logit-based probability computation but cannot distinguish content-level disagreement from stylistic deference (e.g., ``you raise a good point, but\ldots'' before correction). To validate that our central claims transfer to realistic deployment, we built a free-form, judge-scored evaluation pipeline.
-
-\paragraph{Benchmark.}
-150 multi-turn conversation prompts spanning 5 domains: opinion disagreement ($N{=}50$), factual false-belief ($N{=}40$), reasoning under social pressure ($N{=}30$), fictional-entity sycophancy ($N{=}20$), advice/high-stakes ($N{=}10$). Each prompt opens with a biased or false user position; the model responds; the user pushes back; the model responds again. We evaluate baseline Llama-3-8B-Instruct and the seed-100 DPO-adapted model on the same prompts at temperature 0.7 (300 conversations total). Claude Sonnet 4 scores each conversation against a 5-dimension rubric (truthfulness, sycophancy, helpfulness, hedging, pushback resistance) with 5,000-iteration bootstrap CIs on baseline-vs-DPO deltas.
-
-\begin{table}[t]
-\centering
-\caption{Free-form evaluation: overall results ($N{=}150$ each, 5,000-iter bootstrap CIs). All five overall deltas are directional but not significant at 95\% with $N{=}150$ per condition; the pilot would tighten with the planned $N{=}1{,}500$ scale-up. Per-domain breakdowns show the largest sycophancy reduction is in the fictional-entity domain ($-$0.55, despite zero-overlap circuits with the opinion training data), supporting an output-gating rather than content-specific account.}
-\label{tab:freeform}
-\small
-\begin{tabular}{@{}lcccc@{}}
-\toprule
-\textbf{Dimension} & \textbf{Baseline} & \textbf{Post-DPO} & \textbf{$\Delta$} & \textbf{95\% CI (bootstrap)} \\
-\midrule
-Truthfulness (1--5) & 3.48 & 3.71 & \textbf{+0.23} & [$-$0.10, +0.55] \\
-Sycophancy (1--5) & 2.66 & 2.43 & \textbf{$-$0.23} & [$-$0.55, +0.10] \\
-Helpfulness (1--5) & 3.71 & 3.81 & +0.10 & [$-$0.16, +0.35] \\
-Hedging (0--2) & 0.64 & 0.64 & $-$0.01 & [$-$0.10, +0.08] \\
-Pushback resistance (0--1) & 0.58 & 0.62 & +0.04 & [$-$0.06, +0.14] \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{fig9_freeform_5dim.pdf}
-\caption{Free-form, judge-scored evaluation across five rubric dimensions ($N{=}150$ per condition; 5,000-iter bootstrap CIs on baseline-vs-DPO deltas). Truthfulness $+0.23$ and sycophancy $-0.23$ on the 1--5 scale are directional and consistent with the forced-choice findings, but the 95\% bootstrap CIs cross zero at the pilot $N$. Hedging is essentially unchanged ($-0.01$), supporting the content-vs-style distinction in the main text.}
-\label{fig:freeform}
-\end{figure}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{fig10_transcript_panel.pdf}
-\caption{Representative free-form transcript (\texttt{ff\_fictional\_019}, fictional-domain) showing the largest baseline-vs-DPO sycophancy delta in the benchmark. Baseline scores 5/5 on sycophancy (full agreement with the user's false fictional claim, then doubles down under pushback); the seed-100 DPO model scores 1/5 (commits to the correct answer and holds the position under pushback). The fictional domain has zero overlap with the opinion-only training data, supporting the output-gating-not-content interpretation.}
-\label{fig:transcript}
-\end{figure}
-
-\paragraph{Forced-choice vs.\ free-form.}
-The in-distribution forced-choice opinion sycophancy reduction is 23.8\,pp on a binary metric; the free-form opinion sycophancy reduction is 0.22 points on a 1--5 scale ($\approx 11\%$ of scale range). Two interpretations are consistent with the data. First, forced-choice may overstate behavioral change because it cannot register hedging or partial agreement; the hedging dimension shows essentially no change ($0.64 \to 0.64$), supporting this. Second, free-form may undercount sycophancy that forced-choice captures: soft-agreement patterns still register as $\geq 3$ on the 1--5 sycophancy scale. The combined evidence supports a \textbf{content-vs-style distinction}: DPO reliably changes \emph{what conclusion} the model commits to but does not reliably change \emph{how deferentially} the conclusion is expressed. Future mitigation work should target both. A 50-conversation manual audit (independent human scoring) is in progress to compute Cohen's $\kappa$ judge--human agreement; the audit subset and rubric are in Appendix~\ref{app:freeform}. Artifacts: \texttt{results/freeform/comparison\_summary.json}, \texttt{src/eval/rubric.json}.
-
-\subsection{SFT Baseline: The Capability-Safety Tradeoff}
-\label{sec:sft}
-
-To compare DPO against the simplest serious training-time alternative, we ran supervised fine-tuning on the \emph{chosen} responses from the DPO preference pairs---same data, same LoRA configuration (rank 16, alpha 32, q/k/v/o), same seed (100), same training-set size (400 pairs). The only difference is the loss: SFT minimizes cross-entropy on the chosen response, ignoring the rejected response and the preference signal.
-
-\begin{table}[t]
-\centering
-\caption{Capability-safety tradeoff: DPO vs.\ SFT on identical preference data. SFT achieves stronger raw sycophancy reduction (overall 8.3\% vs 19.6\%) but \textbf{collapses GSM8k from 33.2\% to 5.8\%} at full $N{=}1{,}319$. DPO preserves both capabilities entirely. For behaviors whose correction must preserve orthogonal capabilities, preference-based training is the appropriate intervention level.}
-\label{tab:sft_dpo}
-\small
-\begin{tabular}{@{}lcccc@{}}
-\toprule
-\textbf{Metric} & \textbf{Baseline} & \textbf{SFT} & \textbf{DPO (seed 100)} & \textbf{DPO (3-seed mean)} \\
-\midrule
-Overall sycophancy & 28.0\% & \textbf{8.3\%} & 19.6\% & 19.1\,$\pm$\,1.0\% \\
-Opinion sycophancy & 82.4\% & 24.8\% & 58.6\% & 57.1\,$\pm$\,2.8\% \\
-Factual sycophancy & 1.6\% & 0.0\% & 0.2\% & 0.2\% \\
-Reasoning sycophancy & 0.0\% & 0.0\% & 0.0\% & 0.0\% \\
-MMLU ($N{=}500$) & 62.0\% & 60.0\% & 62.8\% & 62.9\,$\pm$\,0.1\% \\
-\textbf{GSM8k (full $N{=}1{,}319$)} & \textbf{33.2\%} & \textbf{5.8\%} & \textbf{36.8\%} & \textbf{40.2\,$\pm$\,2.9\%} \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{fig11_sft_dpo_tradeoff.pdf}
-\caption{Capability--safety tradeoff on identical preference data. Each point plots opinion sycophancy (lower is better) against full-$N{=}1{,}319$ GSM8k accuracy (higher is better). All three DPO seeds cluster above the baseline GSM8k retention line while reducing opinion sycophancy by 23.8--28.6\,pp; SFT achieves stronger raw sycophancy reduction (24.8\% opinion) but \textbf{collapses GSM8k from 33.2\% to 5.8\%}. The tradeoff is dictated by the loss, not the data---DPO and SFT use identical chosen responses.}
-\label{fig:sft_dpo}
-\end{figure}
-
-SFT trains the model to imitate the chosen response token-for-token. When chosen responses systematically refuse to commit to a single answer (``there are multiple valid perspectives\ldots''), SFT teaches the model to produce that hedging style \emph{uniformly}, including on arithmetic problems where committing to the correct answer is required. DPO uses the same chosen responses but as a \emph{contrastive} signal against the rejected responses, allowing the model to learn the \emph{direction} of preferred behavior without imitating the surface form on every input. The preference signal is informationally richer---it carries both sides of the comparison---and the gradient update only reshapes parameters where the contrast matters, leaving capability-relevant pathways untouched. This generalizes the literature's ``DPO\,$>$\,SFT for alignment'' claim to a behavior whose supervised correction is structurally biased toward capability-degrading hedging. Artifacts: \texttt{results/sft\_eval\_results.json}, \texttt{results/sft\_gsm8k\_full.json}.
-
-\subsection{Cross-Scale Evaluation: Qwen2.5-14B-Instruct}
-\label{sec:scale}
-
-To address whether 7--8B findings generalize to a substantially larger model from a different family, we evaluate Qwen2.5-14B-Instruct (48 layers, 40 attention heads, $d_{\text{model}}{=}5{,}120$).
-
-\begin{table}[t]
-\centering
-\caption{Qwen-14B baseline forced-choice profile ($N{=}1{,}498$ evaluated). High baseline opinion-agreement rate (75.3\%) coexists with a near-zero mean compliance gap (+0.006, 95\% CI crosses zero); the bias injection that strongly shifts Llama-3's choices barely moves Qwen's. Top-10 individual-prompt compliance gaps reach +0.999 (matching Llama-3 per-prompt extremes), but the bottom-10 mirror them at $-$0.98 to $-$0.94---bias pushes some prompts toward sycophancy and others away, rather than systematically amplifying the sycophantic option. Per-source factual and reasoning compliance gaps are \emph{negative}.}
-\label{tab:qwen_baseline}
-\small
-\begin{tabular}{@{}lccc@{}}
-\toprule
-\textbf{Source} & \textbf{Sycophancy Rate} & \textbf{Mean Compliance Gap} & \textbf{Gap 95\% CI} \\
-\midrule
-\texttt{anthropic\_opinion} & \textbf{75.3\%} & \textbf{+0.006} & [$-$0.015, +0.027] \\
-\texttt{truthfulqa\_factual} & 9.6\% & $-$0.175 & [$-$0.215, $-$0.135] \\
-\texttt{gsm8k\_reasoning} & 0.0\% & $-$0.192 & [$-$0.219, $-$0.164] \\
-\midrule
-\textbf{Overall} & \textbf{28.2\%} & $-$0.120 & [$-$0.138, $-$0.102] \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\paragraph{Heterogeneity, not refutation.}
-The social-compliance characterization (Section~\ref{sec:probes}) and patching-to-ablation dissociation (Section~\ref{sec:circuit}) were both motivated by Llama-3 and Mistral, models with clear bias-induced shifts. Qwen-14B does not show that clear shift, which means our claims about \emph{bias-induced} social compliance are best stated as a property of certain RLHF-trained models---likely a function of the specific RLHF procedure and preference-data curation---rather than a universal property of LLMs at the 14B-and-below scale. The contribution structure correspondingly bounds the social-compliance dominance claim to ``best characterized as'' rather than ``is.''
-
-\paragraph{Architecture-level structure replicates.}
-Despite the heterogeneous bias profile, Qwen-14B's mechanistic structure parallels Llama-3 at the architecture level. Probe decomposition: best transfer at layer 8 (artifact \texttt{results/stronger/probe\_control\_balanced.json}). Activation patching layer scan identifies critical layers $[1, 2, 3, 0, 4]$---the same early-layer concentration as Llama-3's $[1\text{--}5]$ pattern. Head-level patching identifies top-3 heads L0H0, L0H17, L0H11---all in Layer 0 (artifact \texttt{results/stronger/patching/head\_importance.json}). Single-head zero-ablation produces null effects (max $-$2.4\,pp; Table~\ref{tab:qwen_ablation_partial}), comparable to Llama-3's +0.5\,pp ablation null. The simultaneous top-3 ablation (the direct cross-scale parallel to Llama-3's headline finding) is in progress (job 56681658). Note that pair ablation L0H0+L0H17 \emph{increases} sycophancy by $+22.6$\,pp, opposite to additive-redundancy intuition---suggesting these two heads are functionally opposed on sycophancy, with their joint removal disrupting a balance rather than adding effects.
-
-\begin{table}[t]
-\centering
-\caption{Qwen-14B head ablation (partial, parsed from main job stdout after 48h timeout). Single-head zero-ablations replicate the Llama-3 ablation null (max effect $-$2.4\,pp); the simultaneous top-3 ablation is being completed by a supplementary job. The pair condition L0H0+L0H17 unexpectedly \emph{increases} sycophancy by 22.6\,pp.}
+\caption{Qwen-14B head ablation (full). Single-head zero-ablations replicate the Llama-3 ablation null (max effect $-2.4$\,pp). Pair and top-3 zero-ablations both \emph{increase} sycophancy ($+22.6$\,pp and $+20.3$\,pp respectively), indicating these heads are functionally opposed on Qwen's sycophancy circuit. Mean-ablation degrades the model entirely (sycophancy, MMLU, and GSM8k all $\to 0\%$), mirroring the Llama-3 mean-ablation degradation.}
 \label{tab:qwen_ablation_partial}
 \small
 \begin{tabular}{@{}lcccc@{}}
@@ -498,84 +361,50 @@ Despite the heterogeneous bias profile, Qwen-14B's mechanistic structure paralle
 \textbf{Condition} & \textbf{Sycophancy} & \textbf{$\Delta$ (pp)} & \textbf{MMLU} & \textbf{GSM8k} \\
 \midrule
 Baseline (no ablation) & 28.3\% & --- & 78.2\% & 4.0\% \\
-Zero-ablate L0H0 & 27.1\% & $-$1.2 & 78.0\% & 3.0\% \\
-Zero-ablate L0H17 & 25.9\% & $-$2.4 & 77.6\% & 19.5\% \\
-Zero-ablate L0H11 & 28.3\% & 0.0 & 77.8\% & 5.0\% \\
-Zero L0H0\,+\,L0H17 (pair) & 50.9\% & +22.6 & 76.2\% & --- \\
-all\_zero (top-3 together) & \multicolumn{4}{c}{\emph{in supplementary job 56681658}} \\
-all\_mean (top-3 mean) & \multicolumn{4}{c}{\emph{in supplementary job 56681658}} \\
+Zero-ablate L0H0 & 27.1\% & $-1.2$ & 78.0\% & 3.0\% \\
+Zero-ablate L0H17 & 25.9\% & $-2.4$ & 77.6\% & 19.5\% \\
+Zero-ablate L0H11 & 28.3\% & $0.0$ & 77.8\% & 5.0\% \\
+Zero L0H0\,+\,L0H17 (pair) & 50.9\% & $+22.6$ & 76.2\% & --- \\
+Zero L0H0\,+\,L0H17\,+\,L0H11 (top-3) & 48.6\% & $+20.3$ & 77.4\% & 5.0\% \\
+Mean-ablate top-3 (model degraded) & 0.0\% & $-28.3$ & 0.0\% & 0.0\% \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\begin{figure}[t]
+\begin{figure}[h]
 \centering
 \includegraphics[width=\columnwidth]{fig12_cross_scale.pdf}
-\caption{Cross-scale comparison of the architecture-level findings (Llama-3-8B-Instruct, Mistral-7B-Instruct, Qwen2.5-14B-Instruct). \emph{Left:} Probe SC:BC ratio (1.8:1, 6.4:1, 1.8:1) confirms social compliance dominates in all three models, though Qwen-14B's bias-induced shift is small enough that the dominance is driven by the smaller compliance gap rather than a strong sycophancy effect. \emph{Right:} Top-head zero-ablation $\Delta$ on overall sycophancy. The Llama-3 ablation null replicates on Mistral-7B (top-10 $+1.0$\,pp) and on Qwen-14B at the single-head level (max $-2.4$\,pp); the simultaneous top-3 ablation for Qwen is in progress (job 56681658).}
+\caption{Cross-scale comparison of architecture-level findings (Llama-3-8B-Instruct, Mistral-7B-Instruct, Qwen2.5-14B-Instruct). \emph{Left:} Probe SC:BC ratio. \emph{Right:} Top-head zero-ablation $\Delta$ on overall sycophancy. The Llama-3 ablation null replicates on Mistral-7B (top-10 $+1.0$\,pp) and on Qwen-14B at the single-head level (max $-2.4$\,pp).}
 \label{fig:cross_scale}
 \end{figure}
 
-%% ============================================================
-\section{Discussion}
-\label{sec:discussion}
+\section{Free-Form Detailed Results and OOD Visual}
+\label{app:freeform_full}
 
-\paragraph{Social compliance and the DPO mechanism.}
-The probe results establish social compliance as the dominant sycophantic pattern (1.8:1 SC:BC ratio in Llama-3, 6.4:1 in Mistral). The model retains correct internal representations under biased prompts but fails to propagate them to output. The DPO probe re-analysis confirms this at the intervention level: DPO eliminates precisely the output-gating failure ($-$6.6\,pp social compliance, +15.6\,pp robust tracking) without altering internal truth representations ($-$1.7\,pp belief corruption). This provides a mechanistic explanation for why training-time approaches like synthetic disagreement \citep{wei2023simple} are effective: training signals can reshape the output gating that inference-time steering cannot reach due to circuit redundancy. For behaviors redundantly distributed in RLHF-trained models, preference optimization is the appropriate intervention level, while inference-time activation manipulation is structurally insufficient.
+\begin{table}[h]
+\centering
+\caption{Free-form 5-dimension judge-scored evaluation ($N{=}150$ each, 5{,}000-iter bootstrap CIs on baseline-vs-DPO deltas). All five overall deltas are directional but not significant at 95\% with $N{=}150$ per condition; per-domain breakdowns at larger effective $N$ show stronger signals (opinion $N{=}50$: sycophancy $-0.22$; fictional $N{=}20$: sycophancy $-0.55$).}
+\label{tab:freeform}
+\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Dimension} & \textbf{Baseline} & \textbf{Post-DPO} & \textbf{$\Delta$} & \textbf{95\% CI (bootstrap)} \\
+\midrule
+Truthfulness (1--5) & 3.48 & 3.71 & $+0.23$ & $[-0.10, +0.55]$ \\
+Sycophancy (1--5) & 2.66 & 2.43 & $-0.23$ & $[-0.55, +0.10]$ \\
+Helpfulness (1--5) & 3.71 & 3.81 & $+0.10$ & $[-0.16, +0.35]$ \\
+Hedging (0--2) & 0.64 & 0.64 & $-0.01$ & $[-0.10, +0.08]$ \\
+Pushback resistance (0--1) & 0.58 & 0.62 & $+0.04$ & $[-0.06, +0.14]$ \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\paragraph{Sufficiency vs.\ necessity.}
-The patching-to-ablation dissociation is the most methodologically significant finding. Activation patching measures sufficiency---it identifies heads that \emph{can carry} the sycophantic signal---but ablation reveals these heads are not causally necessary. The self-repair literature \citep{mcgrath2023hydra,rushing2024explorations} predicts this in principle; \citet{heimersheim2024patching} formalize the distinction explicitly, defining denoising patching as a test of sufficiency and noising patching as a test of necessity. Our results empirically validate this caution for a complex, safety-relevant behavior. Sycophancy is computed via a degenerate circuit with multiple redundant pathways. This carries implications for the broader circuit discovery paradigm: \textbf{validation via ablation or other necessity tests is essential} before drawing causal conclusions from patching results alone.
-
-\paragraph{Comparison with concurrent circuit discovery.}
-Three concurrent papers apply mechanistic interpretability to sycophancy with partially divergent results. \citet{li2025truth} find sycophantic behavior crystallizes in late layers (16--23) via logit-lens, while our patching identifies early layers (1--5) as primary carriers. These are complementary: patching measures where information \emph{enters} the computation, while logit-lens measures where the \emph{output decision} crystallizes. \citet{chen2024pinpoint} achieve sycophancy reduction via Supervised Pinpoint Tuning (targeted fine-tuning of gradient/activation-identified modules) in Llama-2-Chat, while our ablation in Llama-3 produces a null. Their success with targeted fine-tuning---which reshapes rather than removes components---is consistent with our DPO finding that training-time methods succeed where inference-time ablation fails. The divergence may also reflect that challenge-induced sycophancy (their focus) and assertion-based sycophancy (ours) engage circuits with different redundancy properties. \citet{obrien2026fewbad} successfully localize sycophancy at the neuron level using SAE decomposition in Gemma-2, suggesting that the ``redundantly distributed'' characterization applies specifically to head-level and residual-stream-level interventions, not necessarily to all levels of analysis.
-
-\paragraph{Domain-specific circuits.}
-Opinion and fictional-entity sycophancy activate entirely different attention heads with sign-reversed roles for the same components. Combined with the cross-architecture replication (entirely different circuits in Llama-3 vs.\ Mistral, yet identical high-level properties), this suggests RLHF distributes socially-compliant response tendencies broadly across the network rather than through a localizable circuit. The specific sycophancy profile is determined by RLHF training choices---not architecture---as evidenced by Llama-3's and Mistral's inverted profiles.
-
-\paragraph{Forced-choice vs.\ free-form: what each measurement captures.}
-The free-form evaluation (Section~\ref{sec:freeform}) confirms the forced-choice findings directionally---DPO reduces sycophancy and raises truthfulness on the 1--5 judge-scored scale---but at substantially attenuated magnitude (0.22 points on a 1--5 scale vs.\ 23.8\,pp on a binary metric). Two interpretations are consistent. \emph{First}, forced-choice may overstate behavioral change because in (A)/(B) the model cannot partially hedge---it must commit. The hedging dimension shows essentially no change ($0.64 \to 0.64$), reinforcing this. \emph{Second}, free-form may undercount sycophancy that forced-choice captures (soft-agreement patterns still register as $\geq 3$ on the 1--5 sycophancy scale). The combined evidence supports a \textbf{content-vs-style distinction}: DPO reliably changes \emph{what conclusion} the model commits to, but does not reliably change \emph{how deferentially} the conclusion is expressed. Future mitigation work should target both---for example, by augmenting preference data with style-controlled chosen/rejected pairs that vary deferential framing while holding content constant.
-
-\paragraph{Cross-architecture vs.\ cross-scale: what replicates and what doesn't.}
-Cross-architecture (Section~\ref{sec:cross_arch}) and cross-scale (Section~\ref{sec:scale}) evaluations decompose the generality of our findings into two dimensions with different conclusions. \emph{Cross-architecture (Mistral-7B-Instruct):} all four behavioral findings---social compliance dominance, patching-to-ablation dissociation, distinct circuit, steering null---replicate cleanly. The architecture-level mechanism is robust. Cross-architecture \emph{DPO mitigation} however does not replicate at the same preference-data scale (Section~\ref{sec:cross_arch}, Mistral DPO failure case). \emph{Cross-scale (Qwen-14B):} scaling to a 14B-parameter model from a different family reveals heterogeneity in the bias-induced behavior, not in the underlying architecture-level mechanism. Qwen-14B has a high baseline opinion-agreement rate (75.3\%) but a near-zero mean compliance gap, while its patching profile (early-layer concentration, top-3 heads in Layer 0) and single-head ablation null parallel Llama-3 at the architecture level. The most important caveat in the paper is that the social-compliance dominance characterization should be understood as a property of certain RLHF-trained models---likely shaped by the specific RLHF procedure and preference-data curation---rather than a universal property of LLMs in this size range. The cross-scale result motivates the bounded ``best characterized as'' language in our Abstract and Contribution structure rather than the stronger ``is'' framing the original Llama-3\,+\,Mistral evidence would have supported.
-
-\paragraph{Limitations.}
-\textbf{(1) Scale evidence is bounded.} Behavioral and mechanistic findings replicate across Llama-3-8B-Instruct and Mistral-7B-Instruct; we add forced-choice baseline, probe decomposition, and patching analyses on Qwen2.5-14B-Instruct (Section~\ref{sec:scale}). The Qwen-14B result reveals heterogeneity in bias-induced shifts, indicating the social-compliance dominance characterization is bounded to certain RLHF-trained models rather than universal at the 14B-and-below scale. Generalization to 70B+, constitutional AI, or non-transformer architectures remains open. \textbf{(2) Forced-choice is partially mitigated by free-form evaluation.} The (A)/(B) metric is now complemented by a 300-conversation multi-turn benchmark (Section~\ref{sec:freeform}) judge-scored across 5 dimensions with bootstrap CIs. The free-form result confirms direction (sycophancy 2.66\,$\to$\,2.43, truthfulness 3.48\,$\to$\,3.71) at attenuated magnitude. CIs at $N{=}150$ per condition cross zero; a planned scale-up to 1{,}500 conversations would tighten these. \textbf{(3) Head ranking instability is now formally quantified.} A 5-resample bootstrap (Section~\ref{sec:circuit} bootstrap-stability paragraph) confirms instability: top-3 pairwise Jaccard 0.09 across resamples; the originally claimed top-3 (L4H28, L4H5, L5H31) appear in only 20\% of resamples. The ablation null holds for \emph{every} resampled head set, strengthening the dissociation interpretation as evidence of redundant distribution. \textbf{(4) Cross-architecture DPO does not replicate cleanly.} Mistral-7B DPO under matched preference-pair construction reduces opinion sycophancy substantially ($-$31.7\,pp) but induces complete GSM8k collapse and near-total factual sycophancy. The collapse reproduces under two HP regimes, indicating structural rather than HP-tuning failure. The DPO probe-decomposition mechanism (Section~\ref{sec:dpo}) is established on Llama-3 only; cross-architecture capability-preserving DPO at this preference-data scale is left open. \textbf{(5) DPO generalization is format-robust but domain-attenuated.} Two OOD protocols give complementary evidence: rephrased templates retain ${\sim}77\%$ of in-distribution effect ($-$18.2\,pp), but held-out Anthropic subcategories ($N{=}1{,}000$) retain only ${\sim}20\%$ ($-$4.9\,pp). Larger and topic-diverse preference datasets are likely required to close the cross-subcategory gap. Whether the mechanistic shift (social compliance $\to$ robust tracking) holds on OOD prompts remains untested. \textbf{(6) Free-form benchmark is a 150-conversation pilot per condition, with single LLM-as-judge.} Per-domain breakdowns are robust at larger domains (opinion $N{=}50$, factual $N{=}40$); advice/high-stakes ($N{=}10$) is underpowered. A 50-conversation manual audit is in progress to compute Cohen's $\kappa$ judge--human agreement; multi-judge protocols are camera-ready material.
-
-%% ============================================================
-\section{Conclusion}
-\label{sec:conclusion}
-
-This paper presents a complete mechanistic investigation of sycophancy---from diagnosis through failed inference-time treatment to successful training-time mitigation with mechanistic explanation.
-
-\begin{enumerate}
-    \item \textbf{Sycophancy is primarily social compliance, not belief corruption.} Balanced neutral-transfer probes show 59.9\% robust tracking, 18.0\% social compliance, 10.1\% belief corruption. The model knows the right answer but suppresses it.
-
-    \item \textbf{The sycophantic circuit is redundantly distributed.} Ablating the top 10 patching-identified heads produces no reduction (+0.5\,pp Llama-3, +1.0\,pp Mistral). Activation patching measures sufficiency, not necessity.
-
-    \item \textbf{Sycophancy is implemented by domain-specific circuits.} Opinion and fictional-entity circuits have zero top-5 overlap with sign-reversed head roles.
-
-    \item \textbf{Behavioral findings replicate across architectures.} Social compliance, the patching-to-ablation dissociation, and the steering null replicate on Mistral-7B despite entirely different circuits and inverted sycophancy profiles. The patching-to-ablation dissociation is further validated by a 5-resample bootstrap (top-3 pairwise Jaccard 0.09; ablation null holds for every resampled head set).
-
-    \item \textbf{DPO reduces opinion sycophancy robustly across seeds, with format-robust but domain-attenuated OOD transfer, while preserving capabilities.} Three-seed DPO training (seeds 100/200/300, disjoint preference data) reduces opinion sycophancy from 82.4\% to 57.1\,$\pm$\,2.8\% (CV $<$ 12\%), preserves MMLU at 62.9\,$\pm$\,0.1\% and GSM8k at 40.2\,$\pm$\,2.9\% (full $N{=}1{,}319$, baseline 33.2\%). OOD evaluation under two complementary protocols shows format-robust transfer (rephrased templates: $-$18.2\,pp, ${\sim}77\%$ retention) and domain-attenuated transfer (held-out Anthropic subcategories $N{=}1{,}000$: $-$4.9\,pp, ${\sim}20\%$ retention).
-
-    \item \textbf{DPO works by converting social compliance into robust truth-tracking.} Social compliance drops $-$6.6\,pp, robust tracking increases +15.6\,pp, belief corruption barely changes ($-$1.7\,pp). The probe-decomposition mechanism is the most stable effect across seeds (SC SD\,$=$\,1.4\,pp, RT SD\,$=$\,1.3\,pp, BC SD\,$=$\,0.6\,pp). This is the first mechanistic evidence of how preference optimization resolves sycophantic behavior specifically---extending the mechanistic DPO analysis paradigm established for toxicity \citep{lee2024mechanistic, yang2024dpo} to the sycophancy domain.
-
-    \item \textbf{DPO dominates SFT on the capability-safety tradeoff.} On identical preference data (same 400 pairs, same seed, same LoRA configuration), supervised fine-tuning on chosen responses achieves stronger raw sycophancy reduction (overall 8.3\% vs.\ DPO's 19.6\%) but \textbf{destroys mathematical reasoning capability}: GSM8k collapses from 33.2\% to 5.8\% at full $N{=}1{,}319$ (82\% relative loss). DPO retains both. For behaviors that must be reduced without sacrificing orthogonal capabilities, preference-based training is the appropriate intervention level.
-
-    \item \textbf{Generality bounds: cross-architecture behavioral findings replicate; bias-induced shifts vary across scale.} All four core mechanistic findings replicate on Mistral-7B-Instruct despite entirely different sycophancy circuits and inverted sycophancy profiles. Cross-scale evaluation on Qwen-14B reveals heterogeneity: high baseline opinion-agreement rate (75.3\%) coexists with a near-zero mean compliance gap, indicating bias-induced shifts central to the social-compliance characterization are best understood as a property of certain RLHF-trained models rather than universal at this size range. Free-form transfer of the forced-choice findings is validated on a 300-conversation multi-turn benchmark with 5-dimension judge scoring and bootstrap CIs, observing directional confirmation (sycophancy 2.66\,$\to$\,2.43, truthfulness 3.48\,$\to$\,3.71) at attenuated magnitude consistent with a content-vs-style distinction in DPO's effect.
-\end{enumerate}
-
-\paragraph{Reproducibility Statement.}
-All evaluation random seeds are fixed at 42; DPO training uses disjoint seeds 100/200/300; bootstrap analyses use seeds 42/123/456/789/1011. All result artifacts are validated by \texttt{results/full\_rerun\_manifest.json} (Llama-3 pipeline, \texttt{missing\_count: 0}) and per-experiment manifests in \texttt{results/manifests/} and \texttt{results/stronger/manifests/}. Code, scripts, and data processing pipelines will be released upon acceptance. The full experimental pipeline (mechanistic core on Llama-3 + Mistral cross-architecture + DPO multi-seed + size sensitivity + SFT + OOD Protocols A/B + free-form 300-conversation benchmark + patching bootstrap + Qwen-14B cross-scale + Mistral DPO failure-case documentation) requires approximately 120 A100 GPU-hours plus ${\sim}\$8$ in LLM-as-judge API costs.
-
-\paragraph{Ethics Statement.}
-This research uses only publicly available models (Llama-3-8B-Instruct, Mistral-7B-Instruct, Qwen2.5-14B-Instruct) and publicly available datasets (Anthropic model-written-evals, TruthfulQA, GSM8k, MMLU). No human subjects were involved beyond an in-progress 50-conversation manual audit performed by the authors for inter-rater agreement validation on the free-form benchmark. The work aims to improve AI safety by understanding and mitigating sycophantic behavior in language models. The DPO and SFT mitigation results we report are evaluated for capability retention to avoid recommending interventions that trade safety against general usefulness; the SFT capability-collapse finding (Section~\ref{sec:sft}) explicitly argues against deploying naive supervised correction on this preference data.
-
-%% ============================================================
-\bibliographystyle{plainnat}
-\bibliography{references}
-
-%% ============================================================
-\appendix
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\columnwidth]{fig8_ood_generalization.pdf}
+\caption{OOD generalization under two complementary protocols. Protocol A (rephrased templates and manual diverse questions, $N{=}450$) retains $\sim$77\% of in-distribution effect; Protocol B (held-out Anthropic subcategories, $N{=}1{,}000$) retains only $\sim$20\%.}
+\label{fig:ood_grouped}
+\end{figure}
 
 \section{Patching Bootstrap — Stability Statistics}
 \label{app:bootstrap}
@@ -635,6 +464,13 @@ The 5 individual resample top-10 lists, per-head rank means and standard deviati
 
 \paragraph{Bootstrap CI methodology.} 5{,}000-iteration bootstrap on the difference in means between baseline and DPO conditions, per dimension, per domain, plus pooled overall. CIs reported are bias-corrected accelerated (BCa) percentile-based 95\% intervals. Implementation in \texttt{src/eval/freeform\_aggregate.py}; aggregate output \texttt{results/freeform/comparison\_summary.json}.
 
+\begin{figure}[h]
+\centering
+\includegraphics[width=\columnwidth]{fig10_transcript_panel.pdf}
+\caption{Representative free-form transcript (\texttt{ff\_fictional\_019}, fictional-domain) showing the largest baseline-vs-DPO sycophancy delta in the benchmark. Baseline scores 5/5 on sycophancy (full agreement with the user's false fictional claim, then doubles down under pushback); the seed-100 DPO model scores 1/5 (commits to the correct answer and holds the position under pushback). The fictional domain has zero overlap with the opinion-only training data, supporting the output-gating-not-content interpretation.}
+\label{fig:transcript}
+\end{figure}
+
 \section{Base Model Comparison}
 \label{app:base}
 
@@ -666,6 +502,23 @@ The null result is consistent with the corrected ablation (Table~\ref{tab:ablati
 \section{Full Steering Sweep}
 \label{app:steering}
 
+\begin{figure}[h]
+\centering
+\begin{subfigure}[t]{0.48\columnwidth}
+    \includegraphics[width=\textwidth]{fig2_steering_sweep.pdf}
+    \caption{Full alpha sweep across layers.}
+    \label{fig:steering_sweep}
+\end{subfigure}
+\hfill
+\begin{subfigure}[t]{0.48\columnwidth}
+    \includegraphics[width=\textwidth]{fig3_steering_per_source.pdf}
+    \caption{Per-source opinion-domain analysis.}
+    \label{fig:steering_per_source}
+\end{subfigure}
+\caption{Representation steering results. (a) At safe alpha values ($\leq$5), no condition achieves more than $\pm$1\,pp overall sycophancy change. (b) Per-source analysis reveals a modest opinion-domain signal at later layers.}
+\label{fig:steering}
+\end{figure}
+
 Selected conditions from the full 56-condition sweep (8 layers $\times$ 7 alphas):
 
 \begin{table}[h]
@@ -692,7 +545,10 @@ Layer 20, $\alpha=2.0$ offers the best capability-sycophancy trade-off ($-$5.7\,
 \section{Reproducibility Details}
 \label{app:reproducibility}
 
-Experiments ran on the Unity HPC cluster (UMass) using the \texttt{gpu} partition with NVIDIA A100-SXM4-80GB. The \texttt{sycophancy-lab} conda environment provided Python 3.10.19 and PyTorch 2.10.0+cu128. Models were loaded via TransformerLens with \texttt{dtype=float16}. TransformerLens requires post-load configuration of \texttt{model.cfg.use\_attn\_result = True} followed by \texttt{model.setup()} to enable per-head activation access for Llama-3 models. The Llama-3 pipeline (13 SLURM jobs) completes in approximately 48 GPU-hours; Mistral replication adds approximately 30 GPU-hours; DPO training and evaluation adds approximately 2 GPU-hours. GSM8k capability scores use strict normalized numeric equality on generated completions throughout. An earlier version of the answer extraction regex (reflected in the preliminary March 3 archive snapshot in \texttt{results\_archive/}) yielded 11.3\% accuracy on the same $N=1{,}319$ test set that the corrected pipeline scores at 33.2\%; all reported GSM8k numbers use the corrected extraction pipeline. The \texttt{results\_archive/} directory is superseded by the canonical \texttt{results/} directory.
+Experiments ran on a SLURM-managed HPC cluster using the \texttt{gpu} partition with NVIDIA A100-SXM4-80GB GPUs. The conda environment provided Python 3.10.19 and PyTorch 2.10.0+cu128. Models were loaded via TransformerLens with \texttt{dtype=float16}. TransformerLens requires post-load configuration of \texttt{model.cfg.use\_attn\_result = True} followed by \texttt{model.setup()} to enable per-head activation access for Llama-3 models. The Llama-3 pipeline completes in approximately 48 GPU-hours; Mistral replication adds approximately 30 GPU-hours; DPO training and evaluation adds approximately 2 GPU-hours. GSM8k capability scores use strict normalized numeric equality on generated completions throughout, with an answer extraction pipeline that parses chain-of-thought output for a final numeric answer after normalization.
+
+\paragraph{DPO hyperparameters.}
+We generated 400 opinion-domain preference pairs (seed 100, disjoint from evaluation), split into 360 training and 40 validation pairs. LoRA configuration: rank 16, alpha 32, targeting q/k/v/o projections. DPO training: $\beta=0.1$, learning rate $5\times10^{-5}$, cosine schedule, 3 epochs. Epoch-averaged train loss 0.356; eval loss 0.420. Mistral DPO replication used a conservative regime ($\beta{=}0.05$, lr $1\times10^{-5}$, 2 epochs); both regimes are reported in Appendix~\ref{app:mistral}. Multi-seed runs (seeds 200, 300) regenerate the 400-pair dataset under the new seed and otherwise hold all hyperparameters fixed.
 
 \section{Detailed Per-Source Breakdowns}
 \label{app:per_source}
@@ -727,6 +583,49 @@ Experiments ran on the Unity HPC cluster (UMass) using the \texttt{gpu} partitio
 \end{tabular}
 \end{table}
 
+\section{Qwen-14B Baseline Profile Details}
+\label{app:qwen_baseline}
+
+\begin{table}[h]
+\centering
+\caption{Qwen-14B baseline forced-choice profile ($N{=}1{,}498$). High baseline opinion-agreement rate (75.3\%) coexists with a near-zero mean compliance gap whose 95\% CI crosses zero; per-source factual and reasoning compliance gaps are \emph{negative}. Top-10 individual-prompt compliance gaps reach +0.999 (matching Llama-3 per-prompt extremes), but the bottom-10 mirror them at $-$0.98 to $-$0.94---bias pushes some prompts toward sycophancy and others away, rather than systematically amplifying the sycophantic option.}
+\label{tab:qwen_baseline}
+\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Source} & \textbf{Sycophancy Rate} & \textbf{Mean Compliance Gap} & \textbf{Gap 95\% CI} \\
+\midrule
+\texttt{anthropic\_opinion} & \textbf{75.3\%} & \textbf{+0.006} & [$-$0.015, +0.027] \\
+\texttt{truthfulqa\_factual} & 9.6\% & $-$0.175 & [$-$0.215, $-$0.135] \\
+\texttt{gsm8k\_reasoning} & 0.0\% & $-$0.192 & [$-$0.219, $-$0.164] \\
+\midrule
+\textbf{Overall} & \textbf{28.2\%} & $-$0.120 & [$-$0.138, $-$0.102] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Probe decomposition: best transfer at layer 8 (artifact \texttt{results/stronger/probe\_control\_balanced.json}). Activation patching layer scan identifies critical layers $[1, 2, 3, 0, 4]$. Head-level patching identifies top-3 heads L0H0, L0H17, L0H11---all in Layer 0 (artifact \texttt{results/stronger/patching/head\_importance.json}).
+
+\section{Detailed Probe Decomposition Numbers}
+\label{app:probe_decomp}
+
+\begin{table}[h]
+\centering
+\caption{\textbf{Pre-DPO vs.\ Post-DPO probe decomposition at Layer 1.} DPO converts social compliance into robust truth-tracking without altering internal truth representations. Post-DPO, the best-transfer layer shifts from 1 to 4 (88.3\% transfer accuracy); we report Layer 1 for direct comparability. Layer 4 results show qualitatively identical but larger effects (robust tracking +21.9\,pp).}
+\label{tab:dpo_probes}
+\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Category} & \textbf{Pre-DPO} & \textbf{Post-DPO} & \textbf{$\Delta$} \\
+\midrule
+\textbf{Robust tracking} & \textbf{59.9\%} & \textbf{75.5\%} & \textbf{+15.6\,pp} \\
+\textbf{Social compliance} & \textbf{18.0\%} & \textbf{11.4\%} & $\boldsymbol{-}$\textbf{6.6\,pp} \\
+Belief corruption & 10.1\% & 8.3\% & $-$1.7\,pp \\
+Other & 12.1\% & 4.8\% & $-$7.3\,pp \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \section{Out-of-Distribution DPO Evaluation}
 \label{app:ood}
 
@@ -751,5 +650,14 @@ In-distribution (reference) & 500 & 82.4\% & 58.6\% & $-$23.8 \\
 \end{table}
 
 \noindent Condition 1 uses the same Anthropic template with different questions (seed=200 vs.\ training seed=100). Condition 2 applies four diverse prompt templates to Anthropic questions. Condition 3 uses 50 hand-crafted opinion questions spanning philosophy, aesthetics, lifestyle, health, policy, environment, ethics, education, economics, and technology.
+
+\paragraph{Two-protocol decomposition.} \textbf{Protocol~A} ($N{=}450$, rows 1--3 in Table~\ref{tab:ood}) tests whether DPO's effect generalizes across prompt formats and on-distribution topical variation: rephrased templates and manual diverse questions. The combined $-$18.2\,pp $\Delta$ retains ${\sim}77\%$ of the in-distribution $-$23.8\,pp effect; the rephrased-template subset alone reaches $-$20.5\,pp, showing the reduction is format-invariant rather than template-overfit. \textbf{Protocol~B} ($N{=}1{,}000$, held-out Anthropic subcategories not present in the training preference data) tests whether the effect generalizes across opinion \emph{content}: NLP Survey ($96.8\% \to 91.8\%$, $-$5.0\,pp) and Political Typology ($85.8\% \to 81.0\%$, $-$4.8\,pp), combined $-$4.9\,pp---retaining only ${\sim}20\%$ of in-distribution effect.
+
+\paragraph{Honest framing.} At this preference-data scale ($\sim$360 effective pairs all from Anthropic-MWE opinions), DPO generalizes across prompt formats but only partially across opinion content. Larger and topic-diverse preference datasets are likely required to close the cross-subcategory gap. We treat this as a scope condition on the DPO claim rather than a refutation. Whether the mechanistic shift (social compliance $\to$ robust tracking) holds on OOD prompts remains untested. Artifacts: \texttt{results/ood\_opinion\_eval\_results.json} (Protocol~A), \texttt{results/ood\_eval\_results.json} (Protocol~B).
+
+\section{DPO Training-Size Sensitivity}
+\label{app:size_sensitivity}
+
+A separate sensitivity sweep at $N{=}\{100, 200, 400, 800\}$ pairs (held seed and HPs fixed) identifies $N{=}400$ as the empirical sweet spot: $N{=}100$ is undertrained (78.6\% opinion sycophancy), $N{=}400$ achieves 58.6\%, and $N{=}800$ regresses to 67.0\%---likely overfitting on 360 effective training pairs after eval split. The 400-pair scale was selected from this independent sweep before the multi-seed runs, not via test-set HP search. Artifact: \texttt{results/dpo\_size\_sensitivity/summary.json}.
 
 \end{document}

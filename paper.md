@@ -689,7 +689,21 @@ To address whether our 7–8B findings generalize to a substantially larger and 
 
 **Implication for the central thesis.** The social-compliance characterization of sycophancy (Section 5.5) and the patching-to-ablation dissociation (Section 5.6) were both motivated by Llama-3 and Mistral, two models whose forced-choice profiles show clear bias-induced shifts. Qwen-14B does not show that clear shift, which means our claims about *bias-induced* social compliance are best stated as a property of certain RLHF-trained models — likely a function of the specific RLHF procedure, the preference-data curation, and possibly model scale — rather than as a universal property of LLMs at the 14B-and-below scale. The contribution structure correspondingly bounds the social-compliance dominance claim to "best understood as" rather than "is."
 
-**Probe decomposition, patching, and ablation on Qwen-14B** are in progress (job 56515980, 24h wallclock). Step 1 (full-N baseline above) reused from a prior successful run; Steps 2–4 (probes, patching, top-3 ablation) launched after a position-clamp fix in `scripts/02_train_probes.py` to handle Qwen's BOS-handling difference from Llama-3. Results will be appended to this section and compared against the Llama-3 / Mistral cross-architecture profile (Section 5.10) on completion. See **Figure 12** for cross-scale compliance-gap distribution comparison.
+**Architecture-level structure replicates on Qwen-14B.** Despite the heterogeneous bias profile, Qwen-14B's mechanistic structure parallels Llama-3 at the architecture level. Probe decomposition: best transfer at layer 8 (`results/stronger/probe_control_balanced.json`). Activation patching identifies critical layers [1, 2, 3, 0, 4] — the same early-layer concentration as Llama-3's [1–5] pattern. Head-level patching identifies top-3 heads L0H0, L0H17, L0H11 — all in Layer 0 (`results/stronger/patching/head_importance.json`).
+
+**Qwen-14B head ablation (full).**
+
+| Condition | Sycophancy | Δ (pp) | MMLU | GSM8k |
+|---|---|---|---|---|
+| Baseline (no ablation) | 28.3% | — | 78.2% | 4.0% |
+| Zero-ablate L0H0 | 27.1% | −1.2 | 78.0% | 3.0% |
+| Zero-ablate L0H17 | 25.9% | −2.4 | 77.6% | 19.5% |
+| Zero-ablate L0H11 | 28.3% | 0.0 | 77.8% | 5.0% |
+| Zero L0H0+L0H17 (pair) | 50.9% | **+22.6** | 76.2% | — |
+| Zero L0H0+L0H17+L0H11 (top-3) | 48.6% | **+20.3** | 77.4% | 5.0% |
+| Mean-ablate top-3 (model degraded) | 0.0% | −28.3 | 0.0% | 0.0% |
+
+Single-head zero-ablations replicate the Llama-3 ablation null at the architecture level (max effect −2.4 pp). Pair and top-3 zero-ablations both **increase** sycophancy (+22.6 pp and +20.3 pp respectively) — opposite to additive-redundancy intuition and suggesting these heads are functionally opposed on Qwen's sycophancy circuit, with their joint removal disrupting a balance rather than producing additive effects. Mean-ablation degrades the model entirely (sycophancy, MMLU, and GSM8k all drop to 0%), mirroring the Llama-3 mean-ablation degradation documented in Appendix E (`app:original_ablation`). We treat this as a scope condition on the redundancy claim rather than a refutation: the single-head null replicates; the multi-head zero-ablation behavior diverges. Artifacts: `results/stronger/head_ablation_partial.json` (parsed from main job stdout), `results/stronger/head_ablation_supplementary.json` (all_zero + all_mean from job 56681658). See **Figure 12** for cross-scale compliance-gap distribution comparison.
 
 ---
 
@@ -859,9 +873,10 @@ Cross-architecture (Section 5.10) and cross-scale (Section 5.14) evaluations dec
 | `results/stronger/baseline_summary.json` | Qwen-14B full N=1,498 baseline |
 | `results/stronger/qwen_n200_baseline.json` | Qwen-14B confidence-filtered N=200 diagnostic |
 | `results/stronger/qwen_diagnostic.json` | Qwen-14B N=10 initial diagnostic |
-| `results/stronger/probe_control_balanced.json` | Qwen-14B probe decomposition (in progress) |
-| `results/stronger/patching/patching_heatmap.json` | Qwen-14B activation patching (in progress) |
-| `results/stronger/head_ablation.json` | Qwen-14B top-3 head ablation (in progress) |
+| `results/stronger/probe_control_balanced.json` | Qwen-14B probe decomposition (best transfer at layer 8) |
+| `results/stronger/patching/head_importance.json` | Qwen-14B head-level activation patching (top-3: L0H0, L0H17, L0H11 in Layer 0) |
+| `results/stronger/head_ablation_partial.json` | Qwen-14B baseline + single-head + pair ablations (parsed from main job 56532117 stdout) |
+| `results/stronger/head_ablation_supplementary.json` | Qwen-14B all_zero (top-3) + all_mean ablations (job 56681658) |
 | `results/mistral/dpo_model/` | Mistral DPO LoRA adapter (β=0.05, LR=1e-5, 2ep — capability-collapse failure case) |
 | `results/mistral/dpo_eval_results.json` | Mistral DPO behavioral + capability eval (failure case documentation) |
 | `results/mistral/dpo_training_pairs_llama_bug.json` | Preserved buggy first-attempt artifact (Llama tokens fed to Mistral) |
@@ -889,7 +904,7 @@ All code, data processing scripts, SLURM job scripts, and result artifacts will 
 - Free-form judge scoring (Anthropic API): ~$8 in API costs (300 transcripts × ~3,400 tokens each)
 - Patching bootstrap (5 resamples × N=100): ~20h
 - Mistral DPO retry attempts (2 hyperparameter regimes documenting capability collapse): ~6h
-- Qwen2.5-14B-Instruct full N=1,498 baseline + (in progress) probes/patching/ablation: ~16h
+- Qwen2.5-14B-Instruct full N=1,498 baseline + probes + patching + full ablation (single-head, pair, top-3 zero, top-3 mean): ~60h (main job 56532117 timed out at 48h with 5 conditions; supplementary job 56681658 completed all_zero + all_mean in 11.4h)
 
 Llama-3 result artifacts are validated by `results/full_rerun_manifest.json` (`missing_count: 0`); Mistral artifacts are in `results/mistral/`; DPO artifacts (3 seeds) are in `results/dpo_model{,_seed200,_seed300}/`; SFT in `results/sft_model/`; free-form in `results/freeform/`; Qwen-14B in `results/stronger/`. The `results_archive/` directory contains a March 3, 2026 snapshot from the first half of the experimental pipeline; it is superseded by the canonical `results/` directory, which contains the complete validated rerun with corrected GSM8k answer extraction.
 
