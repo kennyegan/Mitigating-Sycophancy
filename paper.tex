@@ -65,7 +65,7 @@ A separate methodological question concerns mechanistic interpretability itself.
 
 We apply controlled probes, activation patching, head ablation, and preference-based fine-tuning to sycophancy in Llama-3-8B-Instruct, with cross-architecture replication on Mistral-7B-Instruct and cross-scale evaluation on Qwen2.5-14B-Instruct. Our contributions are:
 \begin{enumerate}
-  \item Controlled probes (neutral-transfer design with randomized answer positions) suggest social compliance dominates belief corruption in Llama-3 (1.8:1) and Mistral-7B (6.4:1) under our forced-choice evaluation.
+  \item Controlled probes (neutral-transfer design with randomized answer positions) suggest social compliance dominates belief corruption in Llama-3 (1.8:1) and Mistral-7B (6.3:1) under our forced-choice evaluation.
   \item Activation patching identifies heads that carry the sycophantic signal, but top-3 and top-10 zero-ablations produce no sycophancy reduction in either Llama-3 or Mistral. A 5-resample bootstrap confirms the null is robust to head-selection instability (top-3 pairwise Jaccard 0.09; the ablation null holds for every resampled head set)---an empirical instance of the sufficiency-vs-necessity gap \citep{heimersheim2024patching} consistent with redundant implementation \citep{mcgrath2023hydra, rushing2024explorations}.
   \item In Llama-3, DPO reduces opinion sycophancy across three training seeds (82.4\% $\to$ 57.1\,$\pm$\,2.8\%) with better capability retention than SFT on identical preference data; the probe decomposition shifts from social compliance toward robust tracking.
   \item Cross-model and free-form evaluations bound the claim: Mistral DPO fails to preserve capabilities; Qwen-14B's bias-induced shift is near zero despite high baseline opinion-agreement; free-form gains are directional but not significant at the pilot $N$.
@@ -133,13 +133,13 @@ Layer$\times$position patching localizes sycophancy carriers to early layers (1-
 
 \begin{figure}[t]
 \centering
-\begin{subfigure}[t]{0.48\linewidth}
+\begin{subfigure}[t]{0.85\linewidth}
     \includegraphics[width=\linewidth]{fig1_patching_heatmap.pdf}
     \caption{Layer$\times$position patching}
     \label{fig:dissociation_a}
 \end{subfigure}
-\hfill
-\begin{subfigure}[t]{0.48\linewidth}
+\\[6pt]
+\begin{subfigure}[t]{0.95\linewidth}
     \includegraphics[width=\linewidth]{fig5_ablation_comparison.pdf}
     \caption{Zero-ablation of patching-identified heads}
     \label{fig:dissociation_b}
@@ -195,7 +195,7 @@ A supervised baseline trained on the chosen responses from the same 400 preferen
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.7\linewidth]{fig11_sft_dpo_tradeoff.pdf}
+\includegraphics[width=0.9\linewidth]{fig11_sft_dpo_tradeoff.pdf}
 \caption{\textbf{DPO reduces sycophancy while preserving full-$N$ GSM8k; SFT on identical preference data achieves stronger raw reduction but collapses GSM8k.} Each point plots opinion sycophancy (lower is better) against full-$N{=}1{,}319$ GSM8k accuracy (higher is better). All three DPO seeds cluster at preserved-or-better GSM8k while reducing opinion sycophancy by 23.8--28.6\,pp.}
 \label{fig:sft_dpo}
 \end{figure}
@@ -212,7 +212,7 @@ A supervised baseline trained on the chosen responses from the same 400 preferen
 \toprule
 \textbf{Test} & \textbf{Result} \\
 \midrule
-Mistral-7B replication & SC:BC $6.4{:}1$; top-10 ablation $+1.0$\,pp; entirely different circuit (Mistral L1/9/11 vs.\ Llama L4--5; zero head overlap); steering null replicates. \\[2pt]
+Mistral-7B replication & SC:BC $6.3{:}1$; top-10 ablation $+1.0$\,pp; entirely different circuit (Mistral L1/9/11 vs.\ Llama L4--5; zero head overlap); steering null replicates. \\[2pt]
 Mistral-7B DPO & Opinion sycophancy $-31.7$\,pp \emph{but} GSM8k collapses $9.3\% \to 0.0\%$ and factual sycophancy $\to 100\%$; reproduces under two HP regimes (App~\ref{app:mistral}). DPO mechanism established on Llama-3 only. \\[2pt]
 Qwen-14B baseline & Opinion-agreement 75.3\% with mean compliance gap $+0.006$ (95\% CI [$-0.015$, $+0.027$], crosses zero); bias injection barely shifts choices. \\[2pt]
 Qwen-14B ablation & Single-head null replicates (max $-2.4$\,pp); top-3 zero-ablation \emph{increases} sycophancy by $+20.3$\,pp (and pair L0H0+L0H17 by $+22.6$\,pp)---scope condition on the redundancy claim. \\[2pt]
@@ -223,9 +223,9 @@ Free-form (Llama, $N{=}150$/cond) & Sycophancy $2.66 \to 2.43$ ($\Delta\,{-}0.23
 \end{tabular}
 \end{table}
 
-\paragraph{Cross-architecture (Mistral-7B-Instruct).} Several architecture-level findings replicate (Table~\ref{tab:generality}, rows 1--2). Social compliance dominates more lopsidedly (6.4:1); the patching-to-ablation dissociation holds (top-10 ablation $+1.0$\,pp); steering fails. Mistral and Llama-3 implement sycophancy through entirely different circuits (zero head overlap) yet show the same high-level properties. \emph{However, Mistral DPO mitigation does not replicate}: under matched preference-pair construction (with corrected Mistral chat templating) and two independent HP regimes, Mistral DPO reduces opinion sycophancy substantially but collapses GSM8k from 9.3\% to 0.0\% and pushes factual sycophancy to 100\%. The DPO probe-decomposition mechanism is established on Llama-3 only; cross-architecture mitigation remains open. Whether this is an architectural property of Mistral or a preference-data-scale artefact ($\sim$360 effective opinion-domain pairs may be insufficient for Mistral's smaller capability margin) is not resolved by our experiments and is the most direct follow-up.
+\paragraph{Cross-architecture (Mistral-7B-Instruct).} Several architecture-level findings replicate (Table~\ref{tab:generality}, rows 1--2). Social compliance dominates more lopsidedly (6.3:1); the patching-to-ablation dissociation holds (top-10 ablation $+1.0$\,pp); steering fails. Mistral and Llama-3 implement sycophancy through entirely different circuits (zero head overlap) yet show the same high-level properties. \emph{However, Mistral DPO mitigation does not replicate}: under matched preference-pair construction (with corrected Mistral chat templating) and two independent HP regimes, Mistral DPO reduces opinion sycophancy substantially but collapses GSM8k from 9.3\% to 0.0\% and pushes factual sycophancy to 100\%. The DPO probe-decomposition mechanism is established on Llama-3 only; cross-architecture mitigation remains open. Whether this is an architectural property of Mistral or a preference-data-scale artefact ($\sim$360 effective opinion-domain pairs may be insufficient for Mistral's smaller capability margin) is not resolved by our experiments and is the most direct follow-up.
 
-\paragraph{Cross-scale (Qwen-14B).} Qwen-14B's high baseline opinion-agreement coexists with a near-zero compliance gap whose CI crosses zero (Table~\ref{tab:generality}, row 3): the bias injection that strongly moves Llama-3 barely moves Qwen. We bound the social-compliance dominance characterization to certain RLHF-trained models, not a universal property at this scale. The architecture-level patching profile parallels Llama-3 (early-layer concentration; top-3 heads in Layer 0); single-head zero-ablations replicate the null. Top-3 ($+20.3$\,pp) and pair L0H0+L0H17 ($+22.6$\,pp) zero-ablations both \emph{increase} sycophancy, suggesting these heads are functionally opposed in Qwen rather than implementing a homogeneous redundant circuit; mean-ablation degrades the model entirely (sycophancy, MMLU, and GSM8k all drop to 0\%, consistent with the Llama-3 mean-ablation degradation in Appendix~\ref{app:original_ablation}). Full Qwen ablation table in Appendix~\ref{app:qwen_visuals}.
+\paragraph{Cross-scale (Qwen-14B).} Qwen-14B's high baseline opinion-agreement (75.3\%) coexists with a near-zero mean compliance gap whose CI crosses zero (Table~\ref{tab:generality}, row 3); we note that Llama-3's mean opinion-domain compliance gap is also small (+0.012, 95\% CI [$-$0.002, +0.026]) due to per-prompt cancellation, so the cleaner cross-scale scope condition is the ablation behavior below rather than the mean-gap contrast. We bound the social-compliance dominance characterization to certain RLHF-trained models, not a universal property at this scale. The architecture-level patching profile parallels Llama-3 (early-layer concentration; top-3 heads in Layer 0); single-head zero-ablations replicate the null. Top-3 ($+20.3$\,pp) and pair L0H0+L0H17 ($+22.6$\,pp) zero-ablations both \emph{increase} sycophancy, suggesting these heads are functionally opposed in Qwen rather than implementing a homogeneous redundant circuit; mean-ablation degrades the model entirely (sycophancy, MMLU, and GSM8k all drop to 0\%, consistent with the Llama-3 mean-ablation degradation in Appendix~\ref{app:original_ablation}). Full Qwen ablation table in Appendix~\ref{app:qwen_visuals}.
 
 \paragraph{OOD and free-form.} Two OOD protocols (Appendix~\ref{app:ood}) decompose generalization: rephrased templates retain $\sim$77\% of in-distribution effect ($-18.2$\,pp); held-out Anthropic subcategories ($N{=}1{,}000$) retain only $\sim$20\% ($-4.9$\,pp). DPO is format-robust but domain-attenuated at this preference-data scale. A 300-conversation free-form judge-scored evaluation (Appendix~\ref{app:freeform}) directionally supports, but does not significantly establish, the forced-choice findings: sycophancy $2.66 \to 2.43$ with bootstrap 95\% CI crossing zero; truthfulness $3.48 \to 3.71$; hedging is essentially unchanged. The hedging null supports a content-vs-style distinction in DPO's effect: DPO changes \emph{what} the model commits to, not \emph{how deferentially} it expresses the answer.
 
@@ -234,7 +234,7 @@ Free-form (Llama, $N{=}150$/cond) & Sycophancy $2.66 \to 2.43$ ($\Delta\,{-}0.23
 \label{sec:discussion}
 
 \paragraph{Social compliance and the DPO mechanism.}
-The probe decomposition (pre-DPO) and the post-DPO probe re-analysis are consistent in direction: under our forced-choice evaluation, the model already retains correct internal representations of the right answer, and DPO operates on the output-gating step rather than re-learning truth. In Llama-3, DPO shifts the probe decomposition from social compliance toward robust tracking. In our setting, the tested inference-time activation interventions did not reliably reach this distributed gating, whereas preference optimization did on Llama-3.
+The probe decomposition (pre-DPO) and the post-DPO probe re-analysis are consistent in direction: under our forced-choice evaluation, correct-answer information remains linearly decodable from residual-stream activations, and DPO operates on the output-selection step rather than altering decodability. In Llama-3, DPO shifts the probe decomposition from social compliance toward robust tracking. In our setting, the tested inference-time activation interventions did not reliably reach this distributed gating, whereas preference optimization did on Llama-3.
 
 \paragraph{Reconciling the probe and ablation results.}
 A natural tension arises between our probe and ablation findings: probes at early layers identify representations correlated with the correct answer, yet zero-ablating the heads that carry the sycophantic signal at those same layers produces no behavioural change. We do not interpret this as contradiction. Probes show that representations exist; ablation shows they do not propagate through any small set of attention heads we tested. The joint reading is that the gating between internal representation and output is distributed across pathways that head-granularity patching does not isolate---consistent with the finer-grained SAE-level neuron isolation reported by \citet{obrien2026fewbad}. Probe-based claims about internal representations should be paired with necessity tests at the granularity at which the claim is made.
@@ -242,11 +242,11 @@ A natural tension arises between our probe and ablation findings: probes at earl
 \paragraph{Sufficiency vs.\ necessity in mechanistic interpretability.}
 Our patching-to-ablation dissociation provides a clean empirical instance of the sufficiency-vs-necessity gap formalised by \citet{heimersheim2024patching} and the self-repair phenomena documented by \citet{mcgrath2023hydra, rushing2024explorations}. The methodological distinction is not new; what we add is empirical confirmation in a safety-relevant behaviour combined with a bootstrap-robustness check showing the ablation null holds across every resampled top-3 head set despite top-3 Jaccard 0.09. The implication for practice is unchanged: validation via ablation or other necessity tests is essential before drawing causal localisation conclusions from patching alone, and inference-time interventions targeting patching-identified components should not be expected to work for behaviours implemented through redundant pathways.
 
-\paragraph{Why DPO helps in Llama, fails in Mistral, and is bounded by free-form / cross-scale.}
+\paragraph{Why capability-preserving DPO holds in Llama, fails in Mistral, and is bounded by free-form / cross-scale.}
 On Llama-3 the DPO mitigation preserves capabilities and shifts the probe decomposition. On Mistral the same construction collapses GSM8k under two HP regimes. On Qwen the bias-induced shift the social-compliance characterization rests on is itself near zero, so the frame may not apply. Free-form gains are directional but underpowered. Several architecture-level findings replicate across Llama and Mistral, while mitigation and bias profiles vary. We treat the central DPO claim as a property of one model at one preference-data scale, not a universal mechanism.
 
 \paragraph{Scope of claims.}
-(i) Three model families is a small sample; 70B+, constitutional AI, and non-transformer architectures remain open. (ii) Forced-choice (A)/(B) cannot capture style-level deference. The free-form evaluation uses a single LLM judge without human-audit validation; pooled CIs cross zero. We therefore treat it as directional supporting evidence and note that the paper's central claims (probe decomposition, patching-to-ablation null, DPO capability retention) do not depend on the free-form result. Human-validated free-form benchmarking is the most direct follow-up. (iii) Head ranking is unstable (top-3 Jaccard 0.09); the load-bearing finding is the ablation null, not a precise localization. (iv) DPO mitigation does not transfer to Mistral at this preference-data scale ($\sim$360 effective opinion-domain pairs). (v) DPO generalization is format-robust but domain-attenuated ($\sim$20\% retention on held-out Anthropic subcategories at $N{=}1{,}000$). (vi) Whether the SC$\to$RT probe shift holds under OOD prompts or multi-turn pushback is untested.
+(i) Three model families is a small sample; 70B+, constitutional AI, and non-transformer architectures remain open. (ii) Forced-choice (A)/(B) cannot capture style-level deference. The free-form evaluation uses a single LLM judge without human-audit validation; pooled CIs cross zero. We therefore treat it as directional supporting evidence and note that the paper's central claims (probe decomposition, patching-to-ablation null, DPO capability retention) do not depend on the free-form result. Human-validated free-form benchmarking is the most direct follow-up. (iii) Head ranking is unstable (top-3 Jaccard 0.09); the load-bearing finding is the ablation null, not a precise localization. (iv) Capability-preserving DPO mitigation does not transfer to Mistral at this preference-data scale ($\sim$360 effective opinion-domain pairs); Mistral DPO reduces opinion sycophancy substantially but collapses GSM8k. (v) DPO generalization is format-robust but domain-attenuated ($\sim$20\% retention on held-out Anthropic subcategories at $N{=}1{,}000$). (vi) Whether the SC$\to$RT probe shift holds under OOD prompts or multi-turn pushback is untested.
 
 %% ============================================================
 \section{Conclusion}
@@ -383,7 +383,7 @@ Other & 12.1\% & 4.8\% & $-$7.3\,pp \\
 
 \begin{figure}[!ht]
 \centering
-\includegraphics[width=0.75\columnwidth]{fig7_dpo_seed_robustness.pdf}
+\includegraphics[width=0.95\columnwidth]{fig7_dpo_seed_robustness.pdf}
 \caption{Multi-seed DPO robustness across three independent training seeds (100, 200, 300) with regenerated 400-pair preference data per seed; error bars are $\pm 1$\,SD.}
 \label{fig:dpo_seeds}
 \end{figure}
@@ -408,7 +408,7 @@ Opinion sycophancy & 82.4\% & 50.8\% \\
 Factual sycophancy & 1.6\% & 99.8\% \\
 Reasoning sycophancy & 0.0\% & 0.2\% \\
 \midrule
-SC:BC ratio (probes) & 1.8:1 & 6.4:1 \\
+SC:BC ratio (probes) & 1.8:1 & 6.3:1 \\
 Top patching head & L4H28 (0.443) & L11H17 (0.306) \\
 Top-10 ablation $\Delta$ & $+0.5$\,pp & $+1.0$\,pp \\
 MMLU & 62.0\% & 50.6\% \\
@@ -623,7 +623,7 @@ Political Typology & 500 & 85.8\% & 81.0\% & $-$4.8 \\
 \section{Base Model Comparison}
 \label{app:base}
 
-Llama-3-8B (base, no instruction tuning) shows \emph{higher} overall sycophancy (36.7\% vs.\ 28.0\%), contradicting the hypothesis that RLHF introduces sycophancy. The distribution shifts dramatically: the base model is sycophantic broadly (opinion 50.3\%, factual 37.8\%, reasoning 21.8\%), while the instruct model concentrates sycophancy in opinion domains (82.4\%) while nearly eliminating it elsewhere (factual 1.6\%, reasoning 0.0\%). Patching on the base model reveals a similarly early circuit (layers 0--4) but with substantially lower total effect (0.93 vs.\ 2.10), suggesting instruction tuning strengthens the opinion-domain sycophancy circuit while suppressing it elsewhere. RLHF teaches the model \emph{when} to be sycophantic (social/opinion contexts) rather than \emph{whether} to be sycophantic.
+Llama-3-8B (base, no instruction tuning) shows \emph{higher} overall sycophancy (36.7\% vs.\ 28.0\%), suggesting RLHF in this case redistributes rather than introduces total sycophancy. The distribution shifts dramatically: the base model is sycophantic broadly (opinion 50.3\%, factual 37.8\%, reasoning 21.8\%), while the instruct model concentrates sycophancy in opinion domains (82.4\%) while nearly eliminating it elsewhere (factual 1.6\%, reasoning 0.0\%). Patching on the base model reveals a similarly early circuit (layers 0--4) but with substantially lower total effect (0.93 vs.\ 2.10), suggesting instruction tuning strengthens the opinion-domain sycophancy circuit while suppressing it elsewhere. RLHF teaches the model \emph{when} to be sycophantic (social/opinion contexts) rather than \emph{whether} to be sycophantic.
 
 \FloatBarrier
 \section{Supplementary Ablation Results}
