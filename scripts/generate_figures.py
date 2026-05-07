@@ -373,8 +373,8 @@ def figure_ablation_comparison(data_dir, output_dir):
                 "key": key,
             })
 
-    _add_conditions(corrected, "Validated top-3\n(L4H28, L4H5, L5H31)", "")
-    _add_conditions(original, "Original top-3\n(L1H20, L5H5, L4H28)", "")
+    _add_conditions(corrected, "Validated top-3 (H1=L4H28, H2=L4H5, H3=L5H31)", "")
+    _add_conditions(original, "Original top-3 (H1$'$=L1H20, H2$'$=L5H5, H3$'$=L4H28)", "")
 
     if not entries:
         return
@@ -398,7 +398,31 @@ def figure_ablation_comparison(data_dir, output_dir):
             seen_groups.append(e["group"])
     groups = seen_groups
 
-    fig, ax = plt.subplots(figsize=(10, 5))
+    # Build per-group head -> short label mapping (H1/H2/H3 for first group,
+    # H1'/H2'/H3' for the second). Order is the order of first appearance
+    # of each head within its group.
+    group_short = {}
+    for g in groups:
+        suffix = "" if g == groups[0] else "'"
+        order = []
+        for e in entries:
+            if e["group"] != g or e["key"] == "baseline":
+                continue
+            for full in [s.strip() for s in e["label"].split("+")]:
+                if full and full not in order:
+                    order.append(full)
+        group_short[g] = {full: f"H{i+1}{suffix}" for i, full in enumerate(order)}
+
+    # Rewrite labels using the per-group short mapping. The "All (zero)" /
+    # "All (mean)" labels are kept verbatim.
+    for e in entries:
+        if e["key"] == "baseline" or e["label"].startswith("All "):
+            continue
+        parts = [s.strip() for s in e["label"].split("+")]
+        m = group_short.get(e["group"], {})
+        e["label"] = "+".join(m.get(p, p) for p in parts)
+
+    fig, ax = plt.subplots(figsize=(12, 5.5))
 
     if HAS_SEABORN:
         group_colors = sns.color_palette("Set2", n_colors=len(groups))
@@ -437,16 +461,19 @@ def figure_ablation_comparison(data_dir, output_dir):
     ax.axhline(bl_rate, ls="--", color="grey", linewidth=0.8, zorder=0)
 
     ax.set_xticks(x)
-    ax.set_xticklabels(labels, rotation=40, ha="right", fontsize=FONT_SIZE_TICK - 1)
-    ax.set_ylabel("Overall sycophancy rate")
-    ax.set_title("Head ablation: sycophancy rate across conditions")
+    ax.set_xticklabels(labels, rotation=30, ha="right", fontsize=FONT_SIZE_TICK + 1)
+    ax.tick_params(axis="y", labelsize=FONT_SIZE_TICK + 1)
+    ax.set_ylabel("Overall sycophancy rate", fontsize=FONT_SIZE_LABEL + 1)
+    ax.set_title("Head ablation: sycophancy rate across conditions",
+                 fontsize=FONT_SIZE_TITLE)
 
     # Legend for groups
     from matplotlib.patches import Patch
     handles = [Patch(facecolor="0.6", label="Baseline")]
     for g in groups:
         handles.append(Patch(facecolor=gcolor[g], label=g))
-    ax.legend(handles=handles, frameon=False, loc="upper right", fontsize=FONT_SIZE_LEGEND)
+    ax.legend(handles=handles, frameon=False, loc="upper right",
+              fontsize=FONT_SIZE_LEGEND + 1)
 
     fig.tight_layout()
     _save(fig, output_dir, "fig5_ablation_comparison")

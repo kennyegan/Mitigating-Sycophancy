@@ -693,6 +693,7 @@ def run_ablation_pipeline(
     gsm8k_samples: int = 200,
     seed: int = RANDOM_SEED,
     all_only: bool = False,
+    include_all_mean: bool = False,
 ) -> Dict:
     """Run the full head ablation experiment."""
 
@@ -739,7 +740,7 @@ def run_ablation_pipeline(
         'description': f'Zero-ablate all ({all_names})',
     }
 
-    if not all_only:
+    if not all_only or include_all_mean:
         # All heads — mean ablation
         conditions[f'all_mean'] = {
             'heads': list(heads),
@@ -879,6 +880,8 @@ Examples:
                         help=f"Output JSON path (default: {DEFAULT_OUTPUT})")
     parser.add_argument('--all-only', action='store_true',
                         help="Only run baseline + all-heads-zero (skip single/pairwise/mean conditions)")
+    parser.add_argument('--include-all-mean', action='store_true',
+                        help="When combined with --all-only, also include all-heads-mean condition")
     parser.add_argument('--device', type=str, default=None,
                         choices=['cpu', 'cuda', 'mps'],
                         help="Device (default: auto-detect)")
@@ -926,6 +929,7 @@ def main():
         gsm8k_samples=args.gsm8k_samples,
         seed=args.seed,
         all_only=args.all_only,
+        include_all_mean=args.include_all_mean,
     )
 
     # Add metadata
