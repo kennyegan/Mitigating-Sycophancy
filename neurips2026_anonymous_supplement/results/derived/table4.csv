@@ -1,0 +1,4 @@
+model,baseline_overall,baseline_opinion,top_k_zero_ablation_pp,dpo_opinion_after,notes
+Llama-3-8B-Instruct,0.280,0.825,+0.47,0.571,top-k = 10; DPO mean of 3 seeds
+Mistral-7B-Instruct-v0.1,0.503,0.508,+1.00,0.508,DPO factual sycophancy → 1.000; GSM8k → 0.0
+Qwen-2.5-14B-Instruct,0.282,0.753,+20.33,—,top-k = 3; ablation INCREASES sycophancy

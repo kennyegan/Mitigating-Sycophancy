@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-04-13T03:58:22.057811+00:00",
+  "description": "Mistral-7B-Instruct artifact manifest (cross-architecture replication)",
+  "artifact_count": 7,
+  "missing_count": 0,
+  "artifacts": [
+    {
+      "label": "baseline_summary",
+      "path": "results/mistral/baseline_summary.json",
+      "exists": true,
+      "non_empty": true,
+      "status": "ok",
+      "key_metrics": {
+        "analysis_mode": "baseline_compliance_gap"
+      }
+    },
+    {
+      "label": "head_importance",
+      "path": "results/mistral/head_importance.json",
+      "exists": true,
+      "non_empty": true,
+      "status": "ok",
+      "key_metrics": {
+        "analysis_mode": "activation_patching_head_scan"
+      }
+    },
+    {
+      "label": "patching_heatmap",
+      "path": "results/mistral/patching_heatmap.json",
+      "exists": true,
+      "non_empty": true,
+      "status": "ok",
+      "key_metrics": {
+        "analysis_mode": "activation_patching_layer_scan"
+      }
+    },
+    {
+      "label": "probe_control_balanced_results",
+      "path": "results/mistral/probe_control_balanced_results.json",
+      "exists": true,
+      "non_empty": true,
+      "status": "ok",
+      "key_metrics": {
+        "analysis_mode": "neutral_transfer"
+      }
+    },
+    {
+      "label": "steering_results",
+      "path": "results/mistral/steering_results.json",
+      "exists": true,
+      "non_empty": true,
+      "status": "ok",
+      "key_metrics": {
+        "analysis_mode": "representation_steering"
+      }
+    },
+    {
+      "label": "steering_results.checkpoint",
+      "path": "results/mistral/steering_results.json.checkpoint.json",
+      "exists": true,
+      "non_empty": true,
+      "status": "ok",
+      "key_metrics": {}
+    },
+    {
+      "label": "top10_ablation_full_gsm8k",
+      "path": "results/mistral/top10_ablation_full_gsm8k.json",
+      "exists": true,
+      "non_empty": true,
+      "status": "ok",
+      "key_metrics": {
+        "analysis_mode": "head_ablation_intervention"
+      }
+    }
+  ]
+}

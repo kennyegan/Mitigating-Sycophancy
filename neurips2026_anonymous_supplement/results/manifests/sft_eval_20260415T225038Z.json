@@ -1,0 +1,15 @@
+{
+  "script": "scripts/11_sft_eval.py",
+  "status": "completed",
+  "command": "scripts/11_sft_eval.py --model meta-llama/Meta-Llama-3-8B-Instruct --adapter-path results/sft_model --data data/processed/master_sycophancy.jsonl --output results/sft_eval_results.json --mmlu-samples 500 --gsm8k-samples 200 --probe-layers 0,1,2,3,4,5 --seed 42",
+  "git_hash": null,
+  "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+  "adapter_path": "results/sft_model",
+  "data": "data/processed/master_sycophancy.jsonl",
+  "seed": 42,
+  "started_at": "2026-04-15T22:14:46.356795+00:00",
+  "ended_at": "2026-04-15T22:50:38.472219+00:00",
+  "artifacts": [
+    "results/sft_eval_results.json"
+  ]
+}

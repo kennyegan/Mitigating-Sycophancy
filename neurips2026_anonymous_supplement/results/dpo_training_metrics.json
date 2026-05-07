@@ -1,0 +1,22 @@
+{
+  "model": "mistralai/Mistral-7B-Instruct-v0.1",
+  "seed": 100,
+  "n_train_pairs": 360,
+  "n_eval_pairs": 40,
+  "epochs": 2,
+  "learning_rate": 1e-05,
+  "dpo_beta": 0.05,
+  "lora_rank": 16,
+  "lora_alpha": 32,
+  "batch_size": 4,
+  "gradient_accumulation_steps": 4,
+  "effective_batch_size": 16,
+  "trainable_parameters": 13631488,
+  "total_parameters": 7255363584,
+  "train_loss": 0.6364906702352606,
+  "train_runtime_seconds": 81.9506,
+  "eval_loss": 0.6193703413009644,
+  "total_elapsed_seconds": 129.65707755088806,
+  "output_dir": "results/mistral/dpo_model",
+  "completed_at": "2026-05-01T21:23:05.412732"
+}

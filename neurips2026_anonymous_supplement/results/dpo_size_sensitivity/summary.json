@@ -1,0 +1,49 @@
+{
+  "description": "DPO size-sensitivity analysis (N=100, 200, 400, 800)",
+  "sizes": [
+    100,
+    200,
+    400,
+    800
+  ],
+  "n_conditions": 4,
+  "per_size": [
+    {
+      "N": 100,
+      "opinion_sycophancy": 0.786,
+      "overall_sycophancy": 0.26466666666666666,
+      "MMLU": 0.634,
+      "GSM8k": 0.49
+    },
+    {
+      "N": 200,
+      "opinion_sycophancy": 0.646,
+      "overall_sycophancy": 0.216,
+      "MMLU": 0.628,
+      "GSM8k": 0.47
+    },
+    {
+      "N": 400,
+      "opinion_sycophancy": 0.586,
+      "overall_sycophancy": 0.196,
+      "MMLU": 0.628,
+      "GSM8k": 0.385
+    },
+    {
+      "N": 800,
+      "opinion_sycophancy": 0.67,
+      "overall_sycophancy": 0.22533333333333333,
+      "MMLU": 0.634,
+      "GSM8k": 0.37
+    }
+  ],
+  "trend": {
+    "opinion_sycophancy_vs_N_correlation": -0.3828639368800393
+  },
+  "source_files": {
+    "100": "results/dpo_size_sensitivity/N100_eval.json",
+    "200": "results/dpo_size_sensitivity/N200_eval.json",
+    "400": "results/dpo_eval_results.json",
+    "800": "results/dpo_size_sensitivity/N800_eval.json"
+  }
+}

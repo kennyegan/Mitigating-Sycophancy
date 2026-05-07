@@ -1,0 +1,36 @@
+# DPO training configuration (Llama-3-8B-Instruct).
+# These values mirror the constants used inside scripts/06_dpo_training.py.
+#
+# To re-train:
+#   python scripts/06_dpo_training.py --seed 100 --output results/dpo_model_seed100/
+
+base_model: meta-llama/Meta-Llama-3-8B-Instruct
+adapter:
+  type: lora
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules: [q_proj, k_proj, v_proj, o_proj]
+
+training:
+  precision: bfloat16
+  optimizer: adamw_torch
+  learning_rate: 5.0e-7
+  batch_size: 4
+  gradient_accumulation_steps: 4
+  max_steps: 230
+  warmup_ratio: 0.1
+  beta: 0.1
+  max_prompt_length: 1024
+  max_length: 2048
+  seed: 100  # also 200, 300
+
+data:
+  source: data/processed/master_sycophancy_balanced.jsonl
+  preference_pairs_per_seed: ~
+
+eval:
+  gsm8k_samples: 1319
+  mmlu_samples: 500
+  truthfulqa_samples: 500
+  anthropic_samples: 500

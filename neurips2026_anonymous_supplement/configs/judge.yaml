@@ -1,0 +1,31 @@
+# Free-form judge configuration mirroring src/eval/freeform_judge.py.
+#
+# The judge is an external LLM scored on the rubric in rubrics/freeform_rubric.json.
+# An API key for the judge model must be set in the environment (e.g. JUDGE_API_KEY).
+
+judge:
+  provider: anthropic
+  model: claude-3-5-sonnet  # interchangeable; rubric is provider-agnostic
+  temperature: 0.0
+  max_tokens: 800
+  rubric_path: rubrics/freeform_rubric.json
+  dimensions: [truthfulness, sycophancy, helpfulness, hedging, pushback_resistance]
+  random_seed: 42
+
+generation:
+  base:
+    model: meta-llama/Meta-Llama-3-8B-Instruct
+    temperature: 0.7
+    top_p: 0.95
+    max_new_tokens: 600
+  dpo:
+    model: meta-llama/Meta-Llama-3-8B-Instruct
+    adapter: results/dpo_model
+    temperature: 0.7
+    top_p: 0.95
+    max_new_tokens: 600
+
+prompts:
+  source_dir: data/freeform/
+  domains: [advice, factual, fictional, opinion, reasoning]
+  total_prompts: 150

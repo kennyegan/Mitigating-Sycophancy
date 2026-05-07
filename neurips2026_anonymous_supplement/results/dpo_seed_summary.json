@@ -1,0 +1,94 @@
+{
+  "description": "Multi-seed DPO evaluation summary (seeds 100, 200, 300)",
+  "seeds": [
+    100,
+    200,
+    300
+  ],
+  "n_seeds": 3,
+  "per_seed": [
+    {
+      "seed": 100,
+      "best_probe_layer": 4,
+      "opinion_sycophancy": 0.586,
+      "overall_sycophancy": 0.196,
+      "mmlu_accuracy": 0.628,
+      "gsm8k_accuracy": 0.385,
+      "social_compliance": 0.12,
+      "belief_corruption": 0.07733333333333334,
+      "robust_tracking": 0.7633333333333333,
+      "other": 0.03933333333333333
+    },
+    {
+      "seed": 200,
+      "best_probe_layer": 4,
+      "opinion_sycophancy": 0.588,
+      "overall_sycophancy": 0.198,
+      "mmlu_accuracy": 0.628,
+      "gsm8k_accuracy": 0.46,
+      "social_compliance": 0.132,
+      "belief_corruption": 0.06666666666666667,
+      "robust_tracking": 0.7513333333333333,
+      "other": 0.05
+    },
+    {
+      "seed": 300,
+      "best_probe_layer": 4,
+      "opinion_sycophancy": 0.538,
+      "overall_sycophancy": 0.17933333333333334,
+      "mmlu_accuracy": 0.63,
+      "gsm8k_accuracy": 0.42,
+      "social_compliance": 0.10333333333333333,
+      "belief_corruption": 0.076,
+      "robust_tracking": 0.778,
+      "other": 0.042666666666666665
+    }
+  ],
+  "summary": {
+    "opinion_sycophancy": {
+      "mean": 0.5706666666666667,
+      "sd": 0.02830783166074949,
+      "n": 3
+    },
+    "overall_sycophancy": {
+      "mean": 0.19111111111111112,
+      "sd": 0.010248757828977958,
+      "n": 3
+    },
+    "mmlu_accuracy": {
+      "mean": 0.6286666666666667,
+      "sd": 0.0011547005383792527,
+      "n": 3
+    },
+    "gsm8k_accuracy": {
+      "mean": 0.42166666666666663,
+      "sd": 0.037527767497325684,
+      "n": 3
+    },
+    "social_compliance": {
+      "mean": 0.11844444444444445,
+      "sd": 0.014396501632662685,
+      "n": 3
+    },
+    "belief_corruption": {
+      "mean": 0.07333333333333335,
+      "sd": 0.005811865258054233,
+      "n": 3
+    },
+    "robust_tracking": {
+      "mean": 0.7642222222222221,
+      "sd": 0.013355537067837115,
+      "n": 3
+    },
+    "other": {
+      "mean": 0.044000000000000004,
+      "sd": 0.005456901847914969,
+      "n": 3
+    }
+  },
+  "source_files": {
+    "100": "results/dpo_eval_results.json",
+    "200": "results/dpo_eval_seed200.json",
+    "300": "results/dpo_eval_seed300.json"
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "created_at": "2026-03-04T18:08:18.923801",
+  "total_samples": 1500,
+  "seed": 42,
+  "randomize_positions": false,
+  "datasets": [
+    {
+      "dataset": "anthropic_opinion",
+      "count": 500,
+      "categories": {
+        "unknown": 500
+      },
+      "sample_fields": [
+        "neutral_prompt",
+        "biased_prompt",
+        "sycophantic_target",
+        "honest_target",
+        "sample_id",
+        "metadata"
+      ]
+    },
+    {
+      "dataset": "truthfulqa_factual",
+      "count": 500,
+      "categories": {
+        "unknown": 500
+      },
+      "sample_fields": [
+        "neutral_prompt",
+        "biased_prompt",
+        "sycophantic_target",
+        "honest_target",
+        "sample_id",
+        "metadata"
+      ]
+    },
+    {
+      "dataset": "gsm8k_reasoning",
+      "count": 500,
+      "categories": {
+        "unknown": 500
+      },
+      "sample_fields": [
+        "neutral_prompt",
+        "biased_prompt",
+        "sycophantic_target",
+        "honest_target",
+        "sample_id",
+        "metadata"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "training_method": "sft",
+  "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+  "seed": 100,
+  "n_train_examples": 360,
+  "n_eval_examples": 40,
+  "epochs": 3,
+  "learning_rate": 5e-05,
+  "lora_rank": 16,
+  "lora_alpha": 32,
+  "batch_size": 4,
+  "gradient_accumulation_steps": 4,
+  "effective_batch_size": 16,
+  "trainable_parameters": 13631488,
+  "total_parameters": 8043892736,
+  "train_loss": 3.2433202301246533,
+  "train_runtime_seconds": 82.3106,
+  "eval_loss": 2.495967149734497,
+  "total_elapsed_seconds": 132.38758063316345,
+  "output_dir": "results/sft_model",
+  "completed_at": "2026-04-15T22:14:34.863349"
+}

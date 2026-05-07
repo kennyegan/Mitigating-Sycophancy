@@ -1,0 +1,7 @@
+# Table 3 — DPO vs SFT on Llama-3-8B-Instruct
+
+| condition | overall syc. | opinion syc. | GSM8k acc. | note |
+|-----------|--------------|--------------|------------|------|
+| Baseline | 0.280 | 0.825 | 0.332 | meta-llama/Meta-Llama-3-8B-Instruct |
+| DPO (3 seeds: 100/200/300) | 0.191 ± 0.010 | 0.571 ± 0.028 | 0.402 ± 0.029 | full 1319-sample GSM8k |
+| SFT (same data) | 0.083 | 0.248 | 0.058 | single seed |
