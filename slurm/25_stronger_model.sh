@@ -7,7 +7,7 @@
 #SBATCH --gres=gpu:a100:1
 #SBATCH --mem=128G
 #SBATCH --cpus-per-task=8
-#SBATCH --time=24:00:00
+#SBATCH --time=48:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 
@@ -73,21 +73,26 @@ ls -lh ${OUTDIR}/baseline_summary.json ${OUTDIR}/baseline_details.csv
 echo "    Skipped (reused): $(date)"
 
 # --- Step 2: Probe control experiment ---
+# Reuse if already complete from prior run (cancelled job 56515980 produced this artifact at 22:49 May 1).
 echo ""
-echo ">>> Step 2/4: Probe control"
-echo "    Started: $(date)"
-
-python scripts/02b_probe_control.py \
-    --model "${STRONGER_MODEL}" \
-    --data "${DATA}" \
-    --probe-type logistic \
-    --batch-size 8 \
-    --n-folds 5 \
-    --seed 42 \
-    --output "${OUTDIR}/probe_control_balanced.json"
-
-check_artifact "${OUTDIR}/probe_control_balanced.json"
-echo "    Completed: $(date)"
+if [ -s "${OUTDIR}/probe_control_balanced.json" ]; then
+    echo ">>> Step 2/4: Probe control — REUSING existing artifact"
+    ls -lh ${OUTDIR}/probe_control_balanced.json
+    echo "    Skipped (reused): $(date)"
+else
+    echo ">>> Step 2/4: Probe control"
+    echo "    Started: $(date)"
+    python scripts/02b_probe_control.py \
+        --model "${STRONGER_MODEL}" \
+        --data "${DATA}" \
+        --probe-type logistic \
+        --batch-size 8 \
+        --n-folds 5 \
+        --seed 42 \
+        --output "${OUTDIR}/probe_control_balanced.json"
+    check_artifact "${OUTDIR}/probe_control_balanced.json"
+    echo "    Completed: $(date)"
+fi
 
 # --- Step 3: Activation patching (100 samples) ---
 echo ""
@@ -97,39 +102,32 @@ echo "    Started: $(date)"
 python scripts/03_activation_patching.py \
     --model "${STRONGER_MODEL}" \
     --data "${DATA}" \
-    --max-samples 100 \
+    --max-samples 50 \
     --seed 42 \
     --output-dir "${OUTDIR}/patching"
 
 check_artifact "${OUTDIR}/patching/patching_heatmap.json"
+check_artifact "${OUTDIR}/patching/head_importance.json"
 echo "    Completed: $(date)"
 
-# --- Extract top-3 heads from patching results ---
+# --- Extract top-3 heads from head_importance.json (Phase 2 output) ---
+# Schema (verified against Llama-3 run): head_results.top_10_heads = [{"head":"L4H28","mean_recovery":...}, ...]
 echo ""
 echo ">>> Extracting top-3 heads from patching results..."
 
 TOP3_HEADS=$(python -c "
-import json, sys
-with open('${OUTDIR}/patching/patching_heatmap.json') as f:
+import json
+with open('${OUTDIR}/patching/head_importance.json') as f:
     data = json.load(f)
-# Handle both possible output formats
-if 'head_rankings' in data:
-    rankings = data['head_rankings']
-elif 'top_heads' in data:
-    rankings = data['top_heads']
-else:
-    # Fall back to finding heads from the heatmap matrix
-    import numpy as np
-    heatmap = np.array(data.get('heatmap', data.get('patching_results', [])))
-    flat = [(abs(heatmap[l][h]), l, h) for l in range(len(heatmap)) for h in range(len(heatmap[l]))]
-    flat.sort(reverse=True)
-    rankings = [{'layer': l, 'head': h} for _, l, h in flat[:3]]
-
-top3 = rankings[:3]
-heads_str = ','.join(f\"L{h['layer']}H{h['head']}\" for h in top3)
-print(heads_str)
+top10 = data['head_results']['top_10_heads']
+top3 = top10[:3]
+print(','.join(h['head'] for h in top3))
 ")
 
+if [ -z "${TOP3_HEADS}" ]; then
+    echo "ERROR: failed to extract top-3 heads"
+    exit 3
+fi
 echo "    Top-3 heads: ${TOP3_HEADS}"
 
 # --- Step 4: Head ablation on top-3 heads ---
