@@ -1,0 +1,58 @@
+{
+  "artifact_type": "aggregate_result_summary",
+  "raw_artifact_status": "PARTIAL",
+  "provenance": "Aggregate values copied from cached artifacts where available: results/stronger/baseline_summary.json (Qwen baseline, N=1498). Top-3 zero-ablation delta is reported in paper text only; the underlying Qwen ablation evaluation log (parsed by scripts/parse_qwen_ablation_log.py) was not located as a standalone JSON artifact in the working repository.",
+  "paper_claim_supported": "Paper Claim 5 (cross-scale Qwen): high baseline opinion-agreement with near-zero compliance gap; top-3 ablation increases sycophancy.",
+  "model": "Qwen/Qwen2.5-14B-Instruct",
+  "evaluation": {
+    "n_evaluated": 1498,
+    "n_skipped": 2,
+    "random_seed": 42,
+    "data": "master_sycophancy_balanced.jsonl"
+  },
+  "metrics": {
+    "baseline": {
+      "raw_artifact_status": "FOUND",
+      "overall": {
+        "sycophancy_rate": 0.2824,
+        "sycophancy_rate_95ci": [0.2602, 0.3057],
+        "mean_compliance_gap": -0.1203,
+        "compliance_gap_95ci": [-0.1384, -0.1022]
+      },
+      "per_source": {
+        "anthropic_opinion": {
+          "sycophancy_rate": 0.753,
+          "sycophancy_rate_95ci": [0.7133, 0.7889],
+          "mean_compliance_gap": 0.0059,
+          "compliance_gap_95ci": [-0.0154, 0.0272],
+          "count": 498,
+          "paper_label": "75.3% opinion-agreement; mean compliance gap +0.006 (95% CI [-0.015, +0.027], crosses zero)."
+        },
+        "truthfulqa_factual": {
+          "sycophancy_rate": 0.096,
+          "sycophancy_rate_95ci": [0.0732, 0.125],
+          "mean_compliance_gap": -0.1748
+        },
+        "gsm8k_reasoning": {
+          "sycophancy_rate": 0.0,
+          "sycophancy_rate_95ci": [0.0, 0.0076],
+          "mean_compliance_gap": -0.1915
+        }
+      }
+    },
+    "ablation_paper_reported": {
+      "raw_artifact_status": "SUMMARY_ONLY",
+      "source": "Paper Section 5 / Appendix C (app:qwen_visuals).",
+      "top3_zero_ablation_overall_sycophancy_delta_pp": 20.3,
+      "pair_l0h0_l0h17_zero_ablation_delta_pp": 22.6,
+      "single_head_zero_ablation_max_delta_pp": -2.4,
+      "mean_ablation_outcome": "Sycophancy, MMLU, and GSM8k all collapse to 0% (model-destroying intervention).",
+      "interpretation": "Top-head zero-ablations on Qwen *increase* sycophancy rather than reduce it, suggesting the heads are functionally opposed rather than implementing a homogeneous redundant circuit."
+    }
+  },
+  "notes": [
+    "Qwen-14B baseline opinion-agreement (75.3%) coexists with a near-zero mean compliance gap whose 95% CI crosses zero. Bias injection barely shifts forced-choice selections.",
+    "Per-source factual and reasoning compliance gaps are negative (bias pushes some prompts toward sycophancy and others away), so the social-compliance frame is not assumed to apply at this scale."
+  ],
+  "not_raw_experimental_output": false
+}

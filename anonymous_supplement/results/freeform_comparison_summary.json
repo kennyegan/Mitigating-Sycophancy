@@ -1,0 +1,700 @@
+{
+  "artifact_type": "aggregate_result_summary",
+  "raw_artifact_status": "FOUND",
+  "provenance": "Verbatim copy of cached aggregate artifact: results/freeform/comparison_summary.json. 5,000-iteration bootstrap on baseline-vs-DPO deltas per dimension per domain (and pooled overall). N=150 per condition, seed=42. No per-prompt content, no judge logs, no raw transcripts included.",
+  "paper_claim_supported": "Paper Claim 6 / Appendix D (app:freeform): free-form 5-dimension judge-scored evaluation. Pooled deltas are directional but not statistically significant at N=150 per condition.",
+  "model": "meta-llama/Meta-Llama-3-8B-Instruct (baseline vs. DPO seed=100)",
+  "metrics": {
+    "baseline_n": 150,
+    "dpo_n": 150,
+    "n_bootstrap": 5000,
+    "seed": 42,
+    "domains": {
+      "advice": {
+        "baseline": {
+          "truthfulness": {
+            "mean": 4.2,
+            "sd": 1.135,
+            "n": 10
+          },
+          "sycophancy": {
+            "mean": 1.6,
+            "sd": 0.843,
+            "n": 10
+          },
+          "helpfulness": {
+            "mean": 4.1,
+            "sd": 1.449,
+            "n": 10
+          },
+          "hedging": {
+            "mean": 0.5,
+            "sd": 0.393,
+            "n": 10
+          },
+          "pushback_resistance": {
+            "mean": 0.85,
+            "sd": 0.337,
+            "n": 10
+          }
+        },
+        "dpo": {
+          "truthfulness": {
+            "mean": 4.3,
+            "sd": 0.949,
+            "n": 10
+          },
+          "sycophancy": {
+            "mean": 1.7,
+            "sd": 0.949,
+            "n": 10
+          },
+          "helpfulness": {
+            "mean": 3.9,
+            "sd": 1.449,
+            "n": 10
+          },
+          "hedging": {
+            "mean": 0.767,
+            "sd": 0.473,
+            "n": 10
+          },
+          "pushback_resistance": {
+            "mean": 0.8,
+            "sd": 0.35,
+            "n": 10
+          }
+        },
+        "comparison": {
+          "hedging": {
+            "baseline_mean": 0.5,
+            "dpo_mean": 0.767,
+            "delta": 0.267,
+            "ci_95": [
+              -0.1,
+              0.633
+            ],
+            "baseline_n": 10,
+            "dpo_n": 10
+          },
+          "helpfulness": {
+            "baseline_mean": 4.1,
+            "dpo_mean": 3.9,
+            "delta": -0.2,
+            "ci_95": [
+              -1.4,
+              1.1
+            ],
+            "baseline_n": 10,
+            "dpo_n": 10
+          },
+          "pushback_resistance": {
+            "baseline_mean": 0.85,
+            "dpo_mean": 0.8,
+            "delta": -0.05,
+            "ci_95": [
+              -0.35,
+              0.25
+            ],
+            "baseline_n": 10,
+            "dpo_n": 10
+          },
+          "sycophancy": {
+            "baseline_mean": 1.6,
+            "dpo_mean": 1.7,
+            "delta": 0.1,
+            "ci_95": [
+              -0.6,
+              0.8
+            ],
+            "baseline_n": 10,
+            "dpo_n": 10
+          },
+          "truthfulness": {
+            "baseline_mean": 4.2,
+            "dpo_mean": 4.3,
+            "delta": 0.1,
+            "ci_95": [
+              -0.7,
+              1.0
+            ],
+            "baseline_n": 10,
+            "dpo_n": 10
+          }
+        }
+      },
+      "factual": {
+        "baseline": {
+          "truthfulness": {
+            "mean": 3.55,
+            "sd": 1.377,
+            "n": 40
+          },
+          "sycophancy": {
+            "mean": 2.55,
+            "sd": 1.449,
+            "n": 40
+          },
+          "helpfulness": {
+            "mean": 3.975,
+            "sd": 0.974,
+            "n": 40
+          },
+          "hedging": {
+            "mean": 0.55,
+            "sd": 0.358,
+            "n": 40
+          },
+          "pushback_resistance": {
+            "mean": 0.588,
+            "sd": 0.451,
+            "n": 40
+          }
+        },
+        "dpo": {
+          "truthfulness": {
+            "mean": 3.75,
+            "sd": 1.373,
+            "n": 40
+          },
+          "sycophancy": {
+            "mean": 2.425,
+            "sd": 1.412,
+            "n": 40
+          },
+          "helpfulness": {
+            "mean": 4.05,
+            "sd": 0.959,
+            "n": 40
+          },
+          "hedging": {
+            "mean": 0.567,
+            "sd": 0.379,
+            "n": 40
+          },
+          "pushback_resistance": {
+            "mean": 0.575,
+            "sd": 0.432,
+            "n": 40
+          }
+        },
+        "comparison": {
+          "hedging": {
+            "baseline_mean": 0.55,
+            "dpo_mean": 0.567,
+            "delta": 0.017,
+            "ci_95": [
+              -0.142,
+              0.183
+            ],
+            "baseline_n": 40,
+            "dpo_n": 40
+          },
+          "helpfulness": {
+            "baseline_mean": 3.975,
+            "dpo_mean": 4.05,
+            "delta": 0.075,
+            "ci_95": [
+              -0.35,
+              0.5
+            ],
+            "baseline_n": 40,
+            "dpo_n": 40
+          },
+          "pushback_resistance": {
+            "baseline_mean": 0.588,
+            "dpo_mean": 0.575,
+            "delta": -0.013,
+            "ci_95": [
+              -0.2,
+              0.187
+            ],
+            "baseline_n": 40,
+            "dpo_n": 40
+          },
+          "sycophancy": {
+            "baseline_mean": 2.55,
+            "dpo_mean": 2.425,
+            "delta": -0.125,
+            "ci_95": [
+              -0.725,
+              0.525
+            ],
+            "baseline_n": 40,
+            "dpo_n": 40
+          },
+          "truthfulness": {
+            "baseline_mean": 3.55,
+            "dpo_mean": 3.75,
+            "delta": 0.2,
+            "ci_95": [
+              -0.4,
+              0.775
+            ],
+            "baseline_n": 40,
+            "dpo_n": 40
+          }
+        }
+      },
+      "fictional": {
+        "baseline": {
+          "truthfulness": {
+            "mean": 3.5,
+            "sd": 1.539,
+            "n": 20
+          },
+          "sycophancy": {
+            "mean": 2.7,
+            "sd": 1.559,
+            "n": 20
+          },
+          "helpfulness": {
+            "mean": 3.7,
+            "sd": 1.081,
+            "n": 20
+          },
+          "hedging": {
+            "mean": 0.583,
+            "sd": 0.403,
+            "n": 20
+          },
+          "pushback_resistance": {
+            "mean": 0.475,
+            "sd": 0.444,
+            "n": 20
+          }
+        },
+        "dpo": {
+          "truthfulness": {
+            "mean": 4.15,
+            "sd": 1.182,
+            "n": 20
+          },
+          "sycophancy": {
+            "mean": 2.15,
+            "sd": 1.461,
+            "n": 20
+          },
+          "helpfulness": {
+            "mean": 3.95,
+            "sd": 0.887,
+            "n": 20
+          },
+          "hedging": {
+            "mean": 0.467,
+            "sd": 0.349,
+            "n": 20
+          },
+          "pushback_resistance": {
+            "mean": 0.575,
+            "sd": 0.438,
+            "n": 20
+          }
+        },
+        "comparison": {
+          "hedging": {
+            "baseline_mean": 0.583,
+            "dpo_mean": 0.467,
+            "delta": -0.117,
+            "ci_95": [
+              -0.333,
+              0.117
+            ],
+            "baseline_n": 20,
+            "dpo_n": 20
+          },
+          "helpfulness": {
+            "baseline_mean": 3.7,
+            "dpo_mean": 3.95,
+            "delta": 0.25,
+            "ci_95": [
+              -0.35,
+              0.85
+            ],
+            "baseline_n": 20,
+            "dpo_n": 20
+          },
+          "pushback_resistance": {
+            "baseline_mean": 0.475,
+            "dpo_mean": 0.575,
+            "delta": 0.1,
+            "ci_95": [
+              -0.175,
+              0.35
+            ],
+            "baseline_n": 20,
+            "dpo_n": 20
+          },
+          "sycophancy": {
+            "baseline_mean": 2.7,
+            "dpo_mean": 2.15,
+            "delta": -0.55,
+            "ci_95": [
+              -1.45,
+              0.4
+            ],
+            "baseline_n": 20,
+            "dpo_n": 20
+          },
+          "truthfulness": {
+            "baseline_mean": 3.5,
+            "dpo_mean": 4.15,
+            "delta": 0.65,
+            "ci_95": [
+              -0.15,
+              1.5
+            ],
+            "baseline_n": 20,
+            "dpo_n": 20
+          }
+        }
+      },
+      "opinion": {
+        "baseline": {
+          "truthfulness": {
+            "mean": 4.12,
+            "sd": 0.872,
+            "n": 50
+          },
+          "sycophancy": {
+            "mean": 2.08,
+            "sd": 1.175,
+            "n": 50
+          },
+          "helpfulness": {
+            "mean": 4.1,
+            "sd": 0.886,
+            "n": 50
+          },
+          "hedging": {
+            "mean": 0.833,
+            "sd": 0.37,
+            "n": 50
+          },
+          "pushback_resistance": {
+            "mean": 0.78,
+            "sd": 0.418,
+            "n": 50
+          }
+        },
+        "dpo": {
+          "truthfulness": {
+            "mean": 4.22,
+            "sd": 0.91,
+            "n": 50
+          },
+          "sycophancy": {
+            "mean": 1.86,
+            "sd": 1.03,
+            "n": 50
+          },
+          "helpfulness": {
+            "mean": 4.2,
+            "sd": 0.948,
+            "n": 50
+          },
+          "hedging": {
+            "mean": 0.84,
+            "sd": 0.364,
+            "n": 50
+          },
+          "pushback_resistance": {
+            "mean": 0.87,
+            "sd": 0.316,
+            "n": 50
+          }
+        },
+        "comparison": {
+          "hedging": {
+            "baseline_mean": 0.833,
+            "dpo_mean": 0.84,
+            "delta": 0.007,
+            "ci_95": [
+              -0.133,
+              0.147
+            ],
+            "baseline_n": 50,
+            "dpo_n": 50
+          },
+          "helpfulness": {
+            "baseline_mean": 4.1,
+            "dpo_mean": 4.2,
+            "delta": 0.1,
+            "ci_95": [
+              -0.26,
+              0.46
+            ],
+            "baseline_n": 50,
+            "dpo_n": 50
+          },
+          "pushback_resistance": {
+            "baseline_mean": 0.78,
+            "dpo_mean": 0.87,
+            "delta": 0.09,
+            "ci_95": [
+              -0.06,
+              0.24
+            ],
+            "baseline_n": 50,
+            "dpo_n": 50
+          },
+          "sycophancy": {
+            "baseline_mean": 2.08,
+            "dpo_mean": 1.86,
+            "delta": -0.22,
+            "ci_95": [
+              -0.64,
+              0.22
+            ],
+            "baseline_n": 50,
+            "dpo_n": 50
+          },
+          "truthfulness": {
+            "baseline_mean": 4.12,
+            "dpo_mean": 4.22,
+            "delta": 0.1,
+            "ci_95": [
+              -0.24,
+              0.44
+            ],
+            "baseline_n": 50,
+            "dpo_n": 50
+          }
+        }
+      },
+      "overall": {
+        "baseline": {
+          "truthfulness": {
+            "mean": 3.48,
+            "sd": 1.427,
+            "n": 150
+          },
+          "sycophancy": {
+            "mean": 2.66,
+            "sd": 1.501,
+            "n": 150
+          },
+          "helpfulness": {
+            "mean": 3.707,
+            "sd": 1.138,
+            "n": 150
+          },
+          "hedging": {
+            "mean": 0.644,
+            "sd": 0.387,
+            "n": 150
+          },
+          "pushback_resistance": {
+            "mean": 0.583,
+            "sd": 0.461,
+            "n": 150
+          }
+        },
+        "dpo": {
+          "truthfulness": {
+            "mean": 3.707,
+            "sd": 1.388,
+            "n": 150
+          },
+          "sycophancy": {
+            "mean": 2.433,
+            "sd": 1.449,
+            "n": 150
+          },
+          "helpfulness": {
+            "mean": 3.807,
+            "sd": 1.145,
+            "n": 150
+          },
+          "hedging": {
+            "mean": 0.638,
+            "sd": 0.403,
+            "n": 150
+          },
+          "pushback_resistance": {
+            "mean": 0.623,
+            "sd": 0.437,
+            "n": 150
+          }
+        },
+        "comparison": {
+          "hedging": {
+            "baseline_mean": 0.644,
+            "dpo_mean": 0.638,
+            "delta": -0.007,
+            "ci_95": [
+              -0.098,
+              0.08
+            ],
+            "baseline_n": 150,
+            "dpo_n": 150
+          },
+          "helpfulness": {
+            "baseline_mean": 3.707,
+            "dpo_mean": 3.807,
+            "delta": 0.1,
+            "ci_95": [
+              -0.16,
+              0.353
+            ],
+            "baseline_n": 150,
+            "dpo_n": 150
+          },
+          "pushback_resistance": {
+            "baseline_mean": 0.583,
+            "dpo_mean": 0.623,
+            "delta": 0.04,
+            "ci_95": [
+              -0.063,
+              0.137
+            ],
+            "baseline_n": 150,
+            "dpo_n": 150
+          },
+          "sycophancy": {
+            "baseline_mean": 2.66,
+            "dpo_mean": 2.433,
+            "delta": -0.227,
+            "ci_95": [
+              -0.547,
+              0.1
+            ],
+            "baseline_n": 150,
+            "dpo_n": 150
+          },
+          "truthfulness": {
+            "baseline_mean": 3.48,
+            "dpo_mean": 3.707,
+            "delta": 0.227,
+            "ci_95": [
+              -0.1,
+              0.547
+            ],
+            "baseline_n": 150,
+            "dpo_n": 150
+          }
+        }
+      },
+      "reasoning": {
+        "baseline": {
+          "truthfulness": {
+            "mean": 2.067,
+            "sd": 1.311,
+            "n": 30
+          },
+          "sycophancy": {
+            "mean": 4.1,
+            "sd": 1.213,
+            "n": 30
+          },
+          "helpfulness": {
+            "mean": 2.567,
+            "sd": 0.935,
+            "n": 30
+          },
+          "hedging": {
+            "mean": 0.544,
+            "sd": 0.344,
+            "n": 30
+          },
+          "pushback_resistance": {
+            "mean": 0.233,
+            "sd": 0.365,
+            "n": 30
+          }
+        },
+        "dpo": {
+          "truthfulness": {
+            "mean": 2.3,
+            "sd": 1.418,
+            "n": 30
+          },
+          "sycophancy": {
+            "mean": 3.833,
+            "sd": 1.341,
+            "n": 30
+          },
+          "helpfulness": {
+            "mean": 2.7,
+            "sd": 1.088,
+            "n": 30
+          },
+          "hedging": {
+            "mean": 0.467,
+            "sd": 0.367,
+            "n": 30
+          },
+          "pushback_resistance": {
+            "mean": 0.25,
+            "sd": 0.366,
+            "n": 30
+          }
+        },
+        "comparison": {
+          "hedging": {
+            "baseline_mean": 0.544,
+            "dpo_mean": 0.467,
+            "delta": -0.078,
+            "ci_95": [
+              -0.256,
+              0.1
+            ],
+            "baseline_n": 30,
+            "dpo_n": 30
+          },
+          "helpfulness": {
+            "baseline_mean": 2.567,
+            "dpo_mean": 2.7,
+            "delta": 0.133,
+            "ci_95": [
+              -0.367,
+              0.633
+            ],
+            "baseline_n": 30,
+            "dpo_n": 30
+          },
+          "pushback_resistance": {
+            "baseline_mean": 0.233,
+            "dpo_mean": 0.25,
+            "delta": 0.017,
+            "ci_95": [
+              -0.167,
+              0.2
+            ],
+            "baseline_n": 30,
+            "dpo_n": 30
+          },
+          "sycophancy": {
+            "baseline_mean": 4.1,
+            "dpo_mean": 3.833,
+            "delta": -0.267,
+            "ci_95": [
+              -0.9,
+              0.367
+            ],
+            "baseline_n": 30,
+            "dpo_n": 30
+          },
+          "truthfulness": {
+            "baseline_mean": 2.067,
+            "dpo_mean": 2.3,
+            "delta": 0.233,
+            "ci_95": [
+              -0.433,
+              0.9
+            ],
+            "baseline_n": 30,
+            "dpo_n": 30
+          }
+        }
+      }
+    },
+    "mode": "comparison"
+  },
+  "notes": [
+    "Domains: advice (N=10), factual (N=40), fictional (N=20), opinion (N=50), reasoning (N=30); pooled overall N=150.",
+    "CIs are bias-corrected accelerated (BCa) percentile-based 95% intervals on the difference in means.",
+    "Pooled overall sycophancy delta -0.227 with 95% CI [-0.547, +0.1] crosses zero."
+  ],
+  "not_raw_experimental_output": false
+}

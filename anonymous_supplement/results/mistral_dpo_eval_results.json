@@ -1,0 +1,74 @@
+{
+  "artifact_type": "aggregate_result_summary",
+  "raw_artifact_status": "FOUND",
+  "provenance": "Aggregate values copied from the cached evaluation artifact: results/mistral/dpo_eval_results.json (timestamp 2026-05-01T21:38:18Z, N=1500, random_seed=42). Per-prompt rows, environment metadata, and adapter paths removed.",
+  "paper_claim_supported": "Paper Claim 5 (cross-architecture / Appendix B): Mistral-7B DPO failure case under matched preference-pair construction.",
+  "model": "mistralai/Mistral-7B-Instruct-v0.1",
+  "evaluation": {
+    "n_evaluated": 1500,
+    "random_seed": 42,
+    "data": "master_sycophancy.jsonl"
+  },
+  "metrics": {
+    "behavioral": {
+      "overall": {
+        "sycophancy_rate": 0.5147,
+        "sycophancy_rate_95ci": [0.4894, 0.5399],
+        "mean_compliance_gap": -0.1348,
+        "compliance_gap_95ci": [-0.1408, -0.1288]
+      },
+      "per_source": {
+        "anthropic_opinion": {
+          "sycophancy_rate": 0.508,
+          "sycophancy_rate_95ci": [0.4643, 0.5516],
+          "mean_compliance_gap": -0.0012,
+          "count": 500
+        },
+        "truthfulqa_factual": {
+          "sycophancy_rate": 1.0,
+          "sycophancy_rate_95ci": [0.9924, 1.0],
+          "mean_compliance_gap": -0.1519,
+          "count": 500
+        },
+        "gsm8k_reasoning": {
+          "sycophancy_rate": 0.036,
+          "sycophancy_rate_95ci": [0.0229, 0.0562],
+          "mean_compliance_gap": -0.2512,
+          "count": 500
+        }
+      }
+    },
+    "capabilities": {
+      "mmlu": {
+        "accuracy": 0.516,
+        "accuracy_95ci": [0.4722, 0.5595],
+        "n_samples": 500
+      },
+      "gsm8k": {
+        "accuracy": 0.0,
+        "accuracy_95ci": [0.0, 0.0188],
+        "n_samples": 200
+      }
+    }
+  },
+  "paper_reported_baseline_for_dpo_delta": {
+    "anthropic_opinion_sycophancy_rate": 0.825,
+    "gsm8k_accuracy": 0.093,
+    "factual_sycophancy_rate": 0.016,
+    "note": "These baseline values are reported in paper Section B.1 for the DPO delta computation. The cached results/mistral/baseline_summary.json artifact in the working repository reports a different anthropic_opinion baseline (0.508) on master_sycophancy.jsonl; the 0.825 baseline used in the paper's Mistral DPO delta is not present as a standalone JSON in the working repository. We surface this discrepancy rather than asserting a single value."
+  },
+  "sanity_checks_paper_reported": {
+    "corrected_mistral_chat_template_used": true,
+    "ab_answer_token_mapping_checked": true,
+    "decoding_config_matched_baseline": true,
+    "preference_labels_not_inverted": true,
+    "n_sampled_pairs_or_generations_inspected": 50,
+    "reproduces_under_two_hp_regimes": true,
+    "regime_1": "beta=0.05, lr=1e-5, 2 epochs",
+    "regime_2": "beta=0.1, lr=5e-5, 3 epochs"
+  },
+  "notes": [
+    "The Mistral DPO collapse on GSM8k (9.3% -> 0.0%) and on factual sycophancy (1.6% -> 100%) is the central finding of the cross-architecture replication; the opinion-sycophancy reduction reported in the paper depends on the 0.825 baseline value flagged above."
+  ],
+  "not_raw_experimental_output": false
+}

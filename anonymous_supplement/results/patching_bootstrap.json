@@ -1,0 +1,91 @@
+{
+  "artifact_type": "aggregate_result_summary",
+  "raw_artifact_status": "FOUND",
+  "provenance": "Aggregate summary copied from the cached 5-resample bootstrap artifact in the working repository: results/patching_bootstrap.json. Per-resample top_10_heads, per-head ranks, and full per-head recovery distributions are summarized rather than included verbatim (the underlying file is multi-MB). Top-10 ablation point estimates are copied from results/top10_ablation_results.json (Llama) and the corresponding paper-reported Mistral value.",
+  "paper_claim_supported": "Paper Claim 3 (patching-to-ablation dissociation): activation patching identifies early-layer/head carriers; top-10 zero-ablation gives no sycophancy reduction; bootstrap top-3 Jaccard 0.09; ablation null holds across all resampled head sets. Llama top-10 ablation change +0.5 pp; Mistral top-10 +1.0 pp.",
+  "model": "meta-llama/Meta-Llama-3-8B-Instruct (primary); cross-arch reference to mistralai/Mistral-7B-Instruct-v0.1",
+  "patching_bootstrap": {
+    "n_resamples": 5,
+    "samples_per_resample": 100,
+    "seeds": [42, 123, 456, 789, 1011],
+    "head_top_k": 5,
+    "max_positions": 50,
+    "top3_pairwise_jaccard": {
+      "mean": 0.09,
+      "min": 0.0,
+      "max": 0.5,
+      "n_pairs": 10
+    },
+    "top5_pairwise_jaccard": {
+      "mean": 0.1639,
+      "min": 0.0,
+      "max": 0.6667,
+      "n_pairs": 10
+    },
+    "top10_pairwise_jaccard": {
+      "mean": 0.163,
+      "min": 0.0,
+      "max": 0.5385,
+      "n_pairs": 10
+    },
+    "critical_layer_frequency": {
+      "0": 0.4,
+      "1": 0.6,
+      "2": 0.6,
+      "3": 0.6,
+      "4": 0.2,
+      "5": 0.4,
+      "6": 0.2,
+      "8": 0.4,
+      "9": 0.4,
+      "10": 0.4,
+      "11": 0.6,
+      "14": 0.2
+    },
+    "top3_head_frequency_summary": {
+      "L11H24": 0.4,
+      "L2H5": 0.4,
+      "L9H28": 0.4,
+      "L9H0": 0.4,
+      "L4H28": 0.2,
+      "L4H5": 0.2,
+      "L5H31": 0.2,
+      "L3H30": 0.2,
+      "L11H1": 0.2,
+      "L6H6": 0.2,
+      "L6H7": 0.2
+    },
+    "interpretation": "Head ranking is unstable across resamples (top-3 pairwise Jaccard 0.09); critical layers concentrate at early positions (layers 0-3, 11)."
+  },
+  "top10_zero_ablation": {
+    "llama3_8b": {
+      "raw_artifact_status": "FOUND",
+      "source": "results/top10_ablation_results.json",
+      "heads_ablated": ["L1H20", "L5H5", "L4H28", "L5H17", "L3H17", "L5H4", "L5H19", "L5H24", "L4H5", "L3H0"],
+      "baseline_overall_sycophancy": 0.28,
+      "post_ablation_overall_sycophancy": 0.2847,
+      "delta_pp": 0.5,
+      "delta_pp_paper_reported": 0.5,
+      "z": 0.28,
+      "p": 0.78,
+      "delta_95ci_pp": [-2.9, 3.9],
+      "mmlu_retained_ratio": 1.0226,
+      "gsm8k_retained_ratio": 0.9265
+    },
+    "mistral_7b": {
+      "raw_artifact_status": "PARTIAL",
+      "source": "Paper Section 5 / Table 4; results/mistral/top10_ablation_full_gsm8k.json exists in the working repository but the +1.0 pp summary value is reported in paper text. Underlying file not summarized in detail in this supplement to avoid risk of misreporting.",
+      "delta_pp_paper_reported": 1.0
+    }
+  },
+  "ablation_null_under_resampled_head_sets": {
+    "raw_artifact_status": "SUMMARY_ONLY",
+    "source": "Paper Section 4 / Section 5: 'the ablation null holds for every one of the 5 bootstrap-resampled top-3 head sets'.",
+    "summary": "Across all 5 resampled top-3 head sets, zero-ablation yields no sycophancy reduction (each within sampling noise of baseline). Per-resample ablation deltas were not located as a standalone JSON in the working repository."
+  },
+  "notes": [
+    "The full per-head recovery distribution for all 1024 heads x 5 resamples is in the cached results/patching_bootstrap.json artifact and is too large to include verbatim in this supplement; the values above are the pairwise-Jaccard, layer-frequency, and top-3 head-frequency aggregates from that file's 'aggregate' block.",
+    "Llama top-10 z/p/CI values are paper-reported summary statistics that compute over the cached ablation results."
+  ],
+  "not_raw_experimental_output": false
+}

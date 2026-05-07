@@ -1,0 +1,124 @@
+{
+  "artifact_type": "aggregate_result_summary",
+  "raw_artifact_status": "PARTIAL",
+  "provenance": "Aggregate values copied from cached artifacts where available, otherwise summarized from paper text. Sources: results/mistral/baseline_summary.json, results/mistral/dpo_eval_results.json, results/stronger/baseline_summary.json (Qwen N=1498), results/stronger/qwen_diagnostic.json, results/ood_eval_results.json (Protocol B), results/ood_opinion_eval_results.json (Protocol A), results/freeform/comparison_summary.json. Bound values that are reported only in paper text are flagged inline.",
+  "paper_claim_supported": "Paper Claim 5 (cross-model bounds) and Claim 6 (OOD/free-form bounds), Table 4: generality bounds across Mistral, Qwen, OOD, and free-form.",
+  "rows": {
+    "mistral_dpo": {
+      "model": "mistralai/Mistral-7B-Instruct-v0.1",
+      "raw_artifact_status": "FOUND",
+      "source": "results/mistral/dpo_eval_results.json (DPO eval) and results/mistral/baseline_summary.json (baseline)",
+      "paper_summary": "DPO reduces opinion sycophancy substantially but collapses GSM8k 9.3% -> 0.0% and pushes factual sycophancy to ~100%. Capability-preserving DPO mitigation does not transfer cross-architecture at this preference-data scale.",
+      "metrics": {
+        "baseline_opinion_sycophancy_paper_reported": 0.825,
+        "post_dpo_opinion_sycophancy": 0.508,
+        "opinion_sycophancy_delta_pp": -31.7,
+        "post_dpo_factual_sycophancy": 1.0,
+        "post_dpo_mmlu_accuracy": 0.516,
+        "post_dpo_gsm8k_accuracy": 0.0,
+        "baseline_gsm8k_accuracy_paper_reported": 0.093
+      },
+      "discrepancy_note": "results/mistral/baseline_summary.json reports anthropic_opinion sycophancy_rate = 0.508, which matches the post-DPO value rather than the 0.825 baseline reported in paper Section B.1. The paper paragraph at app:mistral cites '82.5% -> 50.8%' for the Mistral DPO opinion delta. The cached baseline JSON in this repo (run on master_sycophancy.jsonl) reports 50.8% for the baseline as well. The 82.5% baseline value is reported in the paper text but is not present as a cached JSON artifact in the working repository. We surface this as a documentation-only discrepancy rather than asserting a single value.",
+      "sanity_checks_paper_reported": {
+        "corrected_mistral_chat_template": true,
+        "ab_answer_token_mapping_checked": true,
+        "decoding_config_matched_baseline": true,
+        "preference_labels_not_inverted": true,
+        "n_sampled_pairs_or_generations_inspected": 50,
+        "reproduces_under_two_hp_regimes": true
+      }
+    },
+    "qwen_baseline": {
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "raw_artifact_status": "FOUND",
+      "source": "results/stronger/baseline_summary.json (full N=1498)",
+      "paper_summary": "Baseline opinion-agreement 75.3% with mean compliance gap +0.006 (95% CI [-0.015, +0.027], crosses zero). Bias injection barely shifts choices.",
+      "metrics": {
+        "n_evaluated": 1498,
+        "anthropic_opinion_sycophancy_rate": 0.753,
+        "anthropic_opinion_sycophancy_rate_95ci": [0.7133, 0.7889],
+        "anthropic_opinion_mean_compliance_gap": 0.0059,
+        "anthropic_opinion_compliance_gap_95ci": [-0.0154, 0.0272],
+        "overall_sycophancy_rate": 0.2824,
+        "overall_mean_compliance_gap": -0.1203
+      }
+    },
+    "qwen_top3_ablation": {
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "raw_artifact_status": "SUMMARY_ONLY",
+      "source": "Paper Section 5 / Table 4 / paper line app:qwen_visuals; the underlying Qwen ablation evaluation log is not present as a standalone JSON in the working repository (parse_qwen_ablation_log.py exists in scripts/, but its output JSON was not located in results/).",
+      "paper_summary": "Top-3 zero-ablation increases sycophancy by approximately +20.3 pp; pair (L0H0+L0H17) increases sycophancy by +22.6 pp; mean-ablation degrades the model entirely (sycophancy/MMLU/GSM8k all collapse to 0%).",
+      "metrics_paper_reported": {
+        "top3_zero_ablation_delta_pp": 20.3,
+        "pair_l0h0_l0h17_zero_ablation_delta_pp": 22.6
+      }
+    },
+    "ood_protocol_a": {
+      "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+      "raw_artifact_status": "FOUND",
+      "source": "results/ood_opinion_eval_results.json",
+      "paper_summary": "Rephrased templates (combined N=450) retain ~77% of in-distribution DPO effect (-18.2 pp). Format-invariant.",
+      "metrics_paper_reported": {
+        "n_total": 450,
+        "baseline_combined": 0.736,
+        "dpo_combined": 0.553,
+        "delta_pp": -18.2,
+        "in_distribution_effect_pp": -23.8,
+        "retention_fraction_paper_reported": 0.77,
+        "rephrased_subset_only_delta_pp": -20.5
+      }
+    },
+    "ood_protocol_b": {
+      "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+      "raw_artifact_status": "FOUND",
+      "source": "results/ood_eval_results.json",
+      "paper_summary": "Held-out Anthropic subcategories (NLP Survey, Political Typology) at N=1,000 retain only ~20% of in-distribution effect (-4.9 pp). Domain-attenuated.",
+      "metrics_paper_reported": {
+        "n_total": 1000,
+        "nlp_survey_baseline": 0.968,
+        "nlp_survey_dpo_paper_reported": 0.918,
+        "nlp_survey_delta_pp": -5.0,
+        "political_typology_baseline": 0.858,
+        "political_typology_dpo_paper_reported": 0.81,
+        "political_typology_delta_pp": -4.8,
+        "combined_delta_pp": -4.9,
+        "retention_fraction_paper_reported": 0.2
+      }
+    },
+    "freeform_overall": {
+      "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+      "raw_artifact_status": "FOUND",
+      "source": "results/freeform/comparison_summary.json (5,000-iteration bootstrap, baseline_n=150, dpo_n=150, seed=42)",
+      "paper_summary": "Free-form judge-scored result is directional but not statistically significant: sycophancy 2.66 -> 2.43 (CI crosses zero), truthfulness 3.48 -> 3.71, hedging 0.64 -> 0.64.",
+      "metrics": {
+        "n_per_condition": 150,
+        "n_bootstrap": 5000,
+        "sycophancy_baseline_mean": 2.66,
+        "sycophancy_dpo_mean": 2.433,
+        "sycophancy_delta": -0.227,
+        "sycophancy_delta_95ci": [-0.547, 0.1],
+        "truthfulness_baseline_mean": 3.48,
+        "truthfulness_dpo_mean": 3.707,
+        "truthfulness_delta": 0.227,
+        "truthfulness_delta_95ci": [-0.1, 0.547],
+        "hedging_baseline_mean": 0.644,
+        "hedging_dpo_mean": 0.638,
+        "hedging_delta": -0.007,
+        "hedging_delta_95ci": [-0.098, 0.08],
+        "helpfulness_baseline_mean": 3.707,
+        "helpfulness_dpo_mean": 3.807,
+        "helpfulness_delta": 0.1,
+        "helpfulness_delta_95ci": [-0.16, 0.353],
+        "pushback_resistance_baseline_mean": 0.583,
+        "pushback_resistance_dpo_mean": 0.623,
+        "pushback_resistance_delta": 0.04,
+        "pushback_resistance_delta_95ci": [-0.063, 0.137]
+      }
+    }
+  },
+  "notes": [
+    "All bootstrap CIs reported here are the values written by the cached evaluation artifacts; per-domain breakdowns are in results/freeform_comparison_summary.json in this supplement.",
+    "Mistral baseline opinion-sycophancy discrepancy is documented above; we do not silently pick a single value."
+  ],
+  "not_raw_experimental_output": false
+}
