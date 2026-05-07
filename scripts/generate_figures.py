@@ -422,7 +422,13 @@ def figure_ablation_comparison(data_dir, output_dir):
         m = group_short.get(e["group"], {})
         e["label"] = "+".join(m.get(p, p) for p in parts)
 
-    fig, ax = plt.subplots(figsize=(12, 5.5))
+    fig, ax = plt.subplots(figsize=(10, 5.5))
+
+    # Local font bump for readability at the size this figure renders in the paper
+    F_TITLE = 14
+    F_LABEL = 13
+    F_TICK = 12
+    F_LEGEND = 11
 
     if HAS_SEABORN:
         group_colors = sns.color_palette("Set2", n_colors=len(groups))
@@ -461,19 +467,20 @@ def figure_ablation_comparison(data_dir, output_dir):
     ax.axhline(bl_rate, ls="--", color="grey", linewidth=0.8, zorder=0)
 
     ax.set_xticks(x)
-    ax.set_xticklabels(labels, rotation=30, ha="right", fontsize=FONT_SIZE_TICK + 1)
-    ax.tick_params(axis="y", labelsize=FONT_SIZE_TICK + 1)
-    ax.set_ylabel("Overall sycophancy rate", fontsize=FONT_SIZE_LABEL + 1)
+    ax.set_xticklabels(labels, rotation=45, ha="right", fontsize=F_TICK)
+    ax.tick_params(axis="y", labelsize=F_TICK)
+    ax.set_ylabel("Overall sycophancy rate", fontsize=F_LABEL)
     ax.set_title("Head ablation: sycophancy rate across conditions",
-                 fontsize=FONT_SIZE_TITLE)
+                 fontsize=F_TITLE)
 
-    # Legend for groups
+    # Legend for groups: below plot in two columns so labels are not truncated
     from matplotlib.patches import Patch
     handles = [Patch(facecolor="0.6", label="Baseline")]
     for g in groups:
         handles.append(Patch(facecolor=gcolor[g], label=g))
-    ax.legend(handles=handles, frameon=False, loc="upper right",
-              fontsize=FONT_SIZE_LEGEND + 1)
+    ax.legend(handles=handles, frameon=False,
+              loc="lower center", bbox_to_anchor=(0.5, -0.42),
+              ncol=2, fontsize=F_LEGEND)
 
     fig.tight_layout()
     _save(fig, output_dir, "fig5_ablation_comparison")

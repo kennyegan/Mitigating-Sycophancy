@@ -83,7 +83,14 @@ def fig7_dpo_seed_robustness():
         ("robust_tracking", "Robust Tracking (best layer)", 100, "Higher is better"),
     ]
 
-    fig, axes = plt.subplots(1, 4, figsize=(13, 3.2))
+    # Local font bump for readability at the size this figure renders in the paper
+    F_TITLE = 13
+    F_LABEL = 12
+    F_TICK = 11
+    F_LEGEND = 10
+
+    fig, axes = plt.subplots(2, 2, figsize=(10, 8))
+    axes = axes.flatten()
     for ax, (key, title, scale, sub) in zip(axes, metrics):
         per_seed_vals = [s[key] * scale for s in data["per_seed"]]
         mean_v = summary[key]["mean"] * scale
@@ -96,19 +103,20 @@ def fig7_dpo_seed_robustness():
             color="black", alpha=0.08, label=f"Mean $\\pm$ SD: {mean_v:.1f}±{sd_v:.1f}"
         )
         ax.set_xticks(x)
-        ax.set_xticklabels([f"Seed {s}" for s in seeds])
+        ax.set_xticklabels([f"Seed {s}" for s in seeds], fontsize=F_TICK)
+        ax.tick_params(axis="y", labelsize=F_TICK)
         ax.set_xlim(-0.5, len(seeds) - 0.5)
-        ax.set_ylabel(f"{title} (%)")
-        ax.set_title(title, fontsize=FONT_SIZE_TITLE - 1)
-        ax.legend(loc="best", fontsize=FONT_SIZE_LEGEND - 1, framealpha=0.9)
+        ax.set_ylabel(f"{title} (%)", fontsize=F_LABEL)
+        ax.set_title(title, fontsize=F_TITLE)
+        ax.legend(loc="best", fontsize=F_LEGEND, framealpha=0.9)
         for i, v in enumerate(per_seed_vals):
             ax.text(i, v + (0.5 if "Higher" in sub else -0.5), f"{v:.1f}",
                     ha="center", va="bottom" if "Higher" in sub else "top",
-                    fontsize=FONT_SIZE_TICK - 1)
+                    fontsize=F_TICK - 1)
 
     fig.suptitle(
         "DPO Robustness Across 3 Independent Training Seeds (100, 200, 300)",
-        fontsize=FONT_SIZE_TITLE,
+        fontsize=F_TITLE + 1,
     )
     fig.tight_layout(rect=(0, 0, 1, 0.96))
     save_fig(fig, "fig7_dpo_seed_robustness")
