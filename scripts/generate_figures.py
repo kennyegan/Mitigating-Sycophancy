@@ -57,6 +57,7 @@ def setup_style():
         "axes.grid": False,
         "pdf.fonttype": 42,     # TrueType fonts in PDF
         "ps.fonttype": 42,
+        "svg.fonttype": "none",
     })
 
 
